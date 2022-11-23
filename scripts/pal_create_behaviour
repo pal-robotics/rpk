@@ -1,0 +1,57 @@
+#! /usr/bin/python3
+
+import argparse
+from pathlib import Path
+from jinja2 import Environment, select_autoescape, FileSystemLoader
+
+import rospkg
+
+PKG_PATH = Path(rospkg.RosPack().get_path("pal_create_behaviour"))
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(
+        description="Generates behaviour skeletons for interactive ROS-based robots"
+    )
+    #     parser.add_argument(
+    #         "-f",
+    #         "--force",
+    #         action="store_true",
+    #         help="if set, force overwriting existing documentation",
+    #     )
+    #
+    parser.add_argument(
+        "name",
+        type=str,
+        help="Short name of your behaviour. Must be a valid file name without spaces.",
+    )
+
+    parser.add_argument(
+        "path",
+        type=str,
+        nargs="?",
+        const=".",
+        default=".",
+        help="path of the directory where the skeleton will be generated (default: .)",
+    )
+
+    args = parser.parse_args()
+    root = Path(args.path)
+
+    env = Environment(
+        loader=FileSystemLoader(PKG_PATH / "tpl"),
+        autoescape=select_autoescape(),
+        trim_blocks=True,
+    )
+
+    py_tpls = {
+        "main.py": env.get_template("python_script/main.py.j2"),
+    }
+
+    data = {
+        "name": args.name,
+    }
+
+    for filename, tpl in py_tpls.items():
+        with open(root / filename, "w") as fh:
+            fh.write(tpl.render(data))
