@@ -1,92 +1,167 @@
 #! /usr/bin/python3
 
+from typing import Tuple
+import threading
 import rospy
 import actionlib
 import hri_actions_msgs.msg
 
 
-class Behaviour:
+class Behavior:
     def __init__(self) -> None:
 
-        rospy.loginfo("Initialising behaviour {{ name }}...")
+        rospy.loginfo("Initialising behavior {{ id }}...")
+
+        self._thread = threading.Thread(target=self.run)
+
+        #######################################
+        #
+        # TODO: Add here any initialization steps
+        # that should occurs only once.
+        #
 
         self.is_running = False
 
-        # do here any initialisation steps you need
+        rospy.loginfo(
+            "Behavior {{ id }} ready to start. Send START goal to /behaviors/{{ id }}/control/ action."
+        )
 
     def run(self) -> None:
 
+        rospy.loginfo("Behavior {{ id }} is running.")
+
+        #######################################
+        #
+        # TODO: Implement here your behaviour.
+        #
+
         rate = rospy.Rate(1)  # 1Hz
+
+        inc = 0
         while self.is_running:
 
-            rospy.loginfo("Behaviour {{ name }} is running!")
+            rospy.loginfo(inc)
+            inc += 1
+
             rate.sleep()
 
-    def start(self) -> bool:
+        rospy.loginfo("Behavior {{ id }} stopped.")
+
+    def start(self) -> Tuple[bool, str]:
+
+        rospy.loginfo("Starting behavior {{ id }}...")
+
+        #######################################
+        #
+        # TODO: Add here any steps that need to
+        # run each time the behavior starts.
+        #
+
+        if self.is_running:  # already running?
+            return False, "behaviour already running!"
 
         self.is_running = True
-        self.run()
 
-        # return True if the behaviour successfully started
-        return True
+        # return True if the behavior successfully started
+        self._thread.start()
 
-    def stop(self) -> bool:
+        return True, "behaviour started"
 
-        # add here any additional steps to stop your behaviour
+    def stop(self) -> Tuple[bool, str]:
+        rospy.loginfo("Stopping behavior {{ id }}...")
+
+        #######################################
+        #
+        # TODO: Add here any additional steps
+        # to stop your behavior
+        #
+
         self.is_running = False
 
-        # return True once the behaviour is fully stopped.
-        return True
+        # return True *only once the behavior is fully stopped*.
+        if self._thread and self._thread.is_alive():
+            self._thread.join()
+        return True, "behaviour stopped"
 
 
 ####################################################################
 ####################################################################
 
-## AUTO-GENERATED BEHAVIOUR SERVER
+## AUTO-GENERATED Behavior SERVER
 ##
 ## you should not need to modify anything below this line.
 
 
-class BehaviourControlActionServer:
+class BehaviorControlActionServer:
     # create messages that are used to publish feedback/result
-    _feedback = hri_actions_msgs.msg.BehaviourControlFeedback()
-    _result = hri_actions_msgs.msg.BehaviourControlResult()
+    _feedback = hri_actions_msgs.msg.BehaviorControlFeedback()
+    _result = hri_actions_msgs.msg.BehaviorControlResult()
 
     def __init__(self, name):
         self._action_name = name
         self._as = actionlib.SimpleActionServer(
-            self._action_name,
-            hri_actions_msgs.msg.BehaviourControlAction,
+            "/behaviors" + self._action_name + "/control",
+            hri_actions_msgs.msg.BehaviorControlAction,
             execute_cb=self.execute_cb,
             auto_start=False,
         )
         self._as.start()
 
-        self.behaviour = Behaviour()
+        self.behavior = Behavior()
 
     def execute_cb(self, goal):
 
-        if goal.action == hri_actions_msgs.msg.BehaviourControlGoal.START:
+        if not self.behavior:
+            self._as.set_aborted()
+            return
+
+        if goal.action == hri_actions_msgs.msg.BehaviorControlGoal.START:
 
             rospy.logdebug(
-                "%s: Starting behaviour" % self._action_name,
+                "%s: Starting behavior" % self._action_name,
             )
 
-            success = self.behaviour.start()
+            success, msg = self.behavior.start()
 
             if success:
                 self._result.ok = True
-                rospy.loginfo("%s: Behaviour successfully started" % self._action_name)
-                self._as.set_succeeded(self._result)
+                rospy.loginfo("%s: Behavior successfully started" % self._action_name)
+                self._as.set_succeeded(self._result, text=msg)
             else:
                 self._result.ok = False
-                rospy.logwarning("%s: Behaviour failed to start" % self._action_name)
-                self._as.set_succeeded(self._result)
+                rospy.logwarn("%s: Behavior failed to start" % self._action_name)
+                self._as.set_succeeded(self._result, text=msg)
+
+        elif goal.action == hri_actions_msgs.msg.BehaviorControlGoal.STOP:
+
+            rospy.logdebug(
+                "%s: Stopping behavior" % self._action_name,
+            )
+
+            success, msg = self.behavior.stop()
+
+            if success:
+                self._result.ok = True
+                rospy.loginfo("%s: Behavior successfully stopped" % self._action_name)
+                self._as.set_succeeded(self._result, text=msg)
+            else:
+                self._result.ok = False
+                rospy.logwarn("%s: Behavior failed to stop" % self._action_name)
+                self._as.set_succeeded(self._result, text=msg)
+
+        else:
+            rospy.logerr(
+                "%s: Unknown behavior control request: %s"
+                % (self._action_name, goal.action),
+            )
+            self._as.set_aborted(
+                text="Unknown behavior control request: %s" % goal.action
+            )
 
 
 if __name__ == "__main__":
 
-    rospy.init_node("{{ name }}")
+    rospy.init_node("{{ id }}")
 
-    server = BehaviourControlActionServer(rospy.get_name())
+    server = BehaviorControlActionServer(rospy.get_name())
     rospy.spin()

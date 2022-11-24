@@ -7,6 +7,38 @@ from jinja2 import Environment, select_autoescape, FileSystemLoader
 import rospkg
 
 PKG_PATH = Path(rospkg.RosPack().get_path("pal_create_behaviour"))
+AVAILABLE_TEMPLATES = {
+    "python": {"tpl_path": "python_script", "short_desc": "simple Python script"},
+}
+
+
+def interactive_create(id=None, template=None):
+
+    while not id:
+        id = input(
+            "Name of your behaviour? (must be a vlid identifier without spaces. eg 'robot_receptionist')\n"
+        )
+
+    name = input(
+        "Full name of your behaviour? (eg 'The Receptionist Robot', press Return to skip)\n"
+    )
+    if not name:
+        name = id
+
+    while not template:
+        print("What kind of behaviour do you want to create?")
+        for idx, tpl in enumerate(AVAILABLE_TEMPLATES.keys()):
+            print("%s: %s" % (idx + 1, AVAILABLE_TEMPLATES[tpl]["short_desc"]))
+
+        try:
+            choice = int(input("Your choice? "))
+
+            template = list(AVAILABLE_TEMPLATES.keys())[choice - 1]
+        except:
+            template = ""
+
+    return id, name, template
+
 
 if __name__ == "__main__":
 
@@ -21,9 +53,20 @@ if __name__ == "__main__":
     #     )
     #
     parser.add_argument(
-        "name",
+        "-n",
+        "--name",
         type=str,
+        nargs="?",
         help="Short name of your behaviour. Must be a valid file name without spaces.",
+    )
+
+    parser.add_argument(
+        "-t",
+        "--template",
+        choices=AVAILABLE_TEMPLATES.keys(),
+        type=str,
+        nargs="?",
+        help="Template to use.",
     )
 
     parser.add_argument(
@@ -36,7 +79,6 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    root = Path(args.path)
 
     env = Environment(
         loader=FileSystemLoader(PKG_PATH / "tpl"),
@@ -44,14 +86,28 @@ if __name__ == "__main__":
         trim_blocks=True,
     )
 
-    py_tpls = {
-        "main.py": env.get_template("python_script/main.py.j2"),
-    }
+    id, name, tpl = interactive_create(args.name, args.template)
 
     data = {
-        "name": args.name,
+        "id": id,
+        "name": name,
     }
 
-    for filename, tpl in py_tpls.items():
-        with open(root / filename, "w") as fh:
-            fh.write(tpl.render(data))
+    root = Path(args.path) / id
+    root.mkdir(parents=True, exist_ok=True)
+
+    print("Generating behaviour skeleton in %s..." % root)
+
+    if tpl == "python":
+
+        py_tpls = {
+            "main.py": env.get_template("python_script/main.py.j2"),
+        }
+
+        for filename, tpl in py_tpls.items():
+            with open(root / filename, "w") as fh:
+                fh.write(tpl.render(data))
+    else:
+        print("No template for %s! Can not generate anything!" % tpl)
+
+    print("Done! you can find (and further modify) your behaviour in %s" % root)
