@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.2.0)
 project({{ id }})
 
 find_package(catkin REQUIRED rospy actionlib)
@@ -11,3 +11,6 @@ catkin_install_python(PROGRAMS
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+add_custom_target(pkg COMMAND
+    ${CMAKE_COMMAND} -E tar "cfv" "{{ id }}.behavior" --format=zip
+       "${CMAKE_CURRENT_SOURCE_DIR}")
