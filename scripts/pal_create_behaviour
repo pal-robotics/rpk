@@ -11,6 +11,8 @@ AVAILABLE_TEMPLATES = {
     "python": {"tpl_path": "python_script", "short_desc": "simple Python script"},
 }
 
+TPL_EXT = "j2"
+
 
 def interactive_create(id=None, template=None):
 
@@ -80,12 +82,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    env = Environment(
-        loader=FileSystemLoader(PKG_PATH / "tpl"),
-        autoescape=select_autoescape(),
-        trim_blocks=True,
-    )
-
     id, name, tpl = interactive_create(args.name, args.template)
 
     data = {
@@ -100,12 +96,23 @@ if __name__ == "__main__":
 
     if tpl == "python":
 
-        py_tpls = {
-            "main.py": env.get_template("python_script/main.py.j2"),
-        }
+        env = Environment(
+            loader=FileSystemLoader(
+                PKG_PATH / "tpl" / AVAILABLE_TEMPLATES[tpl]["tpl_path"]
+            ),
+            autoescape=select_autoescape(),
+            trim_blocks=True,
+        )
 
-        for filename, tpl in py_tpls.items():
-            with open(root / filename, "w") as fh:
+        tpls = env.list_templates(extensions=TPL_EXT)
+
+        for tpl_name in tpls:
+            tpl = env.get_template(tpl_name)
+            tpl_name = tpl_name.replace("{{id}}", data["id"])
+            filename = root / tpl_name[: -(1 + len(TPL_EXT))]
+            filename.parent.mkdir(parents=True, exist_ok=True)
+            print("Creating %s..." % filename)
+            with open(filename, "w") as fh:
                 fh.write(tpl.render(data))
     else:
         print("No template for %s! Can not generate anything!" % tpl)

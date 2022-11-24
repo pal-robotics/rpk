@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from distutils.core import setup
+
+
+def readme():
+    with open("README.md") as f:
+        return f.read()
+
+
+NAME = "{{ id }}"
+
+setup(
+    name=NAME,
+    version="0.1.0",
+    license="Proprietary",
+    description="{{ name }}",
+    long_description=readme(),
+    classifiers=[
+        "Programming Language :: Python :: 3",
+    ],
+    author="todo",
+    author_email="todo@todo.todo",
+    package_dir={"": "src"},
+    packages=["{{ id }}"],
+)

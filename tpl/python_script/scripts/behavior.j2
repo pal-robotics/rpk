@@ -1,95 +1,23 @@
 #! /usr/bin/python3
 
+
+####################################################################
+####################################################################
+##
+## AUTO-GENERATED Behavior SERVER
+##
+## you should not need to modify this file.
+##
+####################################################################
+
+
 from typing import Tuple
 import threading
 import rospy
 import actionlib
 import hri_actions_msgs.msg
 
-
-class Behavior:
-    def __init__(self) -> None:
-
-        rospy.loginfo("Initialising behavior {{ id }}...")
-
-        self._thread = threading.Thread(target=self.run)
-
-        #######################################
-        #
-        # TODO: Add here any initialization steps
-        # that should occurs only once.
-        #
-
-        self.is_running = False
-
-        rospy.loginfo(
-            "Behavior {{ id }} ready to start. Send START goal to /behaviors/{{ id }}/control/ action."
-        )
-
-    def run(self) -> None:
-
-        rospy.loginfo("Behavior {{ id }} is running.")
-
-        #######################################
-        #
-        # TODO: Implement here your behaviour.
-        #
-
-        rate = rospy.Rate(1)  # 1Hz
-
-        inc = 0
-        while self.is_running:
-
-            rospy.loginfo(inc)
-            inc += 1
-
-            rate.sleep()
-
-        rospy.loginfo("Behavior {{ id }} stopped.")
-
-    def start(self) -> Tuple[bool, str]:
-
-        rospy.loginfo("Starting behavior {{ id }}...")
-
-        #######################################
-        #
-        # TODO: Add here any steps that need to
-        # run each time the behavior starts.
-        #
-
-        if self.is_running:  # already running?
-            return False, "behaviour already running!"
-
-        self.is_running = True
-
-        # return True if the behavior successfully started
-        self._thread.start()
-
-        return True, "behaviour started"
-
-    def stop(self) -> Tuple[bool, str]:
-        rospy.loginfo("Stopping behavior {{ id }}...")
-
-        #######################################
-        #
-        # TODO: Add here any additional steps
-        # to stop your behavior
-        #
-
-        self.is_running = False
-
-        # return True *only once the behavior is fully stopped*.
-        if self._thread and self._thread.is_alive():
-            self._thread.join()
-        return True, "behaviour stopped"
-
-
-####################################################################
-####################################################################
-
-## AUTO-GENERATED Behavior SERVER
-##
-## you should not need to modify anything below this line.
+import {{ id }}.behavior_impl
 
 
 class BehaviorControlActionServer:
@@ -107,7 +35,7 @@ class BehaviorControlActionServer:
         )
         self._as.start()
 
-        self.behavior = Behavior()
+        self.behavior = {{ id }}.behavior_impl.Behavior()
 
     def execute_cb(self, goal):
 
