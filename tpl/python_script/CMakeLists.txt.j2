@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.2.0)
 project({{ id }})
 
-find_package(catkin REQUIRED rospy actionlib)
+find_package(catkin REQUIRED
+            rospy
+            actionlib
+            hri_actions_msgs
+            )
 
 catkin_python_setup()
 catkin_package()
