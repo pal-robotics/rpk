@@ -21,9 +21,15 @@ def get_intents():
     import rosmsg
 
     msg_def = rosmsg.get_msg_text("hri_actions_msgs/Intent").split("\n")
+
+    prev_line = ""
     for l in msg_def:
         if "__intent_" in l:
-            intents.append(l.split("string")[1].split("=")[0].strip())
+            name = l.split("string")[1].split("=")[0].strip()
+            desc = prev_line.strip()[1:]
+            intents.append({"name": name, "desc": desc})
+
+        prev_line = l
 
     return intents
 

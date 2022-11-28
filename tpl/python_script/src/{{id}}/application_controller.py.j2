@@ -1,0 +1,118 @@
+#! /usr/bin/python3
+
+from typing import Tuple
+import threading
+import json
+
+import rospy
+from hri_actions_msgs.msg import Intent
+
+
+class ApplicationController:
+    def __init__(self) -> None:
+
+        rospy.loginfo("[APPLICATION {{ id }}] initialising...")
+
+        self._thread = threading.Thread(target=self.background_task)
+        self._intents_sub = rospy.Subscriber("/intents", Intent, self.on_intent)
+
+        #######################################
+        #
+        # TODO: Add here any initialization steps
+        # that should occurs only once.
+        #
+
+        self.is_running = False
+
+        rospy.loginfo(
+            "[APPLICATION {{ id }}] Ready to start. Send START goal to /applications/{{ id }}/control/ action."
+        )
+
+    def on_intent(self, msg):
+
+        rospy.loginfo("[APPLICATION {{ id }}] Received an intent: %s" % msg.action)
+
+        #######################################
+        #
+        # TODO: Define here how your application
+        # should react when receiving an user
+        # intent.
+        #
+        # If you do not want to process a given
+        # intent, simply remove the corresponding
+        # lines.
+        #
+
+        data = json.loads(msg.data) if msg.data else {}
+        source = msg.source
+        modality = msg.modality
+        confidence = msg.confidence
+        priority_hint = msg.priority
+
+{% for intent in intents +%}
+        # {{ intent.desc }}
+        if msg.action == Intent.{{ intent.name }}:
+            pass
+{% endfor %}
+
+        # custom intent?
+        else:
+            pass
+
+    def background_task(self) -> None:
+
+        rospy.loginfo("[APPLICATION {{ id }}] running")
+
+        #######################################
+        #
+        # TODO: Implement here any background
+        # task required by your application.
+        #
+
+        rate = rospy.Rate(1)  # 1Hz
+
+        inc = 0
+        while self.is_running:
+
+            rospy.loginfo(inc)
+            inc += 1
+
+            rate.sleep()
+
+        rospy.loginfo("[APPLICATION {{ id }}] stopped")
+
+    def start(self) -> Tuple[bool, str]:
+
+        rospy.loginfo("[APPLICATION {{ id }}] starting...")
+
+        #######################################
+        #
+        # TODO: Add here any steps that need to
+        # run each time the application starts.
+        #
+
+        if self.is_running:  # already running?
+            return False, "application {{ id }} already running"
+
+        self.is_running = True
+
+        # return True if the application successfully started
+        self._thread.start()
+
+        return True, "application {{ id }} started"
+
+    def stop(self) -> Tuple[bool, str]:
+        rospy.loginfo("[APPLICATION {{ id }}] stopping...")
+
+        #######################################
+        #
+        # TODO: Add here any additional steps
+        # to stop your application
+        #
+
+        self.is_running = False
+
+        # return True *only once the application is fully stopped*.
+        if self._thread and self._thread.is_alive():
+            self._thread.join()
+        return True, "application {{ id }} stopped"

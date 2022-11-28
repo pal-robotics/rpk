@@ -1,0 +1,92 @@
+#! /usr/bin/python3
+
+
+####################################################################
+####################################################################
+##
+## AUTO-GENERATED Application SERVER
+##
+## you should not need to modify this file.
+##
+####################################################################
+
+import rospy
+import actionlib
+import hri_actions_msgs.msg
+
+import {{ id }}.application_controller
+
+
+class ApplicationControlActionServer:
+    # create messages that are used to publish feedback/result
+    _feedback = hri_actions_msgs.msg.ApplicationControlFeedback()
+    _result = hri_actions_msgs.msg.ApplicationControlResult()
+
+    def __init__(self, name):
+        self._action_name = name
+        self._as = actionlib.SimpleActionServer(
+            "/applications" + self._action_name + "/control",
+            hri_actions_msgs.msg.ApplicationControlAction,
+            execute_cb=self.execute_cb,
+            auto_start=False,
+        )
+
+        self.application_controller = {{ id }}.application_controller.ApplicationController()
+        self._as.start()
+
+    def execute_cb(self, goal):
+
+        if not self.application_controller:
+            self._as.set_aborted()
+            return
+
+        if goal.action == hri_actions_msgs.msg.ApplicationControlGoal.START:
+
+            rospy.logdebug(
+                "[APPLICATION {{ id }}] requesting start"
+            )
+
+            success, msg = self.application_controller.start()
+
+            if success:
+                self._result.ok = True
+                rospy.logdebug("[APPLICATION {{ id }}] application successfully started")
+                self._as.set_succeeded(self._result, text=msg)
+            else:
+                self._result.ok = False
+                rospy.logwarn("[APPLICATION {{ id }}] application failed to start")
+                self._as.set_succeeded(self._result, text=msg)
+
+        elif goal.action == hri_actions_msgs.msg.ApplicationControlGoal.STOP:
+
+            rospy.logdebug(
+                    "[APPLICATION {{ id }}] requesting stopping"
+            )
+
+            success, msg = self.application_controller.stop()
+
+            if success:
+                self._result.ok = True
+                rospy.logdebug("[APPLICATION {{ id }}] application successfully stopped")
+                self._as.set_succeeded(self._result, text=msg)
+            else:
+                self._result.ok = False
+                rospy.logwarn("[APPLICATION {{ ID }}] application failed to stop")
+                self._as.set_succeeded(self._result, text=msg)
+
+        else:
+            rospy.logerr(
+                "[APPLICATION {{ id }}] unknown control request: %s"
+                % goal.action,
+            )
+            self._as.set_aborted(
+                text="[{{ id }}] unknown control request: %s" % goal.action
+            )
+
+
+if __name__ == "__main__":
+
+    rospy.init_node("{{ id }}")
+
+    server = ApplicationControlActionServer(rospy.get_name())
+    rospy.spin()
