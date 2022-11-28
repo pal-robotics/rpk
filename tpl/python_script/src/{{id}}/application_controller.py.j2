@@ -37,11 +37,6 @@ class ApplicationController:
         # TODO: Define here how your application
         # should react when receiving an user
         # intent.
-        #
-        # If you do not want to process a given
-        # intent, simply remove the corresponding
-        # lines.
-        #
 
         data = json.loads(msg.data) if msg.data else {}
         source = msg.source
@@ -49,15 +44,44 @@ class ApplicationController:
         confidence = msg.confidence
         priority_hint = msg.priority
 
-{% for intent in intents +%}
-        # {{ intent.desc }}
-        if msg.action == Intent.{{ intent.name }}:
+        #######################################
+        #
+        # If you do not need to process specific
+        # intents, simply remove the corresponding
+        # line(s).
+        #
+
+{% if intents %}
+        # Intent {{ intents[0].action }}: {{ intents[0].description }}
+        if msg.action == Intent.{{ intents[0].action }}:
+{% if intents[0].required_thematic_roles %}
+            # the 'data' dictionary should contain at least the following keys:
+{% for role in intents[0].required_thematic_roles %}
+            # - {{ role }}
+{% endfor %}
+{% endif %}
+            pass
+{% for intent in intents[1:] +%}
+        # Intent {{ intent.action }}: {{ intent.description }}
+        elif msg.action == Intent.{{ intent.action }}:
+{% if intent.required_thematic_roles %}
+            # the 'data' dictionary should contain at least the following keys:
+{% for role in intent.required_thematic_roles %}
+            # - {{ role }}
+{% endfor %}
+{% endif %}
             pass
 {% endfor %}
 
         # custom intent?
         else:
             pass
+{% else %}
+        # handle here the different intents
+        if msg.action == "your intent" # or one of the Intent.msg constants
+            pass
+        # elif...
+{% endif %}
 
     def background_task(self) -> None:
 

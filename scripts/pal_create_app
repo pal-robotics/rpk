@@ -24,16 +24,44 @@ def get_intents():
 
     import rosmsg
 
-    msg_def = rosmsg.get_msg_text("hri_actions_msgs/Intent").split("\n")
+    msg_def = rosmsg.get_msg_text("hri_actions_msgs/Intent", raw=True).split("\n")
 
-    prev_line = ""
+    table = []
+    in_table = False
+
     for l in msg_def:
-        if "__intent_" in l:
-            name = l.split("string")[1].split("=")[0].strip()
-            desc = prev_line.strip()[1:]
-            intents.append({"name": name, "desc": desc})
+        if "BEGIN_INTENTS_TABLE" in l:
+            in_table = True
+            continue
+        if "END_INTENTS_TABLE" in l:
+            break
+        if in_table and "|" in l:
+            table.append(l)
 
-        prev_line = l
+    if not table:
+        rospy.logwarn(
+            "Intent.msg not found or empty :-( Not generating the intents handling code"
+        )
+        return intents
+
+    header = [
+        h.strip(" *").lower().replace(" ", "_") for h in table[0].split("|")[1:-1]
+    ]
+
+    for l in table[1:]:
+        entries = [e.strip(" `") for e in l.split("|")[1:-1]]
+
+        # required thematic roles
+        entries[2] = [x.strip().replace("`", "") for x in entries[2].split("-")[1:]]
+        # optional thematic roles
+        entries[3] = [x.strip().replace("`", "") for x in entries[3].split("-")[1:]]
+
+        if not entries[0]:  # intent spanning multiple rows
+            additional_data = dict(zip(header, entries))
+            for h in header:
+                intents[-1][h] += additional_data[h]
+        else:
+            intents.append(dict(zip(header, entries)))
 
     return intents
 
