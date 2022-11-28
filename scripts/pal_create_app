@@ -6,9 +6,13 @@ from jinja2 import Environment, select_autoescape, FileSystemLoader
 
 import rospkg
 
-PKG_PATH = Path(rospkg.RosPack().get_path("pal_create_behaviour"))
+PKG_PATH = Path(rospkg.RosPack().get_path("pal_create_app"))
 AVAILABLE_TEMPLATES = {
-    "python": {"tpl_path": "python_script", "short_desc": "simple Python script"},
+    "python": {
+        "tpl_path": "python_script",
+        "short_desc": "simple Python script",
+        "post_install_help": "Edit ./{path}/src/{id}/application_controller.py to implement your application logic.",
+    }
 }
 
 TPL_EXT = "j2"
@@ -38,17 +42,17 @@ def interactive_create(id=None, template=None):
 
     while not id:
         id = input(
-            "Name of your behaviour? (must be a vlid identifier without spaces. eg 'robot_receptionist')\n"
+            "ID of your application? (must be a vlid identifier without spaces. eg 'robot_receptionist')\n"
         )
 
     name = input(
-        "Full name of your behaviour? (eg 'The Receptionist Robot', press Return to skip)\n"
+        "Full name of your application? (eg 'The Receptionist Robot', press Return to skip)\n"
     )
     if not name:
         name = id
 
     while not template:
-        print("What kind of behaviour do you want to create?")
+        print("What kind of application controller do you want to create?")
         for idx, tpl in enumerate(AVAILABLE_TEMPLATES.keys()):
             print("%s: %s" % (idx + 1, AVAILABLE_TEMPLATES[tpl]["short_desc"]))
 
@@ -65,7 +69,7 @@ def interactive_create(id=None, template=None):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
-        description="Generates behaviour skeletons for interactive ROS-based robots"
+        description="Generates application skeletons for interactive ROS-based robots"
     )
     #     parser.add_argument(
     #         "-f",
@@ -75,11 +79,11 @@ if __name__ == "__main__":
     #     )
     #
     parser.add_argument(
-        "-n",
-        "--name",
+        "-i",
+        "--id",
         type=str,
         nargs="?",
-        help="Short name of your behaviour. Must be a valid file name without spaces.",
+        help="ID of your application. Must be a valid file name without spaces.",
     )
 
     parser.add_argument(
@@ -104,14 +108,14 @@ if __name__ == "__main__":
 
     intents = get_intents()
 
-    id, name, tpl = interactive_create(args.name, args.template)
+    id, name, tpl = interactive_create(args.id, args.template)
 
     data = {"id": id, "name": name, "intents": intents}
 
     root = Path(args.path) / id
     root.mkdir(parents=True, exist_ok=True)
 
-    print("Generating behaviour skeleton in %s..." % root)
+    print("Generating application skeleton in %s..." % root)
 
     if tpl == "python":
 
@@ -126,14 +130,18 @@ if __name__ == "__main__":
         tpls = env.list_templates(extensions=TPL_EXT)
 
         for tpl_name in tpls:
-            tpl = env.get_template(tpl_name)
+            j_tpl = env.get_template(tpl_name)
             tpl_name = tpl_name.replace("{{id}}", data["id"])
             filename = root / tpl_name[: -(1 + len(TPL_EXT))]
             filename.parent.mkdir(parents=True, exist_ok=True)
             print("Creating %s..." % filename)
             with open(filename, "w") as fh:
-                fh.write(tpl.render(data))
+                fh.write(j_tpl.render(data))
+
+        print("\n\033[32;1mDone!")
+        print("\033[33;1m")
+        print(AVAILABLE_TEMPLATES[tpl]["post_install_help"].format(path=root, id=id))
+        print("\033[0m")
+
     else:
         print("No template for %s! Can not generate anything!" % tpl)
-
-    print("Done! you can find (and further modify) your behaviour in %s" % root)

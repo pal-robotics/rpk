@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>pal_create_behaviour</name>
+  <name>pal_create_app</name>
   <version>0.1.0</version>
-  <description>A tool to create behaviour skeletons for interactive robots</description>
+  <description>A tool to create application controllers skeletons for interactive robots</description>
 
   <maintainer email="severin.lemaignan@pal-robotics.com">Séverin Lemaignan</maintainer>
 
@@ -12,7 +12,7 @@
 
   <!--
       Note that 'actionlib' and 'hri_actions_msgs' are not strictly required
-      to run the code generator. However, the generated behaviours will always
+      to run the code generator. However, the generated application controller will always
       require them. In order to offer a better developer experience, it is
       nicer to install these 2 dependencies at the same time as the tool\
       itself is installed.

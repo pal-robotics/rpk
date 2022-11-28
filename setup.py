@@ -10,7 +10,7 @@ def readme():
         return f.read()
 
 
-NAME = "pal_create_behaviour"
+NAME = "pal_create_app"
 
 TPLS = [
     ("share/%s/%s" % (NAME, t.parent), [str(t)])
@@ -22,7 +22,7 @@ setup(
     name=NAME,
     version="0.1.0",
     license="Proprietary",
-    description="A tool to create behaviour skeletons for interactive robots",
+    description="A tool to create application controller skeletons for interactive robots",
     long_description=readme(),
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -30,6 +30,6 @@ setup(
     requires=["jinja2"],
     author="Séverin Lemaignan",
     author_email="severin.lemaignan@pal-robotics.com",
-    scripts=["scripts/pal_create_behaviour"],
+    scripts=["scripts/pal_create_app"],
     data_files=TPLS,
 )

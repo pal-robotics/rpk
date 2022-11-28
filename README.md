@@ -1,7 +1,7 @@
-pal_create_behaviour
-====================
+pal_create_app
+==============
 
-A tool to generate skeletons of robot supervisors.
+A tool to generate skeletons of robot application controller.
 
 Relies on ROS and the ROS `Intents` interface.
 
