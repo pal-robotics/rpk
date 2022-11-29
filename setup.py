@@ -1,14 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Copyright (c) 2022 PAL Robotics S.L. All rights reserved.
+
 from pathlib import Path
 from distutils.core import setup
-
-
-def readme():
-    with open("README.md") as f:
-        return f.read()
-
 
 NAME = "pal_create_app"
 
@@ -20,10 +16,9 @@ TPLS = [
 
 setup(
     name=NAME,
-    version="0.1.0",
-    license="Proprietary",
+    version="0.1.2",
+    license="GPLv3",
     description="A tool to create application controller skeletons for interactive robots",
-    long_description=readme(),
     classifiers=[
         "Programming Language :: Python :: 3",
     ],
@@ -31,5 +26,5 @@ setup(
     author="Séverin Lemaignan",
     author_email="severin.lemaignan@pal-robotics.com",
     scripts=["scripts/pal_create_app"],
-    data_files=TPLS,
+    data_files=TPLS + [("share/doc/pal_create_app", ["README.md", "LICENSE"])],
 )
