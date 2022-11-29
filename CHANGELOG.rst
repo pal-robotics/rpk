@@ -2,8 +2,8 @@
 Changelog for package pal_create_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.3 (2022-11-29)
+------------------
 * on ARI, generate a simple behaviour when the intent 'ENGAGE_WITH' is detected
 * add GPLv3 license + please pypi
 * take the target robot as parameter
