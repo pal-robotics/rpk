@@ -33,6 +33,14 @@
   <depend>actionlib</depend>
   <depend>hri_actions_msgs</depend>
 
+{% if robot == "ARI" %}
+
+  <!-- As an example, we are going to use the TTS and play_motion -->
+  <!-- actions. We need to list the corresponding ROS actions as dependencies. -->
+  <depend>pal_interaction_msgs</depend>
+  <depend>play_motion_msgs</depend>
+
+{% endif %}
   <export>
       <!-- This specifies that this package should be treated as an -->
       <!-- application. -->

@@ -52,25 +52,41 @@ class ApplicationController:
         #
 
 {% if intents %}
-        # Intent {{ intents[0].action }}: {{ intents[0].description }}
-        if msg.action == Intent.{{ intents[0].action }}:
-{% if intents[0].required_thematic_roles %}
-            # the 'data' dictionary should contain at least the following keys:
-{% for role in intents[0].required_thematic_roles %}
-            # - {{ role }}
-{% endfor %}
-{% endif %}
-            pass
-{% for intent in intents[1:] +%}
+{% for intent in intents +%}
         # Intent {{ intent.action }}: {{ intent.description }}
-        elif msg.action == Intent.{{ intent.action }}:
+        {{ "if" if loop.index == 1 else "elif"}} msg.action == Intent.{{ intent.action }}:
 {% if intent.required_thematic_roles %}
             # the 'data' dictionary should contain at least the following keys:
 {% for role in intent.required_thematic_roles %}
             # - {{ role }}
 {% endfor %}
 {% endif %}
+{% if intent.action == "ENGAGE_WITH" and robot == "ARI" %}
+
+            # As an example, we call here the TTS and play_motion action server
+            # to implement a very simple behaviour when someone engages with the
+            # robot.
+            import actionlib
+            from pal_interaction_msgs.msg import TtsAction, TtsGoal
+            from play_motion_msgs.msg import PlayMotionAction, PlayMotionGoal
+
+            tts = actionlib.SimpleActionClient('tts', TtsAction)
+            play_motion = actionlib.SimpleActionClient('play_motion', PlayMotionAction)
+
+            tts_goal = TtsGoal()
+            tts_goal.rawtext.text = "Hello, I'm ARI. Nice to meet you!"
+            tts_goal.rawtext.lang_id = "en_GB"
+
+            tts.send_goal(tts_goal)
+
+            motion_goal = PlayMotionGoal(motion_name="Wave")
+
+            play_motion.send_goal(motion_goal)
+
+{% else %}
             pass
+{% endif %}
+
 {% endfor %}
 
         # custom intent?
