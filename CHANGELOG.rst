@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.5 (2022-12-05)
+------------------
 * fix pkg deps
 * ensure the user select a command
 * Contributors: Séverin Lemaignan
