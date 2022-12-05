@@ -1,9 +1,6 @@
 #! /usr/bin/python3
 
-from typing import Tuple
-import threading
 import json
-
 import rospy
 from hri_actions_msgs.msg import Intent
 
@@ -13,8 +10,10 @@ class ApplicationController:
 
         rospy.loginfo("[APPLICATION {{ id }}] initialising...")
 
-        self._thread = threading.Thread(target=self.background_task)
-        self._intents_sub = rospy.Subscriber("/intents", Intent, self.on_intent)
+
+        # this member variable will be set to 'True' if the application manager
+        # or the user request the application to stop.
+        self.cancellation_requested = False
 
         #######################################
         #
@@ -22,15 +21,14 @@ class ApplicationController:
         # that should occurs only once.
         #
 
-        self.is_running = False
 
         rospy.loginfo(
-            "[APPLICATION {{ id }}] Ready to start. Send START goal to /applications/{{ id }}/control/ action."
+            "[APPLICATION {{ id }}] Ready to start. Call action /applications/{{ id }}/control/ to start it."
         )
 
     def on_intent(self, msg):
 
-        rospy.loginfo("[APPLICATION {{ id }}] Received an intent: %s" % msg.action)
+        rospy.loginfo("[APPLICATION {{ id }}] Received an intent: %s" % msg.intent)
 
         #######################################
         #
@@ -53,15 +51,15 @@ class ApplicationController:
 
 {% if intents %}
 {% for intent in intents +%}
-        # Intent {{ intent.action }}: {{ intent.description }}
-        {{ "if" if loop.index == 1 else "elif"}} msg.action == Intent.{{ intent.action }}:
+        # Intent {{ intent.intent }}: {{ intent.description }}
+        {{ "if" if loop.index == 1 else "elif"}} msg.intent == Intent.{{ intent.intent }}:
 {% if intent.required_thematic_roles %}
             # the 'data' dictionary should contain at least the following keys:
 {% for role in intent.required_thematic_roles %}
             # - {{ role }}
 {% endfor %}
 {% endif %}
-{% if intent.action == "ENGAGE_WITH" and robot == "ARI" %}
+{% if intent.intent == "ENGAGE_WITH" and robot == "ARI" %}
 
             # As an example, we call here the TTS and play_motion action server
             # to implement a very simple behaviour when someone engages with the
@@ -91,16 +89,30 @@ class ApplicationController:
 
         # custom intent?
         else:
-            pass
+            rospy.logwarn("I don't know how to process intent <%s>!" % msg.intent)
 {% else %}
         # handle here the different intents
-        if msg.action == "your intent" # or one of the Intent.msg constants
+        if msg.intent == "your_intent" # or one of the Intent.msg constants
             pass
+
         # elif...
+
+        else:
+            rospy.logwarn("I don't know how to process intent <%s>!" % msg.intent)
 {% endif %}
 
-    def background_task(self) -> None:
+    def run(self, parameters = None) -> None:
+        """
+        The main 'blocking' task of your application. Implements the
+        background processing of your applcation.
 
+        Optionally, parameters can be passed to the application.
+
+        This function should *not* return unless `self.cancellation_requested`
+        is set to `True` (by the application manager).
+        """
+
+        self._intents_sub = rospy.Subscriber("/intents", Intent, self.on_intent)
         rospy.loginfo("[APPLICATION {{ id }}] running")
 
         #######################################
@@ -108,51 +120,21 @@ class ApplicationController:
         # TODO: Implement here any background
         # task required by your application.
         #
+        # This function should *not* return unless
+        # self.cancellation_requested is set to True
+        #
 
         rate = rospy.Rate(1)  # 1Hz
 
         inc = 0
-        while self.is_running:
+        while not self.cancellation_requested:
 
             rospy.loginfo(inc)
             inc += 1
 
             rate.sleep()
 
+        self._intents_sub.unregister()
         rospy.loginfo("[APPLICATION {{ id }}] stopped")
 
-    def start(self) -> Tuple[bool, str]:
 
-        rospy.loginfo("[APPLICATION {{ id }}] starting...")
-
-        #######################################
-        #
-        # TODO: Add here any steps that need to
-        # run each time the application starts.
-        #
-
-        if self.is_running:  # already running?
-            return False, "application {{ id }} already running"
-
-        self.is_running = True
-
-        # return True if the application successfully started
-        self._thread.start()
-
-        return True, "application {{ id }} started"
-
-    def stop(self) -> Tuple[bool, str]:
-        rospy.loginfo("[APPLICATION {{ id }}] stopping...")
-
-        #######################################
-        #
-        # TODO: Add here any additional steps
-        # to stop your application
-        #
-
-        self.is_running = False
-
-        # return True *only once the application is fully stopped*.
-        if self._thread and self._thread.is_alive():
-            self._thread.join()
-        return True, "application {{ id }} stopped"

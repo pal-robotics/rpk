@@ -11,8 +11,10 @@
 ####################################################################
 
 import rospy
-import actionlib
+import json
+from actionlib.action_server import ActionServer
 import hri_actions_msgs.msg
+import threading
 
 import {{ id }}.application_controller
 
@@ -24,65 +26,72 @@ class ApplicationControlActionServer:
 
     def __init__(self, name):
         self._action_name = name
-        self._as = actionlib.SimpleActionServer(
+        self._as = ActionServer(
             "/applications" + self._action_name + "/control",
             hri_actions_msgs.msg.ApplicationControlAction,
-            execute_cb=self.execute_cb,
+            goal_cb=self.goal_cb,
+            cancel_cb=self.cancel_cb,
             auto_start=False,
         )
 
         self.application_controller = {{ id }}.application_controller.ApplicationController()
+
+        self._execute_thread = None
+        self._is_running = False
+
         self._as.start()
 
-    def execute_cb(self, goal):
+    def goal_cb(self, goal):
+
+        rospy.loginfo("[APPLICATION {{ id }}] requesting start")
 
         if not self.application_controller:
-            self._as.set_aborted()
+            rospy.logwarn("[APPLICATION {{ id }}] start rejected: controller not ready")
+            goal.set_rejected(text="Application controller not ready")
             return
 
-        if goal.action == hri_actions_msgs.msg.ApplicationControlGoal.START:
 
-            rospy.logdebug(
-                "[APPLICATION {{ id }}] requesting start"
-            )
+        if self._execute_thread and self._execute_thread.is_alive():
+            rospy.logwarn("[APPLICATION {{ id }}] start rejected: already running")
+            goal.set_rejected(text="Application already running")
+            return
 
-            success, msg = self.application_controller.start()
 
-            if success:
-                self._result.ok = True
-                rospy.logdebug("[APPLICATION {{ id }}] application successfully started")
-                self._as.set_succeeded(self._result, text=msg)
-            else:
-                self._result.ok = False
-                rospy.logwarn("[APPLICATION {{ id }}] application failed to start")
-                self._as.set_succeeded(self._result, text=msg)
+        self.application_controller.cancellation_requested = False
 
-        elif goal.action == hri_actions_msgs.msg.ApplicationControlGoal.STOP:
+        params = None
+        if goal.get_goal().parameters:
+            try:
+                params = json.loads(goal.get_goal().parameters)
+            except json.JSONDecodeError as je:
+                rospy.logwarn("[APPLICATION {{ id }}] start rejected: invalid JSON parameters")
+                goal.set_rejected(text=str(je))
+                return
 
-            rospy.logdebug(
-                    "[APPLICATION {{ id }}] requesting stopping"
-            )
+        self._execute_thread = threading.Thread(target=self.application_controller.run, args=(params,))
 
-            success, msg = self.application_controller.stop()
+        try:
+            self._execute_thread.start()
+            goal.set_accepted()
+        except Exception as e:
+            rospy.logwarn("[APPLICATION {{ id }}] unexpected error: %s" % e)
+            self._execute_thread.join()
+            goal.set_aborted(text=str(e))
+            return
 
-            if success:
-                self._result.ok = True
-                rospy.logdebug("[APPLICATION {{ id }}] application successfully stopped")
-                self._as.set_succeeded(self._result, text=msg)
-            else:
-                self._result.ok = False
-                rospy.logwarn("[APPLICATION {{ ID }}] application failed to stop")
-                self._as.set_succeeded(self._result, text=msg)
 
-        else:
-            rospy.logerr(
-                "[APPLICATION {{ id }}] unknown control request: %s"
-                % goal.action,
-            )
-            self._as.set_aborted(
-                text="[{{ id }}] unknown control request: %s" % goal.action
-            )
+    def cancel_cb(self, goal):
 
+        if not self._execute_thread or not self._execute_thread.is_alive():
+            goal.set_canceled(text="application not running")
+
+        rospy.logwarn("[APPLICATION {{ id }}] requesting cancelation")
+        self.application_controller.cancellation_requested = True
+
+        self._execute_thread.join()
+
+        goal.set_canceled(text="Successfully stopped the application")
+        rospy.loginfo("[APPLICATION {{ id }}] successfully stopped")
 
 if __name__ == "__main__":
 
