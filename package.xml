@@ -17,8 +17,8 @@
       nicer to install these 2 dependencies at the same time as the tool\
       itself is installed.
   -->
-  <exec_depend>actionlib</exec_depend>
-  <exec_depend>hri_actions_msgs</exec_depend>
+  <depend>actionlib</depend>
+  <depend>hri_actions_msgs</depend>
 
   <export>
   </export>
