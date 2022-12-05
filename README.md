@@ -1,5 +1,5 @@
-pal_create_app
-==============
+pal_app
+=======
 
 A tool to generate skeletons of robot application controller.
 

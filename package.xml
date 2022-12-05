@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>pal_create_app</name>
+  <name>pal_app</name>
   <version>0.1.3</version>
   <description>A tool to create application controllers skeletons for interactive robots</description>
 

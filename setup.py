@@ -6,7 +6,7 @@
 from pathlib import Path
 from distutils.core import setup
 
-NAME = "pal_create_app"
+NAME = "pal_app"
 
 TPLS = [
     ("share/%s/%s" % (NAME, t.parent), [str(t)])
@@ -25,6 +25,6 @@ setup(
     requires=["jinja2"],
     author="Séverin Lemaignan",
     author_email="severin.lemaignan@pal-robotics.com",
-    scripts=["scripts/pal_create_app"],
-    data_files=TPLS + [("share/doc/pal_create_app", ["README.md", "LICENSE"])],
+    scripts=["scripts/pal_app"],
+    data_files=TPLS + [("share/doc/pal_app", ["README.md", "LICENSE"])],
 )

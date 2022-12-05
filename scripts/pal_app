@@ -6,7 +6,7 @@ from jinja2 import Environment, select_autoescape, FileSystemLoader
 
 import rospkg
 
-PKG_PATH = Path(rospkg.RosPack().get_path("pal_create_app"))
+PKG_PATH = Path(rospkg.RosPack().get_path("pal_app"))
 AVAILABLE_TEMPLATES = {
     "python": {
         "tpl_path": "python_script",
@@ -110,7 +110,7 @@ def interactive_create(id=None, template=None, robot=None):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
-        description="Generates application skeletons for interactive ROS-based robots"
+        description="Generate and manage application skeletons for ROS-based robots"
     )
     #     parser.add_argument(
     #         "-f",
@@ -119,7 +119,13 @@ if __name__ == "__main__":
     #         help="if set, force overwriting existing documentation",
     #     )
     #
-    parser.add_argument(
+
+    subparsers = parser.add_subparsers(dest="command")
+
+    create_parser = subparsers.add_parser(
+        "create", help="Create a new application skeleton"
+    )
+    create_parser.add_argument(
         "-i",
         "--id",
         type=str,
@@ -127,7 +133,7 @@ if __name__ == "__main__":
         help="ID of your application. Must be a valid file name without spaces.",
     )
 
-    parser.add_argument(
+    create_parser.add_argument(
         "-r",
         "--robot",
         choices=AVAILABLE_ROBOTS,
@@ -136,7 +142,7 @@ if __name__ == "__main__":
         help="target robot.",
     )
 
-    parser.add_argument(
+    create_parser.add_argument(
         "-t",
         "--template",
         choices=AVAILABLE_TEMPLATES.keys(),
@@ -145,7 +151,7 @@ if __name__ == "__main__":
         help="Template to use.",
     )
 
-    parser.add_argument(
+    create_parser.add_argument(
         "path",
         type=str,
         nargs="?",
