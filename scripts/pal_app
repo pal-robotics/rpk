@@ -1,5 +1,6 @@
 #! /usr/bin/python3
 
+import sys
 import argparse
 from pathlib import Path
 from jinja2 import Environment, select_autoescape, FileSystemLoader
@@ -161,6 +162,10 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+
+    if not args.command:
+        print("You must select a command.\nType 'pal_app --help' for details.")
+        sys.exit(1)
 
     intents = get_intents()
 
