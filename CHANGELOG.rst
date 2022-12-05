@@ -2,6 +2,12 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix pkg deps
+* ensure the user select a command
+* Contributors: Séverin Lemaignan
+
 0.1.4 (2022-12-05)
 ------------------
 * [python tpl] re-architecture to have a single blocking action call, with an action cancel to stop the app
