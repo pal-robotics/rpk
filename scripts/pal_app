@@ -104,7 +104,7 @@ def interactive_create(id=None, template=None, robot=None):
             template = list(AVAILABLE_TEMPLATES.keys())[choice - 1]
         except:
             template = ""
-    return id, name, template
+    return id, name, template, robot
 
 
 if __name__ == "__main__":
@@ -164,9 +164,9 @@ if __name__ == "__main__":
 
     intents = get_intents()
 
-    id, name, tpl = interactive_create(args.id, args.template, args.robot)
+    id, name, tpl, robot = interactive_create(args.id, args.template, args.robot)
 
-    data = {"id": id, "name": name, "intents": intents, "robot": args.robot}
+    data = {"id": id, "name": name, "intents": intents, "robot": robot}
 
     root = Path(args.path) / id
     root.mkdir(parents=True, exist_ok=True)
