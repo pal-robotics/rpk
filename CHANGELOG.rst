@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.7 (2023-01-05)
+------------------
 * fix default example to work on robot.
 * Contributors: Aina Irisarri
 
