@@ -16,7 +16,7 @@ TPLS = [
 
 setup(
     name=NAME,
-    version="0.1.6",
+    version="0.1.7",
     license="GPLv3",
     description="A tool to create application controller skeletons for interactive robots",
     classifiers=[
