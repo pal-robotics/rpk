@@ -75,11 +75,11 @@ class ApplicationController:
             tts_goal.rawtext.text = "Hello, I'm ARI. Nice to meet you!"
             tts_goal.rawtext.lang_id = "en_GB"
 
-            tts.send_goal(tts_goal)
+            tts.send_goal_and_wait(tts_goal)
 
-            motion_goal = PlayMotionGoal(motion_name="Wave")
+            motion_goal = PlayMotionGoal(motion_name="wave")
 
-            play_motion.send_goal(motion_goal)
+            play_motion.send_goal_and_wait(motion_goal)
 
 {% else %}
             pass
