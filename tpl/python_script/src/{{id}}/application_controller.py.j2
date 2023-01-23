@@ -50,7 +50,7 @@ class ApplicationController:
         #
 
 {% if intents %}
-{% for intent in intents +%}
+{% for intent in intents %}
         # Intent {{ intent.intent }}: {{ intent.description }}
         {{ "if" if loop.index == 1 else "elif"}} msg.intent == Intent.{{ intent.intent }}:
 {% if intent.required_thematic_roles %}
