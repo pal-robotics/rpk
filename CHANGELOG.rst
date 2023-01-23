@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.10 (2023-01-23)
+-------------------
 * add missing sub-directory to pkg root
 * Contributors: Séverin Lemaignan
 
