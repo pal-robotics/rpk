@@ -34,7 +34,13 @@ def get_intents():
         )
         return intents
 
-    msg_def = rosmsg.get_msg_text("hri_actions_msgs/Intent", raw=True).split("\n")
+    try:
+        msg_def = rosmsg.get_msg_text("hri_actions_msgs/Intent", raw=True).split("\n")
+    except Exception:
+        print(
+            "ROS Intent.msg not found. You can install it with 'apt install ros-noetic-hri-actions-msgs'.\nFor now, not generating the list of available intents."
+        )
+        return intents
 
     table = []
     in_table = False
