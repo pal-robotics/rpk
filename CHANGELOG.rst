@@ -2,6 +2,13 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* compat with older jinja2
+  Older jinja2 does not seem to like the pathlib.Path interface
+* fix typo
+* Contributors: Séverin Lemaignan
+
 0.1.10 (2023-01-23)
 -------------------
 * add missing sub-directory to pkg root
