@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.8 (2023-01-23)
+------------------
 * remove dependency on ROS libraries
 * Contributors: Séverin Lemaignan
 
