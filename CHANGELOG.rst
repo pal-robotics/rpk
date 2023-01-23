@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.12 (2023-01-23)
+-------------------
 * compat with jinja2 v2
 * Contributors: Séverin Lemaignan
 
