@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.11 (2023-01-23)
+-------------------
 * compat with older jinja2
   Older jinja2 does not seem to like the pathlib.Path interface
 * fix typo
