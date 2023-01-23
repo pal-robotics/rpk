@@ -88,7 +88,7 @@ def interactive_create(id=None, template=None, robot=None):
 
     while not id:
         id = input(
-            "ID of your application? (must be a vlid identifier without spaces. eg 'robot_receptionist')\n"
+            "ID of your application? (must be a valid identifier without spaces. eg 'robot_receptionist')\n"
         )
 
     name = input(
