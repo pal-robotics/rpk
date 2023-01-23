@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.9 (2023-01-23)
+------------------
 * gracefully fail if Intent.msg is not available
 * Contributors: Séverin Lemaignan
 
