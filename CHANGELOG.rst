@@ -2,6 +2,11 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* gracefully fail if Intent.msg is not available
+* Contributors: Séverin Lemaignan
+
 0.1.8 (2023-01-23)
 ------------------
 * remove dependency on ROS libraries
