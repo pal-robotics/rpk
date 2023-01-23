@@ -197,7 +197,7 @@ if __name__ == "__main__":
 
         env = Environment(
             loader=FileSystemLoader(
-                PKG_PATH / "tpl" / AVAILABLE_TEMPLATES[tpl]["tpl_path"]
+                str(PKG_PATH / "tpl" / AVAILABLE_TEMPLATES[tpl]["tpl_path"])
             ),
             autoescape=select_autoescape(),
             trim_blocks=True,
