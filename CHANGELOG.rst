@@ -2,6 +2,11 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* remove dependency on ROS libraries
+* Contributors: Séverin Lemaignan
+
 0.1.7 (2023-01-05)
 ------------------
 * fix default example to work on robot.
