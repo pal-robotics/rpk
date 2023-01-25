@@ -5,8 +5,12 @@
 
 from pathlib import Path
 from distutils.core import setup
+import xml.etree.ElementTree as ET
 
 NAME = "pal_app"
+
+# get the version from ROS' package.xml
+VERSION = ET.parse("package.xml").find("version").text
 
 TPLS = [
     ("share/%s/%s" % (NAME, t.parent), [str(t)])
@@ -16,7 +20,7 @@ TPLS = [
 
 setup(
     name=NAME,
-    version="0.1.11",
+    version=VERSION,
     license="Proprietary",
     description="A tool to create application controller skeletons for interactive robots",
     classifiers=[
