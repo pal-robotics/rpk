@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.13 (2023-01-25)
+-------------------
 * set the version in setup.py from package.xml
 * Contributors: Séverin Lemaignan
 
