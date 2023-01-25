@@ -2,6 +2,11 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* set the version in setup.py from package.xml
+* Contributors: Séverin Lemaignan
+
 0.1.12 (2023-01-23)
 -------------------
 * compat with jinja2 v2
