@@ -21,6 +21,10 @@ catkin_install_python(PROGRAMS
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+install(DIRECTORY pages chatbot res
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
 add_custom_target(pkg COMMAND
     ${CMAKE_COMMAND} -E tar "cfv" "{{ id }}.rpk" --format=zip
        "${CMAKE_CURRENT_SOURCE_DIR}")

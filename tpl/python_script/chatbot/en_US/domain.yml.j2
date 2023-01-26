@@ -1,0 +1,31 @@
+version: "3.1"
+
+# chatbot 'internal' intents.
+# Not to be confused with the ROS Intents published on /intents
+intents:
+- say_hello
+- load_page
+    used_entities:
+    - page
+    is_retrieval_intent: true
+
+entities:
+- page
+
+slots:
+  page:
+    type: text
+    mappings: 
+    - type: from_entity
+      entity: page
+
+actions: 
+  - action_send_ROS_intent
+
+responses:
+  utter_confirmation:
+  - text: Sure thing!
+  - text: Right away!
+  - text: ok!
+
+
