@@ -1,0 +1,29 @@
+import PalLib from 'pallib.js'
+import * as RRLIB from 'rrlib.js'
+
+class MyClass {
+    constructor() {
+        this.ros = new RRLIB.Ros({host: 'http://' + window.location.hostname});
+        this.pal_lib = new PalLib();
+
+        this.user_input = new RRLIB.Topic({ros: this.ros, name: 'user_input'});
+        this.intents = new RRLIB.Topic({ros: this.ros, name: 'intents'});
+    }
+
+    init() {
+        this.pal_lib.init();
+    }
+
+    goToLandingPage() {
+        this.intents.publish({
+            intent: '__intent_present_content__',
+            data: '{"object": "landing_page"}',
+            source: '__unknown_agent__',
+            modality: '__modality_touchscreen__',
+            priority: 100,
+            confidence: 1.0
+        });
+    }
+};
+
+export default MyClass

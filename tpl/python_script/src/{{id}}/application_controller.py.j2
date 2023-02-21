@@ -80,6 +80,19 @@ class ApplicationController:
             motion_goal = PlayMotionGoal(motion_name="wave")
 
             play_motion.send_goal_and_wait(motion_goal)
+{% elif intent.intent == "PRESENT_CONTENT" %}
+
+            # handle intents to present specific content by simply
+            # loading the corresponding page onto the touchscreen
+            from pal_web_msgs.msg import WebGoTo
+
+            web_goto_pub = rospy.Publisher('/web/go_to', WebGoTo, queue_size=1)
+
+            rospy.loginfo("Displaying page %s on the touchscreen..." % data["object"])
+            msg = WebGoTo()
+            msg.type = WebGoTo.TOUCH_PAGE
+            msg.value = data["object"]
+            web_goto_pub.publish(msg)
 
 {% else %}
             pass

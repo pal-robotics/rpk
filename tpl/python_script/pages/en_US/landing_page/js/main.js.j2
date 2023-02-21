@@ -1,0 +1,14 @@
+import MyClass from './util.js'
+
+let main = new MyClass();
+
+// Add event listeners
+$(document).ready(function() {
+    main.init();
+    $('#say_hello_btn').on('touchend', function() {
+        main.sayHello();
+    });
+    $('#content_page_btn').on('touchend', function() {
+        main.goToContentPage();
+    });
+});

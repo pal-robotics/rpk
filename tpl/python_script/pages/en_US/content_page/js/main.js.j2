@@ -1,0 +1,11 @@
+import MyClass from './util.js'
+
+let main = new MyClass();
+
+// Add event listeners
+$(document).ready(function() {
+    main.init();
+    $('#landing_page_btn').on('touchend', function() {
+        main.goToLandingPage();
+    });
+});

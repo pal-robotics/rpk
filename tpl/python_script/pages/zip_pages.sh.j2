@@ -1,0 +1,18 @@
+echo "Zipping web pages for {{ name }} ({{ id }})..."
+for lang in */; do 
+    echo $lang; 
+    cd $lang;
+
+    for page in */; do 
+        echo "  $page"; 
+        echo;
+        cd $page;
+        zip -r "../../`basename $page`-`basename $lang`" *;
+        echo;
+        cd ..; 
+    done; 
+    cd ..; 
+done
+
+echo "You can now import these pages into the robot's Touchscreen manager"
+

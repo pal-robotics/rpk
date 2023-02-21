@@ -18,11 +18,66 @@ Your application template already contains examples of each of these possible in
 
 ## Install on the robot
 
-To install you app on the robot, you need to:
+To install you app on the robot, you need to follow the 3 following steps:
 
-1. `pal_deploy`
-2. manually install each of the webpages using the robot's *touchscreen manager* GUI
-3. create a symbolic link to add you chatbot
-4. re-train the chatbot engine with your chatbot
+1. `pal_deploy` your code to the robot
+2. enable the chatbot (if you are using one)
+3. install the webpages (if you are using any)
+
+### Deploy the application controller to the robot
+
+**To deploy the code to the robot, you *must* be running the following commands form within your Developer SDK Docker image!**
+
+- from inside your Developer SDK Docker image, go to root of the project
+- run `rosrun pal_deploy deploy.py --package {{ id }} ari-XXc` (replace `ari-XXc` by your actual robot)
+
+You can now `ssh` onto the robot (`ssh pal@ari-XXc`, password `pal`), and go to your project: `cd ~/deployed_ws/share/{{ id }}`
+
+### Enable the chatbot
+
+To enable your chatbot, follow the following steps *on the robot*:
+
+```
+cd ~/.pal/chatbots-enabled
+```
+
+Then, for each language you support (here, for instance `en_US`):
+
+```
+ln -s ~/deployed_ws/share/{{ id }}/chatbot/en_US en_US/{{ id }}
+```
+
+Finally, you must re-train the chatbot engine for each new language:
+
+```
+rostopic pub /train_chatbot/goal chatbot_msgs/ChatbotTrainActionGoal "header:
+  seq: 0
+  stamp:
+    secs: 0
+    nsecs: 0
+  frame_id: ''
+goal_id:
+  stamp:
+    secs: 0
+    nsecs: 0
+  id: ''
+goal:
+  lang: 'en_US'"
+```
+
+**Note: you need to re-train the chatbot engine after every modification to the chatbot definition.**
+
+### Install the webpages
+
+## Run your application
+
+`ssh` onto the robot (`ssh pal@ari-XXc`, password `pal`), and start your application: `rosrun {{ id }} run_app`
+
+### Configure for automatic launch at start-up
+
+You can also configure your app to automatically start when the robot is turned on.
+
+- create and edit a file called `~/.pal/pal_startup/config`
+
 
 Find more details at the [PAL Developer Center](https://docs.pal-robotics.com/{{ robot | lower }})
