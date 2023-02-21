@@ -15,7 +15,7 @@ AVAILABLE_TEMPLATES = {
     "python": {
         "tpl_path": "python_script",
         "short_desc": "simple Python script",
-        "post_install_help": "Edit ./{path}/src/{id}/application_controller.py to implement your application logic.",
+        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/application_controller.py to implement your application logic.",
     }
 }
 
@@ -194,16 +194,22 @@ if __name__ == "__main__":
     print("Generating application skeleton in %s..." % root)
 
     if tpl == "python":
+        tpl_path = PKG_PATH / "tpl" / AVAILABLE_TEMPLATES[tpl]["tpl_path"]
 
         env = Environment(
-            loader=FileSystemLoader(
-                str(PKG_PATH / "tpl" / AVAILABLE_TEMPLATES[tpl]["tpl_path"])
-            ),
+            loader=FileSystemLoader(str(tpl_path)),
             autoescape=select_autoescape(),
             trim_blocks=True,
         )
 
         tpls = env.list_templates(extensions=TPL_EXT)
+
+        if not tpls:
+            print(
+                "Error! no app template found for %s. I was looking for template files under <%s>. It seems pal_app is not correctly installed."
+                % (tpl, tpl_path)
+            )
+            sys.exit(1)
 
         for tpl_name in tpls:
             j_tpl = env.get_template(tpl_name)
@@ -220,4 +226,5 @@ if __name__ == "__main__":
         print("\033[0m")
 
     else:
-        print("No template for %s! Can not generate anything!" % tpl)
+        print("No template available for %s! Can not generate an app skeleton." % tpl)
+        sys.exit(1)
