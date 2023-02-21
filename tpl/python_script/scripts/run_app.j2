@@ -10,6 +10,7 @@
 ##
 ####################################################################
 
+import sys
 import rospy
 import json
 from actionlib.action_server import ActionServer
@@ -24,10 +25,13 @@ class ApplicationControlActionServer:
     _feedback = hri_actions_msgs.msg.ApplicationControlFeedback()
     _result = hri_actions_msgs.msg.ApplicationControlResult()
 
-    def __init__(self, name):
+    def __init__(self, name, auto_start=True):
         self._action_name = name
+        
+        ctrl_action = "/applications" + self._action_name + "/control"
+
         self._as = ActionServer(
-            "/applications" + self._action_name + "/control",
+            ctrl_action,
             hri_actions_msgs.msg.ApplicationControlAction,
             goal_cb=self.goal_cb,
             cancel_cb=self.cancel_cb,
@@ -40,6 +44,19 @@ class ApplicationControlActionServer:
         self._is_running = False
 
         self._as.start()
+
+        if auto_start:
+
+            rospy.loginfo("[APPLICATION {{ id }}] auto-starting...")
+
+            ok, _ = self.start_application()
+
+            if not ok:
+                sys.exit(1)
+
+            rospy.loginfo("[APPLICATION {{ id }}] successfully started.")
+
+        rospy.loginfo("[APPLICATION {{ id }}] Ready. Start/stop your app via the ROS action %s" % (name, ctrl_action))
 
     def goal_cb(self, goal):
 
@@ -68,16 +85,27 @@ class ApplicationControlActionServer:
                 goal.set_rejected(text=str(je))
                 return
 
+        ok, exception = self.start_application(params)
+
+        if ok:
+            rospy.loginfo("[APPLICATION {{ id }}] successfully started.")
+            goal.set_accepted()
+        else:
+            goal.set_aborted(text=str(exception))
+
+
+    def start_application(self, params=None):
+
         self._execute_thread = threading.Thread(target=self.application_controller.run, args=(params,))
 
         try:
             self._execute_thread.start()
-            goal.set_accepted()
         except Exception as e:
             rospy.logwarn("[APPLICATION {{ id }}] unexpected error: %s" % e)
             self._execute_thread.join()
-            goal.set_aborted(text=str(e))
-            return
+            return False, e
+
+        return True, None
 
 
     def cancel_cb(self, goal):
@@ -97,5 +125,7 @@ if __name__ == "__main__":
 
     rospy.init_node("{{ id }}")
 
-    server = ApplicationControlActionServer(rospy.get_name())
+    auto_start = rospy.get_param("~autostart", True)
+
+    server = ApplicationControlActionServer(rospy.get_name(), auto_start)
     rospy.spin()

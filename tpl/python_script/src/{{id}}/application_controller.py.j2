@@ -21,11 +21,6 @@ class ApplicationController:
         # that should occurs only once.
         #
 
-
-        rospy.loginfo(
-            "[APPLICATION {{ id }}] Ready to start. Call action /applications/{{ id }}/control/ to start it."
-        )
-
     def on_intent(self, msg):
 
         rospy.loginfo("[APPLICATION {{ id }}] Received an intent: %s" % msg.intent)
