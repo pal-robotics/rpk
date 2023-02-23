@@ -56,7 +56,7 @@ class ApplicationControlActionServer:
 
             rospy.loginfo("[APPLICATION {{ id }}] successfully started.")
 
-        rospy.loginfo("[APPLICATION {{ id }}] Ready. Start/stop your app via the ROS action %s" % (name, ctrl_action))
+        rospy.loginfo("[APPLICATION {{ id }}] Ready. Start/stop your app via the ROS action %s" % ctrl_action)
 
     def goal_cb(self, goal):
 
