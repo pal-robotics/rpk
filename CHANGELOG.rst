@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.0 (2023-02-27)
+------------------
 * more checks to ensure the app ID is valid
 * [python tpl] fix typo in run_app
 * [python tpl] by default, auto-start the application
