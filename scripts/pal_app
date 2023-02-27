@@ -86,10 +86,18 @@ def get_intents():
 
 def interactive_create(id=None, template=None, robot=None):
 
+    if id and (" " in id or "-" in id):
+        print("The chosen ID can not contain spaces or hyphens.")
+        id = None
+
     while not id:
         id = input(
-            "ID of your application? (must be a valid identifier without spaces. eg 'robot_receptionist')\n"
+            "ID of your application? (must be a valid ROS identifier without spaces or hyphens. eg 'robot_receptionist')\n"
         )
+
+        if " " in id or "-" in id:
+            print("The chosen ID can not contain spaces or hyphens.")
+            id = None
 
     name = input(
         "Full name of your application? (eg 'The Receptionist Robot', press Return to skip)\n"
@@ -146,7 +154,7 @@ if __name__ == "__main__":
         "--id",
         type=str,
         nargs="?",
-        help="ID of your application. Must be a valid file name without spaces.",
+        help="ID of your application. Must be a valid ROS identifier, without spaces or hyphens.",
     )
 
     create_parser.add_argument(
