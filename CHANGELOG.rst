@@ -2,6 +2,19 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* more checks to ensure the app ID is valid
+* [python tpl] fix typo in run_app
+* [python tpl] by default, auto-start the application
+  use _autostart:=False to prevent auto-starting.
+* warn user if no tpl found instead of silently failing
+* doc
+* added more interesting HTML pages, that also trigger intents
+* install template for chatbot and webpages
+* more explanation in README
+* Contributors: Séverin Lemaignan
+
 0.1.13 (2023-01-25)
 -------------------
 * set the version in setup.py from package.xml
