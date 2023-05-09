@@ -97,7 +97,8 @@ class ApplicationControlActionServer:
     def start_application(self, params=None):
 
         self._execute_thread = threading.Thread(target=self.application_controller.run, args=(params,))
-
+        self._execute_thread.daemon = True
+        
         try:
             self._execute_thread.start()
         except Exception as e:
