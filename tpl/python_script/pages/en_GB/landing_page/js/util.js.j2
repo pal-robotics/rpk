@@ -8,7 +8,7 @@ class MyClass {
 
         // you can get and set ROS parameters like that:
         this.language = new RRLIB.Param({ros: this.ros, name: 'language'});
-        this.language.set('en_US');
+        this.language.set('en_GB');
 
         // here, we create proxies for ROS topics
         this.user_input = new RRLIB.Topic({ros: this.ros, name: 'user_input'});
@@ -24,7 +24,7 @@ class MyClass {
     sayHello() {
         // you can directly call robott capabilities from a webpage. For
         // instance for TTS:
-        this.pal_lib.say('Hello, I\'m ARI! How are you?', 'en_US');
+        this.pal_lib.say('Hello, I\'m ARI! How are you?', 'en_GB');
 
         // however, if you do so, your application controller won't know about
         // it, and might try to access the TTS at the same time (resource
