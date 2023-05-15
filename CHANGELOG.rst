@@ -2,6 +2,14 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [tpl] en_US->en_GB
+* remove chatbot from tpl
+  Will be brought back when the chatbot training/installation story is better
+* allow killing all threads on sigint
+* Contributors: Luka Juricic, Séverin Lemaignan
+
 0.2.0 (2023-02-27)
 ------------------
 * more checks to ensure the app ID is valid
