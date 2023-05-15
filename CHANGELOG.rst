@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.2 (2023-05-15)
+------------------
 * [tpl] fix links in generated READMEs
 * Contributors: Séverin Lemaignan
 
