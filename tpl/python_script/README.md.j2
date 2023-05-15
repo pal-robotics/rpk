@@ -18,11 +18,10 @@ Your application template already contains examples of each of these possible in
 
 ## Install on the robot
 
-To install you app on the robot, you need to follow the 3 following steps:
+To install you app on the robot, you need to follow the following steps:
 
 1. `pal_deploy` your code to the robot
-2. enable the chatbot (if you are using one)
-3. install the webpages (if you are using any)
+2. install the webpages (if you are using any)
 
 ### Deploy the application controller to the robot
 
@@ -32,41 +31,6 @@ To install you app on the robot, you need to follow the 3 following steps:
 - run `rosrun pal_deploy deploy.py --package {{ id }} ari-XXc` (replace `ari-XXc` by your actual robot)
 
 You can now `ssh` onto the robot (`ssh pal@ari-XXc`, password `pal`), and go to your project: `cd ~/deployed_ws/share/{{ id }}`
-
-### Enable the chatbot
-
-To enable your chatbot, follow the following steps *on the robot*:
-
-```
-cd ~/.pal/chatbots-enabled
-```
-
-Then, for each language you support (here, for instance `en_US`):
-
-```
-ln -s ~/deployed_ws/share/{{ id }}/chatbot/en_US en_US/{{ id }}
-```
-
-Finally, you must re-train the chatbot engine for each new language:
-
-```
-rostopic pub /train_chatbot/goal chatbot_msgs/ChatbotTrainActionGoal "header:
-  seq: 0
-  stamp:
-    secs: 0
-    nsecs: 0
-  frame_id: ''
-goal_id:
-  stamp:
-    secs: 0
-    nsecs: 0
-  id: ''
-goal:
-  lang: 'en_US'"
-```
-
-**Note: you need to re-train the chatbot engine after every modification to the
-chatbot definition.**
 
 ### Install the webpages
 
