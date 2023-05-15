@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.1 (2023-05-15)
+------------------
 * [tpl] en_US->en_GB
 * remove chatbot from tpl
   Will be brought back when the chatbot training/installation story is better
