@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.0 (2023-07-14)
+------------------
 * Updated pages which close the cycle between the supervisor and the touch pages.
   Examples of use for both /intent and /user_input topics
 * Contributors: raquelros
