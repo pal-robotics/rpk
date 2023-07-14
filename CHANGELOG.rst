@@ -2,6 +2,12 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Updated pages which close the cycle between the supervisor and the touch pages.
+  Examples of use for both /intent and /user_input topics
+* Contributors: raquelros
+
 0.2.2 (2023-05-15)
 ------------------
 * [tpl] fix links in generated READMEs
