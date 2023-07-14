@@ -8,17 +8,23 @@ class PageManager {
 		});
 		this.pal_lib = new PalLib();
 
-		// registering to the topic /intents
+		// registering to the topic /user_input
+		this.user_input = new RRLIB.Topic({
+			ros: this.ros,
+			name: 'user_input'
+		});
+
+        // registering to the topic /intents
 		this.user_intent = new RRLIB.Topic({
 			ros: this.ros,
 			name: 'intents'
 		});
 
-        // Text to be shown on the screen
-		this.question = "Welcome!"; 
-		// List the tags on the buttons. For every tag, a new button
+        // Here we indicate the question to be shown on the screen
+		this.question = "Do you want your book or the newspaper?"; 
+		// Here we list the tags on the buttons. For every tag, a new button
 		// will be automatically created.
-		this.answers_list = ["START"];
+		this.answers_list = ["book", "newspaper"];
 	}
 
 	init() {
@@ -35,19 +41,40 @@ class PageManager {
 										answer_value + '</div>');
 		}	
 	}
+	
+	// function to publish through /user_input topic
+	touchInput(button) {
+		this.user_input.publish({
+			action: "user_selection",
+			args: [{
+				key: 'object',
+				value: button
+			}]
+		});
+	}
 
+	// function to publish through /intents topic, intent: BRING_OBJECT
+    objectIntent(object) {
+       	this.user_intent.publish({
+            intent: '__intent_bring_object__',
+			data: '{"agent":"ari", "object":"' + object + '"}', 
+			source: '__unknown_agent__',
+			modality: '__modality_touchscreen__',
+            priority: 100,
+            confidence: 1.0
+		});
+    }
+    
     // function to publish through /intents topic, intent: PRESENT_CONTENT
     presentContentIntent(page) {
-        if (page == "START"){
-            this.user_intent.publish({
-                intent: '__intent_present_content__',
-                data: '{"object": "question_sample_page-en_GB"}',
-                source: '__unknown_agent__',
-                modality: '__modality_touchscreen__',
-                priority: 100,
-                confidence: 1.0
-            });
-        }
+       	this.user_intent.publish({
+            intent: '__intent_present_content__',
+            data: '{"object": "' + page + '"}',
+            source: '__unknown_agent__',
+            modality: '__modality_touchscreen__',
+            priority: 100,
+            confidence: 1.0
+		});
     }
 };
 
@@ -63,7 +90,7 @@ $(document).ready(function() {
         // You can navigate to a different page by publishing an intent, to be 
         // handled by the application controller. The application controller is 
         // then in charge of changing the page with eg the ROS action /web/go_to:
-        page_manager.presentContentIntent("landing_page");
+        page_manager.presentContentIntent("landing_page-en_GB");
         $("#exit_btn").removeClass("exit-button-hover");
     });
     
@@ -73,9 +100,11 @@ $(document).ready(function() {
     	let chosen_answer = page_manager.answers_list[touched_btn_index];
     	console.log(chosen_answer);
     	
-    	// After button was clicked, navigate to a different page
-    	// by publishing an intent.
-    	page_manager.presentContentIntent(chosen_answer);
+    	// After button was clicked, you can either send the user touch input
+    	// through the user_input or the intents topic, depending on how 
+    	// you want to process the information in your application controller.
+    	page_manager.touchInput(chosen_answer);
+    	page_manager.objectIntent(chosen_answer);
     });
     /*
 	===== HOVER STYLES =====

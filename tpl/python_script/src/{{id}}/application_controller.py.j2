@@ -72,7 +72,7 @@ class ApplicationController:
 
             tts.send_goal_and_wait(tts_goal)
 
-            motion_goal = PlayMotionGoal(motion_name="wave")
+            motion_goal = PlayMotionGoal(motion_name="bow")
 
             play_motion.send_goal_and_wait(motion_goal)
 {% elif intent.intent == "PRESENT_CONTENT" %}
@@ -100,7 +100,7 @@ class ApplicationController:
             rospy.logwarn("I don't know how to process intent <%s>!" % msg.intent)
 {% else %}
         # handle here the different intents
-        if msg.intent == "your_intent" # or one of the Intent.msg constants
+        if msg.intent == "your_intent": # or one of the Intent.msg constants
             pass
 
         # elif...
