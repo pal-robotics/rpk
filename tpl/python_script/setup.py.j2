@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from distutils.core import setup
+from setuptools import setup
 
 
 def readme():
@@ -10,6 +10,7 @@ def readme():
 
 
 NAME = "{{ id }}"
+
 
 setup(
     name=NAME,
@@ -24,4 +25,9 @@ setup(
     author_email="todo@todo.todo",
     package_dir={"": "src"},
     packages=["{{ id }}"],
+    data_files=[
+        ('share/' + NAME, ['package.xml']),
+        ('share/ament_index/resource_index/packages', ['res/' + NAME]),
+    ],
+    scripts=["scripts/run_app"],
 )

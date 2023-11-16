@@ -8,14 +8,16 @@ from jinja2 import Environment, select_autoescape, FileSystemLoader
 import pal_app
 
 PKG_PATH = (
-    Path(pal_app.__file__).parent.parent.parent.parent.parent / "share" / "pal_app"
+    Path(pal_app.__file__).parent.parent.parent.parent.parent / "share" / 
+    "pal_app"
 )
 
 AVAILABLE_TEMPLATES = {
     "python": {
         "tpl_path": "python_script",
         "short_desc": "simple Python script",
-        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/application_controller.py to implement your application logic.",
+        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
+        "application_controller.py to implement your application logic.",
     }
 }
 
@@ -29,57 +31,41 @@ def get_intents():
     intents = []
 
     try:
-        import rosmsg
+        from rosidl_runtime_py import get_interface_path
+        from rosidl_adapter.parser import parse_message_file
     except ImportError:
         print(
-            "rosmsg not installed -- we can not automatically generate the list of available intents"
+            "rosidl_runtime_py or rosidl_adapter are not installed -- we "
+            "cannot automatically generate the list of available intents"
         )
         return intents
 
     try:
-        msg_def = rosmsg.get_msg_text("hri_actions_msgs/Intent", raw=True).split("\n")
+        msg_def = parse_message_file(
+            'hri_actions_msgs', 
+            get_interface_path('hri_actions_msgs/msg/Intent'))
     except Exception:
         print(
-            "ROS Intent.msg not found. You can install it with 'apt install ros-noetic-hri-actions-msgs'.\nFor now, not generating the list of available intents."
+            "Intent.msg not found. You can install it with 'apt install "
+            "ros-noetic-hri-actions-msgs'.\nFor now, not generating the list "
+            "of available intents."
         )
         return intents
 
-    table = []
-    in_table = False
-
-    for l in msg_def:
-        if "BEGIN_INTENTS_TABLE" in l:
-            in_table = True
-            continue
-        if "END_INTENTS_TABLE" in l:
-            break
-        if in_table and "|" in l:
-            table.append(l)
-
-    if not table:
+    # We will only extract the available intents for now, not the additional
+    # fields (description and thematic roles) since rosidl parser ignores
+    # comments below the message fields. To solve this, we should place the
+    # long description of the intents before describing the msg fields. 
+    for c in msg_def.constants:
+        if "__intent_" in c.value:
+            intents.append({'intent': c.name,
+                            'description': '',
+                            'required_thematic_roles': [],
+                            'optional_thematic_roles': []})
+    if not intents:
         print(
-            "Intent.msg not found or empty :-( Not generating the intents handling code"
-        )
+            "Intent.msg empty :-( Not generating the intents handling code")
         return intents
-
-    header = [
-        h.strip(" *").lower().replace(" ", "_") for h in table[0].split("|")[1:-1]
-    ]
-
-    for l in table[1:]:
-        entries = [e.strip(" `") for e in l.split("|")[1:-1]]
-
-        # required thematic roles
-        entries[2] = [x.strip().replace("`", "") for x in entries[2].split("-")[1:]]
-        # optional thematic roles
-        entries[3] = [x.strip().replace("`", "") for x in entries[3].split("-")[1:]]
-
-        if not entries[0]:  # intent spanning multiple rows
-            additional_data = dict(zip(header, entries))
-            for h in header:
-                intents[-1][h] += additional_data[h]
-        else:
-            intents.append(dict(zip(header, entries)))
 
     return intents
 
@@ -92,7 +78,8 @@ def interactive_create(id=None, template=None, robot=None):
 
     while not id:
         id = input(
-            "ID of your application? (must be a valid ROS identifier without spaces or hyphens. eg 'robot_receptionist')\n"
+            "ID of your application? (must be a valid ROS identifier without "
+            "spaces or hyphens. eg 'robot_receptionist')\n"
         )
 
         if " " in id or "-" in id:
@@ -100,8 +87,10 @@ def interactive_create(id=None, template=None, robot=None):
             id = None
 
     name = input(
-        "Full name of your application? (eg 'The Receptionist Robot', press Return to skip)\n"
+        "Full name of your application? (eg 'The Receptionist Robot', press "
+        "Return to skip)\n"
     )
+
     if not name:
         name = id
 
@@ -128,13 +117,15 @@ def interactive_create(id=None, template=None, robot=None):
             template = list(AVAILABLE_TEMPLATES.keys())[choice - 1]
         except:
             template = ""
+
     return id, name, template, robot
 
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
-        description="Generate and manage application skeletons for ROS-based robots"
+        description="Generate and manage application skeletons for ROS2-based "
+                    "robots"
     )
     #     parser.add_argument(
     #         "-f",
@@ -154,7 +145,8 @@ if __name__ == "__main__":
         "--id",
         type=str,
         nargs="?",
-        help="ID of your application. Must be a valid ROS identifier, without spaces or hyphens.",
+        help="ID of your application. Must be a valid ROS2 identifier, without "
+             "spaces or hyphens.",
     )
 
     create_parser.add_argument(
@@ -181,7 +173,8 @@ if __name__ == "__main__":
         nargs="?",
         const=".",
         default=".",
-        help="path of the directory where the skeleton will be generated (default: .)",
+        help="path of the directory where the skeleton will be generated "
+             "(default: .)",
     )
 
     args = parser.parse_args()
@@ -192,7 +185,8 @@ if __name__ == "__main__":
 
     intents = get_intents()
 
-    id, name, tpl, robot = interactive_create(args.id, args.template, args.robot)
+    id, name, tpl, robot = interactive_create(
+        args.id, args.template, args.robot)
 
     data = {"id": id, "name": name, "intents": intents, "robot": robot}
 
@@ -214,7 +208,9 @@ if __name__ == "__main__":
 
         if not tpls:
             print(
-                "Error! no app template found for %s. I was looking for template files under <%s>. It seems pal_app is not correctly installed."
+                "Error! no app template found for %s. I was looking for "
+                "template files under <%s>. It seems pal_app is not correctly "
+                "installed."
                 % (tpl, tpl_path)
             )
             sys.exit(1)
@@ -230,9 +226,11 @@ if __name__ == "__main__":
 
         print("\n\033[32;1mDone!")
         print("\033[33;1m")
-        print(AVAILABLE_TEMPLATES[tpl]["post_install_help"].format(path=root, id=id))
+        print(AVAILABLE_TEMPLATES[tpl]["post_install_help"].format(
+            path=root, id=id))
         print("\033[0m")
 
     else:
-        print("No template available for %s! Can not generate an app skeleton." % tpl)
+        print("No template available for %s! Cannot generate an app "
+              "skeleton." % tpl)
         sys.exit(1)

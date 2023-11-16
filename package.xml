@@ -1,25 +1,24 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>pal_app</name>
-  <version>0.3.0</version>
+  <version>0.4.0</version>
   <description>A tool to create application controllers skeletons for interactive robots</description>
-
   <maintainer email="severin.lemaignan@pal-robotics.com">Séverin Lemaignan</maintainer>
-
   <license>Proprietary</license>
-  <buildtool_depend>catkin</buildtool_depend>
+
   <exec_depend>python3-jinja2</exec_depend>
 
   <!--
-      Note that 'actionlib' and 'hri_actions_msgs' are not strictly required
-      to run the code generator. However, the generated application controller will always
-      require them. In order to offer a better developer experience, it is
-      nicer to install these 2 dependencies at the same time as the tool\
+      Note that 'rclpy' and 'hri_actions_msgs' are not strictly required
+      to run the code generator. However, the generated application controller 
+      will always require them. In order to offer a better developer experience,
+      it is nicer to install these 2 dependencies at the same time as the tool
       itself is installed.
   -->
-  <depend>actionlib</depend>
+  <depend>rclpy</depend>
   <depend>hri_actions_msgs</depend>
 
   <export>
+    <build_type>ament_python</build_type>
   </export>
 </package>

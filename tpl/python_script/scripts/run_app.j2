@@ -3,130 +3,152 @@
 
 ####################################################################
 ####################################################################
-##
-## AUTO-GENERATED Application SERVER
-##
-## you should not need to modify this file.
-##
+#
+# AUTO-GENERATED Application SERVER
+#
+# you should not need to modify this file.
+#
 ####################################################################
 
 import sys
-import rospy
+import rclpy
 import json
-from actionlib.action_server import ActionServer
-import hri_actions_msgs.msg
 import threading
+
+from rclpy.node import Node
+from rclpy.executors import SingleThreadedExecutor
+from rclpy.action import ActionServer, CancelResponse, GoalResponse
+
+from hri_actions_msgs.action import ApplicationControl
 
 import {{ id }}.application_controller
 
 
-class ApplicationControlActionServer:
+class ApplicationControlActionServer(Node):
     # create messages that are used to publish feedback/result
-    _feedback = hri_actions_msgs.msg.ApplicationControlFeedback()
-    _result = hri_actions_msgs.msg.ApplicationControlResult()
+    _feedback = ApplicationControl.Feedback()
+    _result = ApplicationControl.Result()
 
     def __init__(self, name, auto_start=True):
-        self._action_name = name
         
-        ctrl_action = "/applications" + self._action_name + "/control"
+        super().__init__('application_control_' + name + '_server')
+
+        ctrl_action = "/applications/" + name + "/control"
 
         self._as = ActionServer(
+            self,
+            ApplicationControl,
             ctrl_action,
-            hri_actions_msgs.msg.ApplicationControlAction,
-            goal_cb=self.goal_cb,
-            cancel_cb=self.cancel_cb,
-            auto_start=False,
+            goal_callback=self.goal_cb,
+            execute_callback=self.execute_callback,
+            cancel_callback=self.cancel_cb,
+            # auto_start=False, --> ROS2?
         )
 
         self.application_controller = {{ id }}.application_controller.ApplicationController()
+        self.application_controller_executor = SingleThreadedExecutor()
+        self.application_controller_executor.add_node(self.application_controller)
 
         self._execute_thread = None
         self._is_running = False
 
-        self._as.start()
-
         if auto_start:
 
-            rospy.loginfo("[APPLICATION {{ id }}] auto-starting...")
+            self.get_logger().info("Auto-starting...")
 
             ok, _ = self.start_application()
 
             if not ok:
                 sys.exit(1)
 
-            rospy.loginfo("[APPLICATION {{ id }}] successfully started.")
+            self.get_logger().info("Successfully started.")
 
-        rospy.loginfo("[APPLICATION {{ id }}] Ready. Start/stop your app via the ROS action %s" % ctrl_action)
+        self.get_logger().info("Ready. Start/stop your app via the ROS " 
+                               "action %s" % ctrl_action)
 
     def goal_cb(self, goal):
 
-        rospy.loginfo("[APPLICATION {{ id }}] requesting start")
+        self.get_logger().info("Requesting start")
 
         if not self.application_controller:
-            rospy.logwarn("[APPLICATION {{ id }}] start rejected: controller not ready")
-            goal.set_rejected(text="Application controller not ready")
-            return
-
+            self.get_logger().warning("Start rejected: controller not ready")
+            # goal.set_rejected(text="Application controller not ready") --> ROS2: how to add info?
+            return GoalResponse.REJECT
 
         if self._execute_thread and self._execute_thread.is_alive():
-            rospy.logwarn("[APPLICATION {{ id }}] start rejected: already running")
-            goal.set_rejected(text="Application already running")
-            return
-
-
-        self.application_controller.cancellation_requested = False
+            self.get_logger().warning("Start rejected: already running")
+            # goal.set_rejected(text="Application already running") --> ROS2: how to add info?
+            return GoalResponse.REJECT
 
         params = None
-        if goal.get_goal().parameters:
+        if goal.parameters:
             try:
-                params = json.loads(goal.get_goal().parameters)
+                params = json.loads(goal.parameters)
             except json.JSONDecodeError as je:
-                rospy.logwarn("[APPLICATION {{ id }}] start rejected: invalid JSON parameters")
-                goal.set_rejected(text=str(je))
-                return
+                self.get_logger().warning("Start rejected: invalid JSON " 
+                                          "parameters: %s" % je)
+                #goal.set_rejected(text=str(je)) --> ROS2: how to add info?
+                return GoalResponse.REJECT
 
+        return GoalResponse.ACCEPT
+
+    def execute_callback(self, goal):
+        # we have already checked the validity of the 
+        # params format in the goal call
+        params = json.loads(goal.request.parameters)
         ok, exception = self.start_application(params)
 
         if ok:
-            rospy.loginfo("[APPLICATION {{ id }}] successfully started.")
-            goal.set_accepted()
+            self.get_logger().info("Successfully started.")
+            goal.succeed()
         else:
-            goal.set_aborted(text=str(exception))
+            # goal.set_aborted(text=str(exception)) --> ROS2: how to add info?
+            goal.abort() 
 
+        return ApplicationControl.Result()
 
     def start_application(self, params=None):
-
-        self._execute_thread = threading.Thread(target=self.application_controller.run, args=(params,))
+        ### RRE: params should be passed through setters in app_controller
+        self.application_controller.start()
+        self._execute_thread = threading.Thread(
+            target=self.application_controller_executor.spin())
         self._execute_thread.daemon = True
         
         try:
             self._execute_thread.start()
         except Exception as e:
-            rospy.logwarn("[APPLICATION {{ id }}] unexpected error: %s" % e)
+            self.get_logger().warning("Unexpected error: %s" % e)
             self._execute_thread.join()
             return False, e
 
         return True, None
 
-
     def cancel_cb(self, goal):
 
         if not self._execute_thread or not self._execute_thread.is_alive():
-            goal.set_canceled(text="application not running")
+            # goal.set_canceled(text="application not running") --> ROS2: how to add info?
+            return CancelResponse.REJECT
 
-        rospy.logwarn("[APPLICATION {{ id }}] requesting cancelation")
-        self.application_controller.cancellation_requested = True
+        self.get_logger().warning("Requesting cancelation")
+        self.application_controller.stop()
 
         self._execute_thread.join()
 
-        goal.set_canceled(text="Successfully stopped the application")
-        rospy.loginfo("[APPLICATION {{ id }}] successfully stopped")
+        self.get_logger().info("Successfully stopped")
+        # goal.set_canceled(text="Successfully stopped the application") --> ROS2: how to add info?
+        return CancelResponse.ACCEPT
+
 
 if __name__ == "__main__":
 
-    rospy.init_node("{{ id }}")
+    rclpy.init()
 
-    auto_start = rospy.get_param("~autostart", True)
+    # auto_start = rospy.get_param("~autostart", True) --> ROS2
+    auto_start = True
 
-    server = ApplicationControlActionServer(rospy.get_name(), auto_start)
-    rospy.spin()
+    server = ApplicationControlActionServer("{{ id }}", auto_start)
+    rclpy.spin(server)
+
+    rclpy.destroy()
+    rclpy.shutdown()
+

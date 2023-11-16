@@ -28,7 +28,7 @@ To install you app on the robot, you need to follow the following steps:
 **To deploy the code to the robot, you *must* be running the following commands form within your Developer SDK Docker image!**
 
 - from inside your Developer SDK Docker image, go to root of the project
-- run `rosrun pal_deploy deploy.py --package {{ id }} ari-XXc` (replace `ari-XXc` by your actual robot)
+- run `ros2 run pal_deploy deploy.py --package {{ id }} ari-XXc` (replace `ari-XXc` by your actual robot)
 
 You can now `ssh` onto the robot (`ssh pal@ari-XXc`, password `pal`), and go to your project: `cd ~/deployed_ws/share/{{ id }}`
 
@@ -39,7 +39,7 @@ To install your webpages onto the robot, check `pages/README.md`.
 ## Run your application
 
 `ssh` onto the robot (`ssh pal@ari-XXc`, password `pal`), and start your
-application: `rosrun {{ id }} run_app`
+application: `ros2 run {{ id }} run_app`
 
 
 
