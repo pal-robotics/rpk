@@ -28,9 +28,9 @@ To install you app on the robot, you need to follow the following steps:
 **To deploy the code to the robot, you *must* be running the following commands form within your Developer SDK Docker image!**
 
 - from inside your Developer SDK Docker image, go to root of the project
-- run `ros2 run pal_deploy deploy.py --package {{ id }} ari-XXc` (replace `ari-XXc` by your actual robot)
+- run `ros2 run pal_deploy deploy.py --package {{ id }} {{ robot | lower }}-XXc` (replace `{{ robot | lower }}-XXc` by your actual robot)
 
-You can now `ssh` onto the robot (`ssh pal@ari-XXc`, password `pal`), and go to your project: `cd ~/deployed_ws/share/{{ id }}`
+You can now `ssh` onto the robot (`ssh pal@{{ robot | lower }}-XXc`, password `pal`), and go to your project: `cd ~/deployed_ws/share/{{ id }}`
 
 ### Install the webpages
 
@@ -38,15 +38,22 @@ To install your webpages onto the robot, check `pages/README.md`.
 
 ## Run your application
 
-`ssh` onto the robot (`ssh pal@ari-XXc`, password `pal`), and start your
+`ssh` onto the robot (`ssh pal@{{ robot | lower }}-XXc`, password `pal`), and start your
 application: `ros2 run {{ id }} run_app`
 
+Since your application controller is a lifecycle node, you need to manage it through the 
+lifecycle tools. 
 
+You can manually transit the application controller as follows:
 
-### Configure for automatic launch at start-up
+``ros2 lifecycle set /app_{{ id }} configure``
+``ros2 lifecycle set /app_{{ id }} activate``
 
-You can also configure your app to automatically start when the robot is turned
-on. See [the official
-documentation](http://docs.pal-robotics.com/{{ robot | lower }}/sdk/latest/management/startup-apps.html).
+To stop it (but not reseting it's internal variables):
+``ros2 lifecycle set /app_{{ id }} activate``
+
+To stop it and clean it:
+``ros2 lifecycle set /app_{{ id }} deactivate``
+``ros2 lifecycle set /app_{{ id }} cleanup``
 
 Find more details at the [PAL Developer Center](https://docs.pal-robotics.com/{{ robot | lower }})

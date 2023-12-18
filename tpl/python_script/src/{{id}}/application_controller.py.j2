@@ -1,4 +1,5 @@
 #! /usr/bin/python3
+# -*- coding: utf-8 -*-
 
 import json
 
@@ -80,12 +81,10 @@ class ApplicationController(Node):
             tts_goal.sentence = "Hello, I'm ARI. Nice to meet you!"
             tts_goal.lang_id = "en_GB"
             tts.wait_for_server()
-            # tts.send_goal_and_wait(tts_goal) --> ROS2: similar wait option?
             tts.send_goal_async(tts_goal)
 
             motion_goal = PlayMotion2.Goal(motion_name="bow")
             play_motion.wait_for_server()
-            # play_motion.send_goal_and_wait(motion_goal) --> ROS2: similar wait option?
             play_motion.send_goal(motion_goal)
 {% elif intent.intent == "PRESENT_CONTENT" %}
 

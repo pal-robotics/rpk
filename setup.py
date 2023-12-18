@@ -5,6 +5,7 @@
 
 from pathlib import Path
 from distutils.core import setup
+
 import xml.etree.ElementTree as ET
 
 NAME = "pal_app"
@@ -33,5 +34,5 @@ setup(
     scripts=["scripts/pal_app"],
     package_dir={"": "src"},
     packages=["pal_app"],
-    data_files=TPLS + [("share/doc/pal_app", ["README.md", "LICENSE"])],
+    data_files=TPLS + [("share/doc/pal_app", ["README.md"])],
 )
