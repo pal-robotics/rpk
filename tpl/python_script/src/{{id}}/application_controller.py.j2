@@ -6,9 +6,12 @@ import json
 from rclpy.lifecycle import Node
 from rclpy.lifecycle import State
 from rclpy.lifecycle import TransitionCallbackReturn
+from rclpy.action import ActionClient
 
 from hri_actions_msgs.msg import Intent
-
+from pal_tts_msgs.action import TTS
+from play_motion2_msgs.action import PlayMotion2
+from pal_web_msgs.msg import WebGoTo
 
 class ApplicationController(Node):
 
@@ -69,11 +72,6 @@ class ApplicationController(Node):
             # As an example, we call here the TTS and play_motion action server
             # to implement a very simple behaviour when someone engages with 
             # the robot.
-            from rclpy.action import ActionClient
-
-            from pal_tts_msgs.action import TTS
-            from play_motion2_msgs.action import PlayMotion2
-
             tts = ActionClient(self, TTS, 'tts')
             play_motion = ActionClient(self, PlayMotion2, 'play_motion2')
 
@@ -90,8 +88,6 @@ class ApplicationController(Node):
 
             # handle intents to present specific content by simply
             # loading the corresponding page onto the touchscreen
-            from pal_web_msgs.msg import WebGoTo
-
             web_goto_pub = self.create_publisher(
                 WebGoTo, '/web/go_to', queue_size=1)
 
