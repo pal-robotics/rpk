@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2022 PAL Robotics S.L. All rights reserved.
+# Copyright (c) 2023 PAL Robotics S.L. All rights reserved.
+
+# Unauthorized copying of this file, via any medium is strictly prohibited,
+# unless it was supplied under the terms of a license agreement or
+# nondisclosure agreement with PAL Robotics SL. In this case it may not be
+# copied or disclosed except in accordance with the terms of that agreement.
 
 from pathlib import Path
 from distutils.core import setup
@@ -26,7 +31,7 @@ setup(
     description=DESCRIPTION,
     author="Séverin Lemaignan",
     author_email="severin.lemaignan@pal-robotics.com",
-    license="Proprietary",
+    license="PAL Robotics S.L.",
     classifiers=[
         "Programming Language :: Python :: 3",
     ],

@@ -4,7 +4,7 @@
   <version>0.4.0</version>
   <description>A tool to create application controllers skeletons for interactive robots</description>
   <maintainer email="severin.lemaignan@pal-robotics.com">Séverin Lemaignan</maintainer>
-  <license>Proprietary</license>
+  <license>PAL Robotics S.L.</license>
 
   <exec_depend>python3-jinja2</exec_depend>
 
