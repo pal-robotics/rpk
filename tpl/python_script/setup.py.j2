@@ -23,11 +23,12 @@ setup(
     ],
     author="todo",
     author_email="todo@todo.todo",
-    package_dir={"": "src"},
     packages=["{{ id }}"],
     data_files=[
         ('share/' + NAME, ['package.xml']),
         ('share/ament_index/resource_index/packages', ['res/' + NAME]),
     ],
     scripts=["scripts/run_app"],
+    tests_require=['pytest'],
 )
+
