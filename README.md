@@ -5,6 +5,8 @@ A tool to generate skeletons of robot application controller.
 
 Relies on ROS 2 and the ROS 2 `Intents` interface.
 
+**Note: this branch only contains ROS 2 support. For ROS 1, check the `main` branch.**
+
 Installation
 ------------
 `pal_app` is written in python3.
@@ -17,9 +19,6 @@ You can install pal_app as any other python package as follows:
 
 ``sudo python3 setup.py install``
 
-or 
-
-``pip install pal_app``
 
 Building your first pal_app
 ---------------------------
