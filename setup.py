@@ -9,7 +9,7 @@
 # copied or disclosed except in accordance with the terms of that agreement.
 
 from pathlib import Path
-from distutils.core import setup
+from setuptools import find_packages, setup
 
 import xml.etree.ElementTree as ET
 
