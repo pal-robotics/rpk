@@ -31,13 +31,18 @@ setup(
     description=DESCRIPTION,
     author="Séverin Lemaignan",
     author_email="severin.lemaignan@pal-robotics.com",
-    license="PAL Robotics S.L.",
-    classifiers=[
-        "Programming Language :: Python :: 3",
+    license="Proprietary",
+    packages=find_packages(exclude=['test']),
+    data_files=TPLS + [
+        ('share/ament_index/resource_index/packages', ['resource/' + NAME]),
+        ('share/' + NAME, ['package.xml'])
     ],
-    requires=["jinja2"],
-    scripts=["scripts/pal_app"],
-    package_dir={"": "src"},
-    packages=["pal_app"],
-    data_files=TPLS + [("share/doc/pal_app", ["README.md"])],
+    install_requires=['setuptools'],
+    zip_safe=True,
+    tests_require=['pytest'],
+    entry_points={
+        'console_scripts': [
+            "pal_app = " + NAME +".pal_app:main"
+        ],
+    },
 )
