@@ -54,7 +54,7 @@ def get_intents():
     except Exception:
         print(
             "Intent.msg not found. You can install it with 'apt install "
-            "ros-noetic-hri-actions-msgs'.\nFor now, not generating the list "
+            "pal-alum-hri-actions-msgs'.\nFor now, not generating the list "
             "of available intents."
         )
         return intents

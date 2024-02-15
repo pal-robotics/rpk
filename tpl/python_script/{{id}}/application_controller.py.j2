@@ -18,20 +18,26 @@ import json
 from rclpy.lifecycle import Node
 from rclpy.lifecycle import State
 from rclpy.lifecycle import TransitionCallbackReturn
-from rclpy.action import ActionClient
 
-from hri_actions_msgs.msg import Intent
+{% if intents %}
+{% for intent in intents %}
+{% if intent.intent == "ENGAGE_WITH" and robot == "ARI" %}
+from rclpy.action import ActionClient
 from pal_tts_msgs.action import TTS
 from play_motion2_msgs.action import PlayMotion2
+{% endif %}
+{% endfor %}
+{% endif %}
+
+from hri_actions_msgs.msg import Intent
+
 # from pal_web_msgs.msg import WebGoTo  ## wating for migration to ROS 2
 
 
 class ApplicationController(Node):
 
     def __init__(self) -> None:
-        """
-        Construct the node
-        """
+        """Construct the node."""
         super().__init__('app_{{ id }}')
 
         self.get_logger().info("Initialising...")
@@ -59,7 +65,7 @@ class ApplicationController(Node):
         # intent.
         #
 
-        data = json.loads(msg.data) if msg.data else {}
+        data = json.loads(msg.data) if msg.data else {}  # noqa: F841
         source = msg.source  # noqa: F841
         modality = msg.modality  # noqa: F841
         confidence = msg.confidence  # noqa: F841
@@ -126,7 +132,7 @@ class ApplicationController(Node):
                                       "<%s>!" % msg.intent)
 {% else %}
         # handle here the different intents
-        if msg.intent == "your_intent": # or one of the Intent.msg constants
+        if msg.intent == "your_intent":  # or one of the Intent.msg constants
             pass
 
         # elif...
@@ -148,16 +154,12 @@ class ApplicationController(Node):
             TransitionCallbackReturn.ERROR or any uncaught exceptions to
             "errorprocessing"
         """
-
         self.inc = 0
         self.get_logger().info('on_configure() is called.')
         return TransitionCallbackReturn.SUCCESS
 
     def on_activate(self, state: State) -> TransitionCallbackReturn:
-        """
-        Subscribe to topic and start listening to /intents topic
-        """
-
+        """Subscribe to topic and start listening to /intents topic."""
         self._intents_sub = self.create_subscription(
             Intent,
             '/intents',
@@ -174,11 +176,7 @@ class ApplicationController(Node):
         return super().on_activate(state)
 
     def on_deactivate(self, state: State) -> TransitionCallbackReturn:
-        """
-        Stop the timer to stop calling the run function (main task of
-        your application).
-        """
-
+        """Stop the timer to stop calling the run function (main task of your application)."""
         self.get_logger().info("Stopping application")
 
         self.destroy_timer(self._timer)
@@ -206,13 +204,11 @@ class ApplicationController(Node):
 
     def run(self) -> None:
         """
-        The main task of your application. Implements the background processing
-        of your applcation.
+        Background processing of your applcation.
 
-        This function will be triggered by the timer in the class, and only
-        when the timer is active.
+        The main task of your application. This function will be triggered by
+        the timer in the class, and only when the timer is active.
         """
-
         #######################################
         #
         # TODO: Implement here any background
