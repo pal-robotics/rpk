@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2023 PAL Robotics S.L. All rights reserved.
+# Copyright (c) 2024 PAL Robotics S.L. All rights reserved.
 
 # Unauthorized copying of this file, via any medium is strictly prohibited,
 # unless it was supplied under the terms of a license agreement or
@@ -42,7 +42,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "pal_app = " + NAME +".pal_app:main"
+            "pal_app = " + NAME + ".pal_app:main"
         ],
     },
 )

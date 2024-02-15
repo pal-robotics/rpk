@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2022 PAL Robotics S.L. All rights reserved.
+# Copyright (c) 2024 PAL Robotics S.L. All rights reserved.
 
 # Unauthorized copying of this file, via any medium is strictly prohibited,
 # unless it was supplied under the terms of a license agreement or
@@ -47,7 +47,7 @@ def get_intents():
 
     try:
         msg_def = parse_message_file(
-            'hri_actions_msgs', 
+            'hri_actions_msgs',
             get_interface_path('hri_actions_msgs/msg/Intent'))
     except Exception:
         print(
@@ -60,7 +60,7 @@ def get_intents():
     # We will only extract the available intents for now, not the additional
     # fields (description and thematic roles) since rosidl parser ignores
     # comments below the message fields. To solve this, we should place the
-    # long description of the intents before describing the msg fields. 
+    # long description of the intents before describing the msg fields.
     for c in msg_def.constants:
         if "__intent_" in c.value:
             intents.append({'intent': c.name,
@@ -108,7 +108,7 @@ def interactive_create(id=None, template=None, robot=None):
             choice = int(input("\nYour choice? "))
 
             robot = AVAILABLE_ROBOTS[choice - 1]
-        except:
+        except Exception:
             robot = ""
 
     while not template:
@@ -120,7 +120,7 @@ def interactive_create(id=None, template=None, robot=None):
             choice = int(input("\nYour choice? "))
 
             template = list(AVAILABLE_TEMPLATES.keys())[choice - 1]
-        except:
+        except Exception:
             template = ""
 
     return id, name, template, robot
