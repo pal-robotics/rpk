@@ -14,10 +14,19 @@ from pathlib import Path
 from jinja2 import Environment, select_autoescape, FileSystemLoader
 
 import pal_app
+
+from ament_index_python.packages import get_package_share_directory
+
+package_share_directory = get_package_share_directory('pal_app')
+
+print(package_share_directory)
+
 PKG_PATH = (
     Path(pal_app.__file__).parent.parent.parent.parent.parent / "share" / 
     "pal_app"
 )
+
+print(PKG_PATH)
 
 AVAILABLE_TEMPLATES = {
     "python": {
@@ -128,7 +137,7 @@ def interactive_create(id=None, template=None, robot=None):
     return id, name, template, robot
 
 
-if __name__ == "__main__":
+def main():
 
     parser = argparse.ArgumentParser(
         description="Generate and manage application skeletons for ROS2-based "
@@ -241,3 +250,7 @@ if __name__ == "__main__":
         print("No template available for %s! Cannot generate an app "
               "skeleton." % tpl)
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
