@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from setuptools import setup
+from setuptools import find_packages, setup
 
 
 def readme():
@@ -17,18 +17,20 @@ setup(
     version="0.1.0",
     license="Apache-2.0",
     description="{{ name }}",
-    long_description=readme(),
-    classifiers=[
-        "Programming Language :: Python :: 3",
-    ],
     author="todo",
     author_email="todo@todo.todo",
-    packages=["{{ id }}"],
+    packages=find_packages(exclude=['test']),
     data_files=[
         ('share/' + NAME, ['package.xml']),
         ('share/ament_index/resource_index/packages', ['res/' + NAME]),
     ],
-    scripts=["scripts/run_app"],
     tests_require=['pytest'],
+    install_requires=['setuptools'],
+    zip_safe=True,
+    entry_points={
+        'console_scripts': [
+            'run_app = ' + NAME + '.run_app:main'
+        ],
+    },
 )
 
