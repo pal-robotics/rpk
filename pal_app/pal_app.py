@@ -13,20 +13,9 @@ import argparse
 from pathlib import Path
 from jinja2 import Environment, select_autoescape, FileSystemLoader
 
-import pal_app
-
 from ament_index_python.packages import get_package_share_directory
 
-package_share_directory = get_package_share_directory('pal_app')
-
-print(package_share_directory)
-
-PKG_PATH = (
-    Path(pal_app.__file__).parent.parent.parent.parent.parent / "share" / 
-    "pal_app"
-)
-
-print(PKG_PATH)
+PKG_PATH = get_package_share_directory('pal_app')
 
 AVAILABLE_TEMPLATES = {
     "python": {
@@ -212,7 +201,7 @@ def main():
     print("Generating application skeleton in %s..." % root)
 
     if tpl == "python":
-        tpl_path = PKG_PATH / "tpl" / AVAILABLE_TEMPLATES[tpl]["tpl_path"]
+        tpl_path = PKG_PATH + "/tpl/" + AVAILABLE_TEMPLATES[tpl]["tpl_path"]
 
         env = Environment(
             loader=FileSystemLoader(str(tpl_path)),
