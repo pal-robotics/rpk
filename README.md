@@ -17,7 +17,7 @@ You require the following libraries:
 
 You can install pal_app as any other python package as follows:
 
-``sudo python3 setup.py install``
+``sudo pip install .``
 
 
 Building your first pal_app

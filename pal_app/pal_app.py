@@ -13,9 +13,11 @@ import argparse
 from pathlib import Path
 from jinja2 import Environment, select_autoescape, FileSystemLoader
 
-from ament_index_python.packages import get_package_share_directory
-
-PKG_PATH = get_package_share_directory('pal_app')
+import pal_app
+PKG_PATH = (
+    Path(pal_app.__file__).parent.parent.parent.parent.parent / "share" / 
+    "pal_app"
+)
 
 AVAILABLE_TEMPLATES = {
     "python": {
