@@ -15,7 +15,7 @@ from jinja2 import Environment, select_autoescape, FileSystemLoader
 
 import pal_app
 PKG_PATH = (
-    Path(pal_app.__file__).parent.parent.parent.parent.parent / "share" / 
+    Path(pal_app.__file__).parent.parent.parent.parent.parent / "share" /
     "pal_app"
 )
 
