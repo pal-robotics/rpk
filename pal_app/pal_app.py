@@ -203,7 +203,7 @@ def main():
     print("Generating application skeleton in %s..." % root)
 
     if tpl == "python":
-        tpl_path = PKG_PATH + "/tpl/" + AVAILABLE_TEMPLATES[tpl]["tpl_path"]
+        tpl_path = PKG_PATH / "tpl" / AVAILABLE_TEMPLATES[tpl]["tpl_path"]
 
         env = Environment(
             loader=FileSystemLoader(str(tpl_path)),
