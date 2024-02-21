@@ -51,7 +51,10 @@ def get_intents():
         msg_def = parse_message_file(
             'hri_actions_msgs',
             get_interface_path('hri_actions_msgs/msg/Intent'))
-    except Exception:
+    except LookupError:
+        # template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+        # message = template.format(type(ex).__name__, ex.args)
+        # print(message)
         print(
             "Intent.msg not found. You can install it with 'apt install "
             "pal-alum-hri-actions-msgs'.\nFor now, not generating the list "
@@ -110,7 +113,10 @@ def interactive_create(id=None, template=None, robot=None):
             choice = int(input("\nYour choice? "))
 
             robot = AVAILABLE_ROBOTS[choice - 1]
-        except Exception:
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
             robot = ""
 
     while not template:
