@@ -31,7 +31,7 @@ setup(
     description=DESCRIPTION,
     author="Séverin Lemaignan",
     author_email="severin.lemaignan@pal-robotics.com",
-    license="Proprietary",
+    license='Apache License 2.0',
     packages=find_packages(exclude=['test']),
     data_files=TPLS + [
         ('share/ament_index/resource_index/packages', ['resource/' + NAME]),
