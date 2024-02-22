@@ -120,10 +120,7 @@ def interactive_create(id=None, template=None, robot=None):
             choice = int(input("\nYour choice? "))
 
             robot = AVAILABLE_ROBOTS[choice - 1]
-        except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
+        except IndexError:
             robot = ""
 
     while not template:
@@ -135,7 +132,7 @@ def interactive_create(id=None, template=None, robot=None):
             choice = int(input("\nYour choice? "))
 
             template = list(AVAILABLE_TEMPLATES.keys())[choice - 1]
-        except Exception:
+        except IndexError:
             template = ""
 
     return id, name, template, robot
