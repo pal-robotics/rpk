@@ -19,6 +19,8 @@ setup(
     data_files=[
         ('share/' + NAME, ['package.xml']),
         ('share/ament_index/resource_index/packages', ['res/' + NAME]),
+         ('share/ament_index/resource_index/pal_system_module_set',
+            ['resource/respeaker_ros_module.yaml']),
         (os.path.join('share', NAME), glob('launch/*.launch.py'))
     ],
     tests_require=['pytest'],
