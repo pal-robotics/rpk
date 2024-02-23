@@ -11,6 +11,8 @@ Installation
 ------------
 `pal_app` is written in python3.
 
+**Installation with pip**
+
 You require the following libraries:
 
 ``pip install jinja2``
@@ -19,11 +21,11 @@ You can install pal_app as any other python package as follows:
 
 ``pip install .``
 
-and then add to the path the installed location:
+If the location where it is installed is not yet on your path, you will get a warning which includes the path location where it has been installed. You need to add this location to your path, e.g., in linux ``export PATH="$HOME/.local/bin:$PATH"`` or in [windows use the GUI or command line](https://stackoverflow.com/questions/9546324/adding-a-directory-to-the-path-environment-variable-in-windows)
 
-``export PATH="$HOME/.local/bin:$PATH"``
+**Installation with ROS debian**
 
-Installing directly with sudo should make the package already available.
+Install the pal-alum-pal-app debian package and source ``/opt/pal/alum/setup.bash``.
 
 
 Building your first pal_app
@@ -35,6 +37,8 @@ applications for your robots. To do so, you just have to run:
 
 ... and follow the instructions!
 
-You're then ready to play with your robot application controller.
+It will create a ROS2 package ready to be run.
+
+You're then ready to play with the application controller.
 Visit the PAL SDK documentation for further information.
 
