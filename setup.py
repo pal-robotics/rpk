@@ -16,7 +16,6 @@ import xml.etree.ElementTree as ET
 NAME = "pal_app"
 
 # get the version from ROS' package.xml
-VERSION = ET.parse("package.xml").find("version").text
 DESCRIPTION = ET.parse("package.xml").find("description").text
 
 TPLS = [
@@ -27,7 +26,7 @@ TPLS = [
 
 setup(
     name=NAME,
-    version=VERSION,
+    version='1.9.9',
     description=DESCRIPTION,
     author="Séverin Lemaignan",
     author_email="severin.lemaignan@pal-robotics.com",
