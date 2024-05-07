@@ -2,6 +2,20 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* added registering to pal modules
+* Apache licensing
+* Update README.md
+* added launch file
+* Use setuptools instead of distutils
+* Changed file structure so the source files are in directory with the same name as the package
+* Copyright fixing. Added License file
+* Removed pip install option. Added note to refer to ROS 1 development
+* Converted application_controller to lifecycle node. Cleaned run_app script to only call application_controller node accordingly. Transitions between cycles are done through CLI lifecycle calls
+* Migration to ROS 2.
+* Contributors: Luka Juricic, Raquel Ros, ferrangebelli
+
 0.3.0 (2023-07-14)
 ------------------
 * Updated pages which close the cycle between the supervisor and the touch pages.
