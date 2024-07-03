@@ -2,6 +2,12 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* update to new TTS.action msg
+* rename tts package
+* Contributors: Luka Juricic, Séverin Lemaignan
+
 2.0.0 (2024-05-07)
 ------------------
 * added registering to pal modules
