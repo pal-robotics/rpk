@@ -90,7 +90,7 @@ class ApplicationController(Node):
             # As an example, we call here the TTS and play_motion action server
             # to implement a very simple behaviour when someone engages with
             # the robot.
-            tts = ActionClient(self, TTS, 'tts')
+            tts = ActionClient(self, TTS, 'speak')
             play_motion = ActionClient(self, PlayMotion2, 'play_motion2')
 
             tts_goal = TTS.Goal()
