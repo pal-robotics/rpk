@@ -94,8 +94,8 @@ class ApplicationController(Node):
             play_motion = ActionClient(self, PlayMotion2, 'play_motion2')
 
             tts_goal = TTS.Goal()
-            tts_goal.sentence = "Hello, I'm ARI. Nice to meet you!"
-            tts_goal.lang_id = "en_GB"
+            tts_goal.input = "Hello, I'm ARI. Nice to meet you!"
+            tts_goal.locale = "en_GB"
             tts.wait_for_server()
             tts.send_goal_async(tts_goal)
 
