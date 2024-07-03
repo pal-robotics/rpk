@@ -20,7 +20,7 @@ from rclpy.lifecycle import TransitionCallbackReturn
 {% for intent in intents %}
 {% if intent.intent == "ENGAGE_WITH" and robot == "ARI" %}
 from rclpy.action import ActionClient
-from pal_tts_msgs.action import TTS
+from tts_msgs.action import TTS
 from play_motion2_msgs.action import PlayMotion2
 {% endif %}
 {% endfor %}
