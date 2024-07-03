@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.2 (2024-07-03)
+------------------
 * update TTS action topic to /speak
 * Contributors: Séverin Lemaignan
 
