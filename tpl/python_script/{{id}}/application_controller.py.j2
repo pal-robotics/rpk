@@ -27,8 +27,11 @@ from play_motion2_msgs.action import PlayMotion2
 {% endif %}
 
 from hri_actions_msgs.msg import Intent
+from lifecycle_msgs.msg import State as StateMsg
 
 # from pal_web_msgs.msg import WebGoTo  ## wating for migration to ROS 2
+
+from {{ id }}.change_state_helper import ChangeNodeStateHelper
 
 
 class ApplicationController(Node):
@@ -40,6 +43,11 @@ class ApplicationController(Node):
         self.get_logger().info("Initialising...")
         self._intents_sub = None
         self._timer = None
+
+        # We manage the state of the "communication_hub" node
+        self._change_state_helper = ChangeNodeStateHelper(
+            self, 
+            'communication_hub')
 
         #######################################
         #
@@ -85,7 +93,19 @@ class ApplicationController(Node):
             # - {{ role }}
 {% endfor %}
 {% endif %}
-{% if intent.intent == "ENGAGE_WITH" and robot == "ARI" %}
+{% if intent.intent == "WAKEUP" %}
+
+            # The "communication_hub" is a managed node that needs to be 
+            # activated based on the received wakeup intent.
+            self._change_state_helper.change_state(
+                StateMsg.PRIMARY_STATE_ACTIVE)
+{% elif intent.intent == "SUSPEND" %}
+
+            # The "communication_hub" is a managed node that needs to be 
+            # deactivated based on the received suspend intent.
+            self._change_state_helper.change_state(
+                StateMsg.PRIMARY_STATE_INACTIVE)
+{% elif intent.intent == "ENGAGE_WITH" and robot == "ARI" %}
 
             # As an example, we call here the TTS and play_motion action server
             # to implement a very simple behaviour when someone engages with
@@ -156,7 +176,12 @@ class ApplicationController(Node):
         return TransitionCallbackReturn.SUCCESS
 
     def on_activate(self, state: State) -> TransitionCallbackReturn:
-        """Subscribe to topic and start listening to /intents topic."""
+        """
+        Activate the node, after an activating transition is requested.
+
+        Subscribe to topic and start listening to /intents topic.
+        Activate the 'communication_hub' node.
+        """
         self._intents_sub = self.create_subscription(
             Intent,
             '/intents',
@@ -168,12 +193,19 @@ class ApplicationController(Node):
         # Define a timer that fires every second to call the run function
         timer_period = 1  # in sec
         self._timer = self.create_timer(timer_period, self.run)
+
+        # We activate the "communication_hub" node by default
+        self._change_state_helper.change_state(StateMsg.PRIMARY_STATE_ACTIVE)
+
         self.get_logger().info("Running")
 
         return super().on_activate(state)
 
     def on_deactivate(self, state: State) -> TransitionCallbackReturn:
-        """Stop the timer to stop calling the run function (main task of your application)."""
+        """
+        Stop the timer to stop calling the run function (main task of your 
+        application).
+        """
         self.get_logger().info("Stopping application")
 
         self.destroy_timer(self._timer)

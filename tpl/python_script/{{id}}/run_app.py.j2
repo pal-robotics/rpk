@@ -23,7 +23,7 @@
 
 import rclpy
 
-from rclpy.executors import SingleThreadedExecutor
+from rclpy.executors import MultiThreadedExecutor
 
 import {{ id }}.application_controller
 
@@ -32,7 +32,7 @@ def main():
     rclpy.init()
 
     application_controller = {{ id }}.application_controller.ApplicationController()
-    application_controller_executor = SingleThreadedExecutor()
+    application_controller_executor = MultiThreadedExecutor()
     application_controller_executor.add_node(application_controller)
 
     try:

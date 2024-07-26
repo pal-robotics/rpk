@@ -19,9 +19,12 @@ setup(
     data_files=[
         ('share/' + NAME, ['package.xml']),
         ('share/ament_index/resource_index/packages', ['res/' + NAME]),
-        ('share/ament_index/resource_index/pal_system_module_set',
-            ['res/app_module.yaml']),
-        (os.path.join('share', NAME), glob('launch/*.launch.py'))
+        ('share/ament_index/resource_index/pal_system_module', ['module/' + NAME]),
+        ('share/' + NAME + '/launch', glob('launch/*.launch.py')),
+        ('share/' + NAME + '/module', ['module/' + NAME + '_module.yaml']),
+        # uncomment the next two lines to make the application be launched automatically at startup
+        # ('share/ament_index/resource_index/pal_system_module_set', ['module_set/' + NAME]),
+        # ('share/' + NAME + '/module_set', ['module_set/' + NAME + '_module_set.yaml'])
     ],
     tests_require=['pytest'],
     install_requires=['setuptools'],
