@@ -10,7 +10,7 @@
 
   <!--
       Note that 'rclpy' and 'hri_actions_msgs' are not strictly required
-      to run the code generator. However, the generated application controller 
+      to run the code generator. However, the generated mission controller 
       will always require them. In order to offer a better developer experience,
       it is nicer to install these 2 dependencies at the same time as the tool
       itself is installed.

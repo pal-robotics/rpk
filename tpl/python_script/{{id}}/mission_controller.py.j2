@@ -18,7 +18,7 @@ from rclpy.lifecycle import TransitionCallbackReturn
 
 {% if intents %}
 {% for intent in intents %}
-{% if intent.intent == "ENGAGE_WITH" and robot == "ARI" %}
+{% if intent.intent == "ENGAGE_WITH"%}
 from rclpy.action import ActionClient
 from tts_msgs.action import TTS
 from play_motion2_msgs.action import PlayMotion2
@@ -34,7 +34,7 @@ from lifecycle_msgs.msg import State as StateMsg
 from {{ id }}.change_state_helper import ChangeNodeStateHelper
 
 
-class ApplicationController(Node):
+class MissionController(Node):
 
     def __init__(self) -> None:
         """Construct the node."""
@@ -85,8 +85,13 @@ class ApplicationController(Node):
 
 {% if intents %}
 {% for intent in intents %}
+    {% if (robot == "ARI" and intent.intent == "PRESENT_CONTENT") or 
+           (robot == "TIAGO" and intent.intent in ["GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT"]) or 
+           (intent.intent not in ["PRESENT_CONTENT", "GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT"]) %}
         # Intent {{ intent.intent }}:{{ intent.description }}
         {{ "if" if loop.index == 1 else "elif"}} msg.intent == Intent.{{ intent.intent }}:
+    {% endif %}
+
 {% if intent.required_thematic_roles %}
             # the 'data' dictionary should contain at least the following keys:
 {% for role in intent.required_thematic_roles %}
@@ -105,27 +110,36 @@ class ApplicationController(Node):
             # deactivated based on the received suspend intent.
             self._change_state_helper.change_state(
                 StateMsg.PRIMARY_STATE_INACTIVE)
-{% elif intent.intent == "ENGAGE_WITH" and robot == "ARI" %}
+{% elif intent.intent == "ENGAGE_WITH" and (robot in ["ARI", "TIAGO"]) %}
 
             # As an example, we call here the TTS and play_motion action server
             # to implement a very simple behaviour when someone engages with
             # the robot.
-            tts = ActionClient(self, TTS, 'speak')
+            tts = ActionClient(self, TTS, 'tts_engine/tts')
             play_motion = ActionClient(self, PlayMotion2, 'play_motion2')
-
             tts_goal = TTS.Goal()
-            tts_goal.input = "Hello, I'm ARI. Nice to meet you!"
             tts_goal.locale = "en_GB"
-            tts.wait_for_server()
-            tts.send_goal_async(tts_goal)
+            {% if robot == "ARI" %}
 
+            tts_goal.input = "Hello, I'm ARI. Nice to meet you!"
             motion_goal = PlayMotion2.Goal(motion_name="bow")
+            {% elif robot == "TIAGO" %}
+
+            tts_goal.input = "Hello, I'm TIAGo. Nice to meet you!"
+            motion_goal = PlayMotion2.Goal(motion_name="head_tour")
+            {% endif %}
+ 
+            tts.wait_for_server()
             play_motion.wait_for_server()
+            tts.send_goal_async(tts_goal)
             play_motion.send_goal(motion_goal)
-{% elif intent.intent == "PRESENT_CONTENT" %}
+
+{% elif (robot == "ARI" and intent.intent == "PRESENT_CONTENT") %}
 
             # Handle intents to present specific content by simply
             # loading the corresponding page onto the touchscreen.
+            # Refer to "touchscreen skills": 
+            # https://docs.pal-robotics.com/sdk-dev/touchscreen/skills_list
             # Will not work until WebGoTo migration to ROS 2
 
             # web_goto_pub = self.create_publisher(
@@ -138,7 +152,37 @@ class ApplicationController(Node):
             # msg.value = data["object"]
             # web_goto_pub.publish(msg)
             print("Presenting %s in touchscreen" % data["object"])
-{% else %}
+
+{% elif (robot == "TIAGO" and intent.intent in ["GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT"]) %}
+
+            # Handle intents to manipulate an object. Refer to "manipulation skills": 
+            # https://docs.pal-robotics.com/sdk-dev/manipulation/skills_list
+            pass
+
+{% elif intent.intent in ["MOVE_TO", "GUIDE"] %}
+
+            # Handle intents to move the robot from one place to another using 
+            # its navigation skills. Refer to "navigation skills":
+            # https://docs.pal-robotics.com/sdk-dev/navigation/skills_list
+            pass
+
+{% elif intent.intent == "PERFORM_MOTION" %}
+
+            # Handle intents to perform a specific motion 
+            # (eg, a dance or a specific gesture like pointing, waving)
+            # Refer to "gestures and motions skills":
+            # https://docs.pal-robotics.com/sdk-dev/motions/skills_list
+            pass
+
+{% elif intent.intent in ["GREET", "SAY"] %}
+
+            # Handle intents to produce speech like greeting or saying
+            # a specific text.
+            # Refer to: 
+            # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
+            pass
+
+{% elif intent.intent in ["START_ACTIVITY", "STOP_ACTIVITY"] %}
             pass
 {% endif %}
 
@@ -158,6 +202,7 @@ class ApplicationController(Node):
             self.get_logger().warning("I don't know how to process intent "
                                       "<%s>!" % msg.intent)
 {% endif %}
+
 
     def on_configure(self, state: State) -> TransitionCallbackReturn:
         """
@@ -238,7 +283,7 @@ class ApplicationController(Node):
         #######################################
         #
         # TODO: Implement here any background
-        # task required by your application
+        # task required by your mission controller
         # If application has been stopped,
         # this function will not be called
         #

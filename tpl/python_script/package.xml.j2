@@ -32,8 +32,6 @@
   <depend>hri_actions_msgs</depend>
   <depend>lifecycle_msgs</depend>
 
-{% if robot == "ARI" %}
-
   <!-- As an example, we are going to use the TTS and play_motion -->
   <!-- actions. We need to list the corresponding ROS actions as -->
   <!-- dependencies. Similary, we will publish in the touchscreen, -->
@@ -42,7 +40,21 @@
   <depend>play_motion2_msgs</depend>
   <!-- <depend>pal_web_msgs</depend> -->  <!-- Waiting for ros 2 porting -->
 
+  <!-- If we wanted to use navigation, we would likely need nav2_msgs and/or twist_mux_msgs-->
+  <!-- You can check the msgs that each interface needs i.e. -->
+  <!-- by pressing "documentation" on the skills documentation i.e.-->
+  <!-- https://docs.pal-robotics.com/sdk-dev/navigation/skills_list-->
+  <depend>nav2_msgs</depend>
+  <depend>twist_mux_msgs</depend>
+
+{% if robot == "TIAGO" %}
+  <!-- If we wanted to use manipulation for grasping for example-->
+  <!-- using TIAGo's advanced grasping capabilities, we would need-->
+  <!-- pal_bt_grasping_msgs, as indicated in here:-->
+  <!-- https://docs.pal-robotics.com/sdk-dev/manipulation/skills_list-->
+  <depend>pal_bt_grasping_msgs</depend>
 {% endif %}
+
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>

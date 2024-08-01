@@ -31,11 +31,11 @@ AVAILABLE_TEMPLATES = {
         "tpl_path": "python_script",
         "short_desc": "simple Python script",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
-        "application_controller.py to implement your application logic.",
+        "mission_controller.py to implement your application logic.",
     }
 }
 
-AVAILABLE_ROBOTS = ["ARI"]
+AVAILABLE_ROBOTS = ["ARI", "TIAGO"]
 
 TPL_EXT = "j2"
 
@@ -124,7 +124,7 @@ def interactive_create(id=None, template=None, robot=None):
             robot = ""
 
     while not template:
-        print("\nWhat kind of application controller do you want to create?")
+        print("\nWhat kind of mission controller do you want to create?")
         for idx, tpl in enumerate(AVAILABLE_TEMPLATES.keys()):
             print("%s: %s" % (idx + 1, AVAILABLE_TEMPLATES[tpl]["short_desc"]))
 

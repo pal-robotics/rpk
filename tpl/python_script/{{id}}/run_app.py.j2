@@ -25,21 +25,21 @@ import rclpy
 
 from rclpy.executors import MultiThreadedExecutor
 
-import {{ id }}.application_controller
+import {{ id }}.mission_controller
 
 
 def main():
     rclpy.init()
 
-    application_controller = {{ id }}.application_controller.ApplicationController()
-    application_controller_executor = MultiThreadedExecutor()
-    application_controller_executor.add_node(application_controller)
+    mission_controller = {{ id }}.mission_controller.MissionController()
+    mission_controller_executor = MultiThreadedExecutor()
+    mission_controller_executor.add_node(mission_controller)
 
     try:
-        application_controller_executor.spin()
+        mission_controller_executor.spin()
     except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
         print("Goodbye!")
-        application_controller.destroy_node()
+        mission_controller.destroy_node()
 
 
 if __name__ == '__main__':
