@@ -35,7 +35,7 @@ AVAILABLE_TEMPLATES = {
     }
 }
 
-AVAILABLE_ROBOTS = ["ARI", "TIAGO"]
+AVAILABLE_ROBOTS = ["ari", "tiago"]
 
 TPL_EXT = "j2"
 
@@ -233,6 +233,8 @@ def main():
             sys.exit(1)
 
         for tpl_name in tpls:
+            if (("pages_only_ari" in tpl_name) and (robot not in tpl_name)):
+                continue
             j_tpl = env.get_template(tpl_name)
             tpl_name = tpl_name.replace("{{id}}", data["id"])
             filename = root / tpl_name[: -(1 + len(TPL_EXT))]
