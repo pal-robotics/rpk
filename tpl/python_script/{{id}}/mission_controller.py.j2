@@ -114,7 +114,7 @@ class MissionController(Node):
             tts = ActionClient(self, TTS, 'communication/say')
             tts.wait_for_server()
             tts_goal = TTS.Goal()
-            tts_goal.locale = "en_GB"
+            tts_goal.locale = "en_US"
             {% if robot == "ari" %}
 tts_goal.input = "Hello, I'm ARI. Nice to meet you!"
             {% elif robot == "tiago" %}
@@ -164,23 +164,28 @@ motion_goal = PlayMotion2.Goal(motion_name="head_tour")
             # https://docs.pal-robotics.com/sdk-dev/motions/skills_list
             play_motion = ActionClient(self, PlayMotion2, 'play_motion2')
             play_motion.wait_for_server()
-            {% if robot == "ari" %}
-motion_goal = PlayMotion2.Goal(motion_name="bow")
-            {% elif robot == "tiago" %}
-motion_goal = PlayMotion2.Goal(motion_name="head_tour")
-            {% endif %}
-play_motion.send_goal(motion_goal)
-{% elif intent.intent in ["GREET", "SAY"] %}
-        # Handle intents to produce speech like greeting or saying
-            # a specific text.
+            motion_goal = PlayMotion2.Goal(motion_name=msg.data['object'])
+            play_motion.send_goal(motion_goal)
+{% elif intent.intent in ["GREET"] %}
+        # Handle intents to greet, customised by the user
             # Refer to: 
             # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
             tts = ActionClient(self, TTS, 'communication/say')
             tts.wait_for_server()
             tts_goal = TTS.Goal()
-            tts_goal.locale = "en_GB"
+            tts_goal.locale = "en_US"
             tts_goal.input = "Hello, what can I do for you today?"
             tts.send_goal_async(tts_goal)
+  {% elif intent.intent in ["SAY"] %}
+        # Handle intents to say a specific text
+            # Refer to: 
+            # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
+            tts = ActionClient(self, TTS, 'communication/say')
+            tts.wait_for_server()
+            tts_goal = TTS.Goal()
+            tts_goal.locale = "en_US"
+            tts_goal.input = msg.data['object']
+            tts.send_goal_async(tts_goal)          
 {% elif intent.intent in ["START_ACTIVITY", "STOP_ACTIVITY"] %}
         # Add code to run given this intent
             pass
