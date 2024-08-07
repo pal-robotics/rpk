@@ -71,3 +71,14 @@ Find more details at the [PAL Developer Center](https://docs.pal-robotics.com/{{
 ### Run at startup
 
 To make your application run at startup, uncomment the related lines in `setup.py` and reinstall the package.
+
+### Testing
+
+You can test the application from the terminal by sending some intents:
+
+``ros2 topic pub /intents hri_actions_msgs/msg/Intent "{intent: '__intent_perform_motion__', data: '{\"object\": \"inspect_surroundings\"}', source: '__myself__', modality: '__modality_motion__', priority: 128, confidence: 1.0}"``
+
+``ros2 topic pub /intents hri_actions_msgs/msg/Intent "{intent: '__intent_say__', data: '{\"object\": \"hello how are you?\"}', source: '__myself__', modality: '__modality_speech__', priority: 128, confidence: 1.0}"``
+
+``ros2 topic pub /inte': ros2 topic pub /intents hri_actions_msgs/msg/Intent "{intent: '__intent_engage_with__'}" ``
+
