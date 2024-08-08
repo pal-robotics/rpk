@@ -17,15 +17,18 @@ import rclpy
 import rclpy.callback_groups
 import rclpy.executors
 import rclpy.node
+import rclpy.lifecycle
 import time
 from typing import Callable
 
 
 class ChangeNodeStateHelper:
-    """Helper class to change the state of a node using the lifecycle interface.
-    
+    """
+    Helper class to change the state of a node using the lifecycle interface.
+
     This class relies on async functions and expects to be executed by a multi-threaded executor.
     """
+
     transitions = {
         State.PRIMARY_STATE_UNCONFIGURED: {
             State.PRIMARY_STATE_INACTIVE: Transition.TRANSITION_CONFIGURE,
@@ -41,7 +44,7 @@ class ChangeNodeStateHelper:
             State.PRIMARY_STATE_FINALIZED: Transition.TRANSITION_ACTIVE_SHUTDOWN}
     }
 
-    def __init__(self, source_node: rclpy.node.Node, target_node_name: str):
+    def __init__(self, source_node: rclpy.node.Node | rclpy.lifecycle.Node, target_node_name: str):
         self.node = source_node
         self.cb_group = rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
         self.state = State.PRIMARY_STATE_UNKNOWN
@@ -51,8 +54,8 @@ class ChangeNodeStateHelper:
         self.change_state_client = self.node.create_client(
             ChangeState, target_node_name + '/change_state', callback_group=self.cb_group)
         if (
-            not self.get_state_client.service_is_ready() or
-            not self.change_state_client.service_is_ready()
+            not self.get_state_client.wait_for_service(1.) or
+            not self.change_state_client.wait_for_service(1.)
         ):
             raise RuntimeError('Lifecycle services servers not available')
 

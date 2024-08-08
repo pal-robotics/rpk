@@ -46,7 +46,7 @@ class ApplicationController(Node):
 
         # We manage the state of the "communication_hub" node
         self._change_state_helper = ChangeNodeStateHelper(
-            self, 
+            self,
             'communication_hub')
 
         #######################################
@@ -95,13 +95,13 @@ class ApplicationController(Node):
 {% endif %}
 {% if intent.intent == "WAKEUP" %}
 
-            # The "communication_hub" is a managed node that needs to be 
+            # The "communication_hub" is a managed node that needs to be
             # activated based on the received wakeup intent.
             self._change_state_helper.change_state(
                 StateMsg.PRIMARY_STATE_ACTIVE)
 {% elif intent.intent == "SUSPEND" %}
 
-            # The "communication_hub" is a managed node that needs to be 
+            # The "communication_hub" is a managed node that needs to be
             # deactivated based on the received suspend intent.
             self._change_state_helper.change_state(
                 StateMsg.PRIMARY_STATE_INACTIVE)
@@ -202,10 +202,7 @@ class ApplicationController(Node):
         return super().on_activate(state)
 
     def on_deactivate(self, state: State) -> TransitionCallbackReturn:
-        """
-        Stop the timer to stop calling the run function (main task of your 
-        application).
-        """
+        """Stop the timer to stop calling the run function (main task of your application)."""
         self.get_logger().info("Stopping application")
 
         self.destroy_timer(self._timer)
