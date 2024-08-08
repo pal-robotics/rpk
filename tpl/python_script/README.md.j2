@@ -42,19 +42,16 @@ To install your webpages onto the robot, check `pages_only_ari/README.md`.
 
 ## Run your application
 
-`ssh` onto the robot (`ssh pal@{{ robot | lower }}-XXc`, password `pal`), and start your
-application: 
+`ssh` onto the robot (`ssh pal@{{ robot | lower }}-XXc`, password `pal`).
+
+There are several ways to run the application:
+
+1. Manually run your application:
 
 `ros2 run {{ id }} run_app`
 
-To active the app by default, run it with:
-
-`ros2 launch {{ id }} {{ id }}.launch.py`
-
 Since your application controller is a lifecycle node, you need to manage it through the 
-lifecycle tools. 
-
-You can manually transit the application controller as follows:
+lifecycle tools. You can execute the following to transit the mission controller as follows:
 
 ``ros2 lifecycle set /app_{{ id }} configure``
 ``ros2 lifecycle set /app_{{ id }} activate``
@@ -66,11 +63,17 @@ To stop it and clean it:
 ``ros2 lifecycle set /app_{{ id }} deactivate``
 ``ros2 lifecycle set /app_{{ id }} cleanup``
 
+2. Automatically launch the app and transition to an active state:
+
+`ros2 launch {{ id }} {{ id }}.launch.py`
+
+3. Run at startup:
+
+To make your application run at startup, uncomment the related lines in `setup.py` and reinstall the package. 
+You can then start, stop or view the logs of the application as a module. See [Application management](https://docs.pal-robotics.com/sdk-dev/management/application-management) 
+for more details. 
+
 Find more details at the [PAL Developer Center](https://docs.pal-robotics.com/{{ robot | lower }})
-
-### Run at startup
-
-To make your application run at startup, uncomment the related lines in `setup.py` and reinstall the package.
 
 ### Testing
 
