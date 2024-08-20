@@ -29,10 +29,7 @@ from play_motion2_msgs.action import PlayMotion2
 from hri_actions_msgs.msg import Intent
 from lifecycle_msgs.msg import State as StateMsg
 
-# from pal_web_msgs.msg import WebGoTo  ## wating for migration to ROS 2
-
 from {{ id }}.change_state_helper import ChangeNodeStateHelper
-
 
 class MissionController(Node):
 
@@ -100,13 +97,11 @@ class MissionController(Node):
 {% if intent.intent == "WAKEUP" %}
         # The "communication_hub" is a managed node that needs to be 
             # activated based on the received wakeup intent.
-            self._change_state_helper.change_state(
-                StateMsg.PRIMARY_STATE_ACTIVE)
+            self._change_state_helper.change_state(StateMsg.PRIMARY_STATE_ACTIVE)
 {% elif intent.intent == "SUSPEND" %}
         # The "communication_hub" is a managed node that needs to be 
             # deactivated based on the received suspend intent.
-            self._change_state_helper.change_state(
-                StateMsg.PRIMARY_STATE_INACTIVE)
+            self._change_state_helper.change_state(StateMsg.PRIMARY_STATE_INACTIVE)
 {% elif intent.intent == "ENGAGE_WITH" and (robot in ["ari", "tiago"]) %}
         # As an example, we call here the TTS and play_motion action server
             # to implement a very simple behaviour when someone engages with
@@ -131,22 +126,11 @@ motion_goal = PlayMotion2.Goal(motion_name="head_tour")
             tts.send_goal_async(tts_goal)
             play_motion.send_goal(motion_goal)
 {% elif (robot == "ari" and intent.intent == "PRESENT_CONTENT") %}
-        # Handle intents to present specific content by simply
+        # Handle intents to present specific content by
             # loading the corresponding page onto the touchscreen.
             # Refer to "touchscreen skills": 
             # https://docs.pal-robotics.com/sdk-dev/touchscreen/skills_list
-            # Will not work until WebGoTo migration to ROS 2
-
-            # web_goto_pub = self.create_publisher(
-            #     WebGoTo, '/web/go_to', queue_size=1)
-
-            # self.get_logger().info(
-            #     "Displaying page %s on the touchscreen..." % data["object"])
-            # msg = WebGoTo()
-            # msg.type = WebGoTo.TOUCH_PAGE
-            # msg.value = data["object"]
-            # web_goto_pub.publish(msg)
-            print("Presenting %s in touchscreen" % data["object"])
+            pass
 {% elif (robot == "tiago" and intent.intent in ["GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT"]) %}
         # Handle intents to manipulate an object. Refer to "manipulation
             # skills": 
@@ -170,24 +154,20 @@ motion_goal = PlayMotion2.Goal(motion_name="head_tour")
         # Handle intents to greet, customised by the user
             # Refer to: 
             # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
-            tts = ActionClient(self, TTS, 'communication/say')
+            tts = ActionClient(self, TTS, 'say')
             tts.wait_for_server()
-            tts_goal = TTS.Goal()
-            tts_goal.locale = "en_US"
-            tts_goal.input = "Hello, what can I do for you today?"
+            tts_goal = TTS.Goal(input="Hello, what can I do for you today?")
             tts.send_goal_async(tts_goal)
   {% elif intent.intent in ["SAY"] %}
         # Handle intents to say a specific text
             # Refer to: 
             # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
-            tts = ActionClient(self, TTS, 'communication/say')
+            tts = ActionClient(self, TTS, 'say')
             tts.wait_for_server()
-            tts_goal = TTS.Goal()
-            tts_goal.locale = "en_US"
-            tts_goal.input = data['object']
-            tts.send_goal_async(tts_goal)          
+            tts_goal = TTS.Goal(input=data['object'])
+            tts.send_goal_async(tts_goal)
 {% elif intent.intent in ["START_ACTIVITY", "STOP_ACTIVITY"] %}
-        # Add code to run given this intent
+        # Handle custom/specialized activities/tasks
             pass
 {% endif %}
 {% endfor %}
@@ -207,9 +187,15 @@ motion_goal = PlayMotion2.Goal(motion_name="head_tour")
                                       "<%s>!" % msg.intent)
 {% endif %}
 
+    #########################################################################
+
+    #################################
+    #
+    # Lifecycle transitions callbacks
+    #
     def on_configure(self, state: State) -> TransitionCallbackReturn:
         """
-        Configure the node, after a configuring transition is requested.
+        Configure the node
 
         :return: The state machine either invokes a transition to the
             "inactive" state or stays in "unconfigured" depending on the
@@ -225,7 +211,7 @@ motion_goal = PlayMotion2.Goal(motion_name="head_tour")
 
     def on_activate(self, state: State) -> TransitionCallbackReturn:
         """
-        Activate the node, after an activating transition is requested.
+        Activate the node
 
         Subscribe to topic and start listening to /intents topic.
         Activate the 'communication_hub' node.
@@ -250,7 +236,7 @@ motion_goal = PlayMotion2.Goal(motion_name="head_tour")
         return super().on_activate(state)
 
     def on_deactivate(self, state: State) -> TransitionCallbackReturn:
-        """Stop the timer to stop calling the run function (main task of your application)."""
+        """Stop the timer to stop calling the `run` function (main task of your application)."""
         self.get_logger().info("Stopping application")
 
         self.destroy_timer(self._timer)
@@ -265,8 +251,8 @@ motion_goal = PlayMotion2.Goal(motion_name="head_tour")
         :return: The state machine either invokes a transition to the
             "finalized" state or stays in the current state depending on the
             return value.
-            TransitionCallbackReturn.SUCCESS transitions to "unconfigured".
-            TransitionCallbackReturn.FAILURE transitions to "inactive".
+            TransitionCallbackReturn.SUCCESS transitions to "finalized".
+            TransitionCallbackReturn.FAILURE remains in current state.
             TransitionCallbackReturn.ERROR or any uncaught exceptions to
             "errorprocessing"
         """

@@ -144,13 +144,6 @@ def main():
         description="Generate and manage application skeletons for ROS2-based "
                     "robots"
     )
-    #     parser.add_argument(
-    #         "-f",
-    #         "--force",
-    #         action="store_true",
-    #         help="if set, force overwriting existing documentation",
-    #     )
-    #
 
     subparsers = parser.add_subparsers(dest="command")
 
