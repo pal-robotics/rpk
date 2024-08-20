@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.0 (2024-08-20)
+------------------
 * refine a little the main app template, mostly documentation
 * [tpl] clean-up README
 * fix msg.data to data and readme
