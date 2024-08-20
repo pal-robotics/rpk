@@ -2,6 +2,23 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* refine a little the main app template, mostly documentation
+* [tpl] clean-up README
+* fix msg.data to data and readme
+* fix indentation and add examples
+* fix readme and say, perform motion intent calls
+* Formatting fixed. Adding missing code for ARI.
+* Formatting fixed
+* create pages only for ari, change tts topic name
+* extend to tiago and fix naming to mission controller
+* Fix module set path
+* Fix change state services and linters.
+* Add communication hub management.
+  Fix and added module management.
+* Contributors: Luka Juricic, Raquel Ros, Sara Cooper, Séverin Lemaignan
+
 2.0.2 (2024-07-03)
 ------------------
 * update TTS action topic to /speak
