@@ -26,12 +26,27 @@ PKG_PATH = (
     "pal_app"
 )
 
-AVAILABLE_TEMPLATES = {
+APPLICATION_TEMPLATES = {
     "python": {
-        "tpl_path": "python_script",
+        "tpl_path": "apps/llm_chatbot",
+        "short_desc": "a full sample application, with an example custom skill and a supervisor using an LLM to interact with users",
+        "post_install_help": "Check README.md in ./{path}/ to learn how to configure and start your application.",
+    }
+}
+
+MISSION_CTRL_TEMPLATES = {
+    "python": {
+        "tpl_path": "mission_ctrl/python_script",
         "short_desc": "simple Python script",
-        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
-        "mission_controller.py to implement your application logic.",
+        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/application_controller.py to implement your application logic.",
+    }
+}
+
+SKILL_TEMPLATES = {
+    "python": {
+        "tpl_path": "skill/python_skill",
+        "short_desc": "skill template, written in Python",
+        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/skill_impl.py to implement your skill logic.",
     }
 }
 
