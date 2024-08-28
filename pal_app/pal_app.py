@@ -21,36 +21,52 @@ from pathlib import Path
 from jinja2 import Environment, select_autoescape, FileSystemLoader
 
 import pal_app
+
+# not using ament, so that is also work outside of a ROS environment
 PKG_PATH = (
     Path(pal_app.__file__).parent.parent.parent.parent.parent / "share" /
     "pal_app"
 )
 
-APPLICATION_TEMPLATES = {
-    "python": {
-        "tpl_path": "apps/llm_chatbot",
-        "short_desc": "a full sample application, with an example custom skill and a supervisor using an LLM to interact with users",
-        "post_install_help": "Check README.md in ./{path}/ to learn how to configure and start your application.",
-    }
-}
-
 MISSION_CTRL_TEMPLATES = {
-    "python": {
-        "tpl_path": "mission_ctrl/python_script",
+    "simple_python": {
+        "tpl_path": "mission_ctrls/python_script",
         "short_desc": "simple Python script",
-        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/application_controller.py to implement your application logic.",
+        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/mission_controller.py to implement your application logic.",
     }
 }
 
 SKILL_TEMPLATES = {
-    "python": {
-        "tpl_path": "skill/python_skill",
-        "short_desc": "skill template, written in Python",
+    "simple_python": {
+        "tpl_path": "skills/python_skill",
+        "short_desc": "simple skill template, written in Python",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/skill_impl.py to implement your skill logic.",
     }
 }
 
-AVAILABLE_ROBOTS = ["ari", "tiago"]
+APPLICATION_TEMPLATES = {
+    "llm": {
+        "tpl_path": "apps/llm_chatbot",
+        "short_desc": "a full sample application, with an example custom skill and a supervisor using an LLM to interact with users",
+        "post_install_help": "Check README.md in ./{path}/ to learn how to configure and start your application.",
+        "skill_templates": [{"simple_python": {"id": "db_connector", "name": "Custom database connector"}}],
+        "mission_ctrl_templates": [{"simple_python": {"id": "llm", "name": "LLM-based mission controller"}}],
+    }
+}
+
+TEMPLATES_FAMILIES = {
+    "skill": {"src": SKILL_TEMPLATES,
+              "name": "skill",
+              "help": "skills are short-term 'atomic' robot actions that mission controllers can compose"},
+    "mission": {"src": MISSION_CTRL_TEMPLATES,
+                "name": "mission controller",
+                "help": "a mission controller role is to supervise the whole behaviour of the robot"},
+    "app": {"src": APPLICATION_TEMPLATES,
+            "name": "application",
+            "help": "a redistribuable package with a mission controller, as well as sample skills and other resources"}
+}
+
+AVAILABLE_ROBOTS = ["generic", "ari", "tiago"]
 
 TPL_EXT = "j2"
 
@@ -102,7 +118,7 @@ def get_intents():
     return intents
 
 
-def interactive_create(id=None, template=None, robot=None):
+def interactive_create(id=None, family=None, template=None, robot=None):
 
     if id and (" " in id or "-" in id):
         print("The chosen ID can not contain spaces or hyphens.")
@@ -119,12 +135,45 @@ def interactive_create(id=None, template=None, robot=None):
             id = None
 
     name = input(
-        "Full name of your application? (eg 'The Receptionist Robot', press "
-        "Return to skip)\n"
+        "Full name of your skill/application? (eg 'The Receptionist Robot' or 'Database connector', press "
+        "Return to use the ID. You can change it later)\n"
     )
 
     if not name:
         name = id
+
+    # get the user to choose between mission controller, skill or full
+    # application
+    while not family:
+        print("\nWhat content do you want to create?")
+        for idx, family in enumerate(TEMPLATES_FAMILIES.keys()):
+            print("%s: %s" % (idx + 1, TEMPLATES_FAMILIES[family]["name"]))
+
+        try:
+            choice = int(input("\nYour choice? "))
+
+            family = list(TEMPLATES_FAMILIES.keys())[choice - 1]
+        except IndexError:
+            family = ""
+
+    tpls = TEMPLATES_FAMILIES[family]["src"]
+    while not template:
+        print("\nWhat kind of mission controller do you want to create?")
+        for idx, tpl in enumerate(tpls.keys()):
+            print("%s: %s" %
+                  (idx + 1, tpls[tpl]["short_desc"]))
+
+        try:
+            if len(tpls) == 1:
+                # if only one template available, make it the default choice
+                choice = int(input(
+                    f"\nYour choice? (default: 1: {tpls[list(tpls.keys())[0]]['short_desc']}) ").strip() or 1)
+            else:
+                choice = int(input("\nYour choice? ").strip())
+
+            template = list(tpls.keys())[choice - 1]
+        except IndexError:
+            template = ""
 
     while not robot:
         print("\nWhat robot are you targeting?")
@@ -132,25 +181,14 @@ def interactive_create(id=None, template=None, robot=None):
             print("%s: %s" % (idx + 1, r))
 
         try:
-            choice = int(input("\nYour choice? "))
+            choice = int(
+                input(f"\nYour choice? (default: 1: {AVAILABLE_ROBOTS[0]}) ").strip() or 1)
 
             robot = AVAILABLE_ROBOTS[choice - 1]
         except IndexError:
             robot = ""
 
-    while not template:
-        print("\nWhat kind of mission controller do you want to create?")
-        for idx, tpl in enumerate(AVAILABLE_TEMPLATES.keys()):
-            print("%s: %s" % (idx + 1, AVAILABLE_TEMPLATES[tpl]["short_desc"]))
-
-        try:
-            choice = int(input("\nYour choice? "))
-
-            template = list(AVAILABLE_TEMPLATES.keys())[choice - 1]
-        except IndexError:
-            template = ""
-
-    return id, name, template, robot
+    return id, name, family, template, robot
 
 
 def main():
@@ -165,14 +203,6 @@ def main():
     create_parser = subparsers.add_parser(
         "create", help="Create a new application skeleton"
     )
-    create_parser.add_argument(
-        "-i",
-        "--id",
-        type=str,
-        nargs="?",
-        help="ID of your application. Must be a valid ROS2 identifier, without "
-             "spaces or hyphens.",
-    )
 
     create_parser.add_argument(
         "-r",
@@ -183,17 +213,33 @@ def main():
         help="target robot.",
     )
 
-    create_parser.add_argument(
-        "-t",
-        "--template",
-        choices=AVAILABLE_TEMPLATES.keys(),
-        type=str,
-        nargs="?",
-        help="Template to use.",
-    )
+    family_subparsers = create_parser.add_subparsers(dest="family")
+    for family in TEMPLATES_FAMILIES.keys():
+        f_parser = family_subparsers.add_parser(
+            family, help=TEMPLATES_FAMILIES[family]["help"]
+        )
+
+        f_parser.add_argument(
+            "-t",
+            "--template",
+            choices=TEMPLATES_FAMILIES[family]["src"].keys(),
+            type=str,
+            nargs="?",
+            help="Template to use.",
+        )
+
+        f_parser.add_argument(
+            "-i",
+            "--id",
+            type=str,
+            nargs="?",
+            help="ID of your application. Must be a valid ROS2 identifier, without "
+            "spaces or hyphens.",
+        )
 
     create_parser.add_argument(
-        "path",
+        "-p",
+        "--path",
         type=str,
         nargs="?",
         const=".",
@@ -210,57 +256,52 @@ def main():
 
     intents = get_intents()
 
-    id, name, tpl, robot = interactive_create(
-        args.id, args.template, args.robot)
+    id, name, family, tpl_name, robot = interactive_create(
+        args.id, args.family, args.template, args.robot)
 
     data = {"id": id, "name": name, "intents": intents, "robot": robot}
 
     root = Path(args.path) / id
     root.mkdir(parents=True, exist_ok=True)
 
-    print("Generating application skeleton in %s..." % root)
+    print(f"Generating {family} skeleton in {root}...")
 
-    if tpl == "python":
-        tpl_path = PKG_PATH / "tpl" / AVAILABLE_TEMPLATES[tpl]["tpl_path"]
+    tpl = TEMPLATES_FAMILIES[family]["src"][tpl_name]
+    tpl_path = PKG_PATH / "tpl" / tpl["tpl_path"]
 
-        env = Environment(
-            loader=FileSystemLoader(str(tpl_path)),
-            autoescape=select_autoescape(),
-            trim_blocks=True,
+    env = Environment(
+        loader=FileSystemLoader(str(tpl_path)),
+        autoescape=select_autoescape(),
+        trim_blocks=True,
+    )
+
+    j2_tpls = env.list_templates(extensions=TPL_EXT)
+
+    if not j2_tpls:
+        print(
+            "Error! no app template found for %s. I was looking for "
+            "template files under <%s>. It seems pal_app is not correctly "
+            "installed."
+            % (tpl, tpl_path)
         )
-
-        tpls = env.list_templates(extensions=TPL_EXT)
-
-        if not tpls:
-            print(
-                "Error! no app template found for %s. I was looking for "
-                "template files under <%s>. It seems pal_app is not correctly "
-                "installed."
-                % (tpl, tpl_path)
-            )
-            sys.exit(1)
-
-        for tpl_name in tpls:
-            if (("pages_only_ari" in tpl_name) and (robot not in tpl_name)):
-                continue
-            j_tpl = env.get_template(tpl_name)
-            tpl_name = tpl_name.replace("{{id}}", data["id"])
-            filename = root / tpl_name[: -(1 + len(TPL_EXT))]
-            filename.parent.mkdir(parents=True, exist_ok=True)
-            print("Creating %s..." % filename)
-            with open(filename, "w") as fh:
-                fh.write(j_tpl.render(data))
-
-        print("\n\033[32;1mDone!")
-        print("\033[33;1m")
-        print(AVAILABLE_TEMPLATES[tpl]["post_install_help"].format(
-            path=root, id=id))
-        print("\033[0m")
-
-    else:
-        print("No template available for %s! Cannot generate an app "
-              "skeleton." % tpl)
         sys.exit(1)
+
+    for j2_tpl_name in j2_tpls:
+        if (("pages_only_ari" in j2_tpl_name) and (robot not in j2_tpl_name)):
+            continue
+        j2_tpl = env.get_template(j2_tpl_name)
+        j2_tpl_name = j2_tpl_name.replace("{{id}}", data["id"])
+        filename = root / j2_tpl_name[: -(1 + len(TPL_EXT))]
+        filename.parent.mkdir(parents=True, exist_ok=True)
+        print("Creating %s..." % filename)
+        with open(filename, "w") as fh:
+            fh.write(j2_tpl.render(data))
+
+    print("\n\033[32;1mDone!")
+    print("\033[33;1m")
+    print(tpl["post_install_help"].format(
+        path=root, id=id))
+    print("\033[0m")
 
 
 if __name__ == "__main__":
