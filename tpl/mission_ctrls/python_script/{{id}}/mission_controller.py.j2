@@ -125,6 +125,9 @@ motion_goal = PlayMotion2.Goal(motion_name="head_tour")
             {% endif %} 
             tts.send_goal_async(tts_goal)
             play_motion.send_goal(motion_goal)
+{% elif (robot == "generic" and intent.intent == "ENGAGE_WITH") %}
+        # Handle intents of a user to engage with the robot
+            pass
 {% elif (robot == "ari" and intent.intent == "PRESENT_CONTENT") %}
         # Handle intents to present specific content by
             # loading the corresponding page onto the touchscreen.
