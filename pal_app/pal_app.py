@@ -31,18 +31,19 @@ PKG_PATH = (
 )
 
 SKILL_TEMPLATES = {
-    "simple_python": {
+    "db_connector_python": {
         "tpl_paths": ["skills/python/{{id}}", "skills/sample_skill_msgs"],
-        "short_desc": "simple skill template, written in Python",
+        "short_desc": "simple skill template, mocking-up a database connector. Written in Python",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/skill_impl.py to implement your skill logic.",
     }
 }
 
 TASK_TEMPLATES = {
-    "simple_python": {
-        "tpl_paths": ["tasks/python/{{id}}"],
-        "short_desc": "simple task template, written in Python",
+    "greet_task_python": {
+        "tpl_paths": ["tasks/python/{{id}}", "tasks/greet_task_msgs"],
+        "short_desc": "simple task template, implementing a very basic greeting activity. Written in Python",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/task_impl.py to implement your task logic.",
+        "skill_templates": [{"db_connector_python": {"id": "db_connector", "name": "Custom database connector"}}],
     }
 }
 
@@ -60,8 +61,7 @@ APPLICATION_TEMPLATES = {
         "tpl_paths": ["apps/python/{{id}}"],
         "short_desc": "a full sample application, using LLM to interact with users. It includes a supervisor and custom tasks and skills.",
         "post_install_help": "Check README.md in ./{path}/ to learn how to configure and start your application.",
-        "skill_templates": [{"simple_python": {"id": "db_connector", "name": "Custom database connector"}}],
-        "task_templates": [{"simple_python": {"id": "greet_task", "name": "Greet task"}}],
+        "task_templates": [{"greet_task_python": {"id": "greet_task", "name": "'greet' task"}}],
         "mission_ctrl_templates": [{"simple_python": {"id": "llm_supervisor", "name": "LLM-based mission controller"}}],
     }
 }

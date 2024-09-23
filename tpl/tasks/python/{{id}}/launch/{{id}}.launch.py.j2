@@ -26,13 +26,13 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     # automatically fetch the start parameters for this node,
-    # using defaults installed with the skill, as well as possible
+    # using defaults installed with the task, as well as possible
     # user overrides
     config = get_pal_configuration(pkg=pkg, node=node, ld=ld)
 
     node = LifecycleNode(
         package=pkg,
-        executable='start_skill',
+        executable='start_task',
         namespace='',
         name=node,
         parameters=config["parameters"],
@@ -42,7 +42,7 @@ def generate_launch_description():
         )
 
     # automatically perform the lifecycle transitions to configure and activate
-    # the skill at startup
+    # the task at startup
     configure_event = EmitEvent(event=ChangeState(
         lifecycle_node_matcher=matches_action(node),
         transition_id=Transition.TRANSITION_CONFIGURE))
@@ -51,7 +51,7 @@ def generate_launch_description():
         target_lifecycle_node=node, goal_state='inactive',
         entities=[EmitEvent(event=ChangeState(
             lifecycle_node_matcher=matches_action(node),
-            transition_id=Transition.TRANSITION_ACTIVATE))], 
+            transition_id=Transition.TRANSITION_ACTIVATE))],
         handle_once=True))
 
     return LaunchDescription([
