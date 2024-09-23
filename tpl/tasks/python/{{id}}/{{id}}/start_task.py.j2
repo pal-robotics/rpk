@@ -25,21 +25,21 @@ import rclpy
 
 from rclpy.executors import MultiThreadedExecutor
 
-import {{ id }}.skill_impl
+import {{ id }}.task_impl
 
 
 def main():
     rclpy.init()
 
-    skill = {{ id }}.skill_impl.SkillImpl()
-    skill_executor = MultiThreadedExecutor()
-    skill_executor.add_node(skill)
+    task = {{ id }}.task_impl.TaskImpl()
+    task_executor = MultiThreadedExecutor()
+    task_executor.add_node(task)
 
     try:
-        skill_executor.spin()
+        task_executor.spin()
     except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
         print("Goodbye!")
-        skill.destroy_node()
+        task.destroy_node()
 
 
 if __name__ == '__main__':

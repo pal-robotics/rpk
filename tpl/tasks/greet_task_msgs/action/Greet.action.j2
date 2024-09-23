@@ -1,0 +1,16 @@
+# sample action message for the 'Greet' task. This is purely
+# for illustration purpose! You would probably not implement
+# a 'greet' task using this message.
+
+# define some status constants
+uint8 INACTIVE = 0
+uint8 SELECTING_USER = 1
+uint8 FACING_USER = 2
+uint8 GREETING_USER = 3
+uint8 SUCCESSFUL_USER_ACKNOWLEDGMENT = 4
+
+---
+string error_msg
+---
+string status
+

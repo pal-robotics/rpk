@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import random
+import time
 
 from rclpy.lifecycle import Node
 from rclpy.lifecycle import State
@@ -18,43 +18,50 @@ from rclpy.lifecycle import TransitionCallbackReturn
 from rcl_interfaces.msg import ParameterDescriptor
 
 from rclpy.action import ActionServer, GoalResponse
-from std_msgs.msg import String
+
+from rclpy.action import ActionClient
+
+# custom action for this task. This has been generated
+# by pal_app alongside this node.
+from greet_task_msgs.action import Greet
+
+# action for the system skill 'say'
+from tts_msgs.action import TTS
+
+# action for the custom skill 'db_request'
+from sample_skill_msgs.action import DbRequest
 
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
 
-class SkillImpl(Node):
+class TaskImpl(Node):
     """
-    This is the main class for the skill. It is a ROS2 node that uses the
+    Implementation of task {{id}}.
+
+    This is the main class for the task. It is a ROS2 node that uses the
     lifecycle feature of ROS2 to manage its states.
 
-    As an example, the skill mocks up the connection to an external
-    database. Adjust the code to your own needs.
+    As an example, the task uses 2 skills:
+    - a skill to connect to a (mock) database and
+      retrieve the name of the current user,
+    - a skill to say hello to that user.
 
-    Don't forget to update accordingly the manifest of the skill to describe
-    what your skill is actually doing.
+    A real 'greet' activity would be significantly more complex: adjust the
+    code to your own needs!
+
+    Don't forget to update accordingly the manifest of the task, included in
+    package.xml, to describe what your task is actually doing.
     """
 
     def __init__(self) -> None:
         """Construct the node."""
-        super().__init__('skill_{{ id }}')
+        super().__init__('task_{{ id }}')
 
-        # Declare ROS parameters
-        self.declare_parameter(
-            'db_url', "mongodb://localhost:27017",
-            ParameterDescriptor(description='Fulll URL of the database')
-        )
 
         self.get_logger().info("Initialising...")
         self._timer = None
         self._diag_pub = None
         self._diag_timer = None
-
-        # mock-up variables for our database example
-        self.db_url = None
-        self.db_ready = False
-        self.nb_requests = None
-        self.last_time = self.get_clock().now()
 
         #######################################
         #
@@ -63,53 +70,60 @@ class SkillImpl(Node):
         # Initialisation should happen in the
         # on_configure state.
         #
+        
+        self.task_server = None
 
-        self.get_logger().info('Skill {{id}} started, but not yet configured.')
+        self.db_client = None
+        self.tts_client = None
 
-    def connect_to_database(self):
-        """ mock-up function to connect to a database """
+        self.current_greeting_status = Greet.Goal().INACTIVE
 
-        self.get_logger().info(f"Connecting to database on {self.db_url}...")
-        self.db_ready = True
-        self.get_logger().info("Connected to database")
-
-    def perform_requests(self):
-        """ mock-up function to perform a request to the database """
-
-        if not self.db_ready:
-            self.get_logger().error("Database not ready")
-            return
-
-        self.get_logger().info("Performing requests to database...")
-        # perform request here
-        self.nb_requests += random.randint(50, 100)
-        self.get_logger().info("Requests performed")
-
-    def close_database_connection(self):
-        """ mock-up function to close the connection to the database """
-
-        self.get_logger().info("Closing connection to database...")
-        self.db_ready = False
-        self.get_logger().info("Connection closed")
+        self.get_logger().info('Task {{id}} started, but not yet configured.')
 
     def on_request_goal(self, goal_handle):
-        """Callback when a new goal is received on the action server"""
-
-        if self._state_machine.current_state[1] != State.ACTIVE:
-            self.get_logger().error("Skill is not active, rejecting goal")
+        """Accept incoming goal if appropriate."""
+        if self._state_machine.current_state[1] != "active":
+            self.get_logger().error("Task is not active, rejecting goal")
             return GoalResponse.REJECT
 
-        self.get_logger().info("Received a new goal")
+        self.get_logger().info("Accepted a new goal")
         return GoalResponse.ACCEPT
 
     def on_request_exec(self, goal_handle):
-        """Callback when a goal is accepted on the action server"""
+        """Process incoming goal."""
 
-        self.get_logger().info(f"Executing request: {goal_handle.request.data}")
-        # perform request here
-        self.get_logger().info("Goal executed")
+        self.current_greeting_status = Greet.Goal().SELECTING_USER
 
-        return String(data="Request executed")
+        self.get_logger().info("Starting the greeting task")
+
+        feedback_msg = Greet.Feedback()
+        feedback_msg.status = self.current_greeting_status
+
+        goal_handle.publish_feedback(feedback_msg)
+
+        previous_status = self.current_greeting_status
+
+        # wait until the status is SUCCESSFUL_USER_ACKNOWLEDGMENT;
+        # publish feecback every time the status changes
+        while self.current_greeting_status != Greet.Goal().SUCCESSFUL_USER_ACKNOWLEDGMENT:
+
+            if previous_status != self.current_greeting_status:
+                self.get_logger().info(
+                    f"Current greeting status: {self.current_greeting_status}")
+                feedback_msg.status = self.current_greeting_status
+                goal_handle.publish_feedback(feedback_msg)
+                previous_status = self.current_greeting_status
+
+            time.sleep(0.5)
+
+        feedback_msg.status = self.current_greeting_status
+        goal_handle.publish_feedback(feedback_msg)
+
+        goal_handle.succeed()
+
+        self.current_greeting_status = Greet.Goal().INACTIVE
+
+        return Greet.Result()
 
     #################################
     #
@@ -138,22 +152,24 @@ class SkillImpl(Node):
             TransitionCallbackReturn.ERROR or any uncaught exceptions to
             "errorprocessing"
         """
-        self.nb_requests = 0
-        self.db_ready = False
-        self.db_url = self.get_parameter('db_url').value
-        self.connect_to_database()
-
-        # example API for our 'database' skill
-        #self.skill_server = ActionServer(
-        #    self, String, "~/db_request",
-        #    goal_callback=self.on_request_goal,
-        #    execute_callback=self.on_request_exec)
 
         # configure and start diagnostics publishing
         self._diag_pub = self.create_publisher(DiagnosticArray, '/diagnostics', 1)
         self._diag_timer = self.create_timer(1., self.publish_diagnostics)
 
-        self.get_logger().info("Skill {{id}} is configured, but not yet active")
+        # example API for our 'database' skill
+        self.task_server = ActionServer(
+            self, Greet, "/greet",
+            goal_callback=self.on_request_goal,
+            execute_callback=self.on_request_exec)
+
+        # create an action client for the 'say' skill
+        self.tts_client = ActionClient(self, TTS, "/say")
+
+        # create an action client for the 'db_request' skill
+        self.db_client = ActionClient(self, DbRequest, "/db_request")
+
+        self.get_logger().info("Task {{id}} is configured, but not yet active")
         return TransitionCallbackReturn.SUCCESS
 
     def on_activate(self, state: State) -> TransitionCallbackReturn:
@@ -165,21 +181,19 @@ class SkillImpl(Node):
         - Start processing data, and accepting action goals, if any
 
         """
-
         # Define a timer that fires every second to call the run function
         timer_period = 1  # in sec
         self._timer = self.create_timer(timer_period, self.run)
 
-        self.get_logger().info("Skill {{id}} is active and running")
+        self.get_logger().info("Task {{id}} is active and running")
         return super().on_activate(state)
 
     def on_deactivate(self, state: State) -> TransitionCallbackReturn:
         """Stop the timer to stop calling the `run` function (main task of your application)."""
-
-        self.get_logger().info("Stopping skill...")
+        self.get_logger().info("Stopping task...")
         self.destroy_timer(self._timer)
 
-        self.get_logger().info("Skill {{id}} is stopped (inactive)")
+        self.get_logger().info("Task {{id}} is stopped (inactive)")
         return super().on_deactivate(state)
 
     def on_shutdown(self, state: State) -> TransitionCallbackReturn:
@@ -194,36 +208,28 @@ class SkillImpl(Node):
             TransitionCallbackReturn.ERROR or any uncaught exceptions to
             "errorprocessing"
         """
-        self.get_logger().info('Shutting down {{id}} skill.')
+        self.get_logger().info('Shutting down task {{id}}.')
         self.destroy_timer(self._diag_timer)
         self.destroy_publisher(self._diag_pub)
 
         self.destroy_timer(self._timer)
 
-        self.close_database_connection()
-
-        self.get_logger().info("Skill {{id}} finalized.")
+        self.get_logger().info("Task {{id}} finalized.")
         return TransitionCallbackReturn.SUCCESS
 
     #################################
 
     def publish_diagnostics(self):
-        requests_per_second = self.nb_requests /
-                (self.get_clock().now() - self.last_time).nanoseconds * 1e9
-        self.last_time = self.get_clock().now()
-        self.nb_requests = 0
 
         arr = DiagnosticArray()
         msg = DiagnosticStatus(
             level=DiagnosticStatus.OK,
-            name="/skills/skill_{{ id }}",
-            message="skill {{id}} is running",
+            name="/tasks/task_{{ id }}",
+            message="task {{id}} is running",
             values=[
                 KeyValue(key="Module name", value="{{ id }}"),
                 KeyValue(key="Current lifecycle state",
                          value=self._state_machine.current_state[1]),
-                KeyValue(key="Database", value=self.db_url),
-                KeyValue(key="Requests/sec", value=str(requests_per_second)),
             ],
         )
 
@@ -233,16 +239,67 @@ class SkillImpl(Node):
 
     def run(self) -> None:
         """
-        The main task of your skill. This function will be triggered by
-        the timer in the class, and only when the timer is active.
+        Background task of the activity.
+
+        This function will be triggered by the timer in the class, 
+        and only when the timer is active.
         """
         #######################################
         #
         # TODO: Implement here any background
-        # task required by your skill
-        # If the skill is deactivated,
+        # task required by your task
+        # If the task is deactivated,
         # this function is not called anymore
         #
+        
 
-        self.perform_requests()
+        current_username = ""
 
+        while True:
+
+            if self.current_greeting_status == Greet.Goal().INACTIVE:
+                time.sleep(0.1)
+                continue
+
+            if self.current_greeting_status == Greet.Goal().SELECTING_USER:
+
+                self.get_logger().info("Requesting user name from the database")
+                self.db_client.wait_for_server()
+                goal = DbRequest.Goal()
+                goal.query = "SELECT name FROM users WHERE id = 1"
+                future = self.db_client.send_goal_async(goal)
+                rclpy.spin_until_future_complete(self, future)
+                result = future.result()
+
+                if result is not None:
+                    current_username = result.result
+                    self.get_logger().info(f"Received user name: {result.result}")
+                    self.current_greeting_status = Greet.Goal().FACING_USER
+                else:
+                    self.get_logger().error("Failed to get user name")
+                    self.current_greeting_status = Greet.Goal().INACTIVE
+
+                continue
+
+            if self.current_greeting_status == Greet.Goal().FACING_USER:
+
+                time.sleep(1)
+                self.current_greeting_status = Greet.Goal().GREETING_USER
+                continue
+
+            if self.current_greeting_status == Greet.Goal().GREETING_USER:
+
+                self.get_logger().info("Saying hello to the user")
+                self.tts_client.wait_for_server()
+                goal = TTS.Goal()
+                goal.text = f"Hello, {current_username}!"
+                future = self.tts_client.send_goal_async(goal)
+                rclpy.spin_until_future_complete(self, future)
+                result = future.result()
+
+                if result is not None:
+                    self.get_logger().info("Greeting successful")
+                    self.current_greeting_status = Greet.Goal().SUCCESSFUL_USER_ACKNOWLEDGMENT
+                else:
+                    self.get_logger().error("Failed to greet the user")
+                    self.current_greeting_status = Greet.Goal().INACTIVE
