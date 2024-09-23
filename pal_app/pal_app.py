@@ -22,11 +22,29 @@ from jinja2 import Environment, select_autoescape, FileSystemLoader
 
 import pal_app
 
+SELF_NAME = "pal_app"
+
 # not using ament, so that is also work outside of a ROS environment
 PKG_PATH = (
     Path(pal_app.__file__).parent.parent.parent.parent.parent / "share" /
     "pal_app"
 )
+
+SKILL_TEMPLATES = {
+    "simple_python": {
+        "tpl_path": "skills/python_skill",
+        "short_desc": "simple skill template, written in Python",
+        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/skill_impl.py to implement your skill logic.",
+    }
+}
+
+TASK_TEMPLATES = {
+    "simple_python": {
+        "tpl_path": "tasks/python_task",
+        "short_desc": "simple task template, written in Python",
+        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/task_impl.py to implement your task logic.",
+    }
+}
 
 MISSION_CTRL_TEMPLATES = {
     "simple_python": {
@@ -36,13 +54,6 @@ MISSION_CTRL_TEMPLATES = {
     }
 }
 
-SKILL_TEMPLATES = {
-    "simple_python": {
-        "tpl_path": "skills/python_skill",
-        "short_desc": "simple skill template, written in Python",
-        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/skill_impl.py to implement your skill logic.",
-    }
-}
 
 APPLICATION_TEMPLATES = {
     "llm": {
@@ -57,13 +68,16 @@ APPLICATION_TEMPLATES = {
 TEMPLATES_FAMILIES = {
     "skill": {"src": SKILL_TEMPLATES,
               "name": "skill",
-              "help": "skills are short-term 'atomic' robot actions that mission controllers can compose"},
+              "help": "short-term 'atomic' robot action, to be re-used by tasks and mission controllers. Examples: 'go to', 'say', 'perform pre-recorded motion'"},
+    "task": {"src": TASK_TEMPLATES,
+              "name": "task",
+              "help": "time-limited robot activity, started by the mission controller. Might use skills. Examples: 'greet person', 'fetch object'"},
     "mission": {"src": MISSION_CTRL_TEMPLATES,
                 "name": "mission controller",
-                "help": "a mission controller role is to supervise the whole behaviour of the robot"},
+                "help": "manages the whole behaviour of the robot. Examples: 'receptionist', 'waiter'"},
     "app": {"src": APPLICATION_TEMPLATES,
             "name": "application",
-            "help": "a redistribuable package with a mission controller, as well as sample skills and other resources"}
+            "help": "complete application including a mission controller, a sample task and skill, and sample resources"}
 }
 
 AVAILABLE_ROBOTS = ["generic", "ari", "tiago"]
@@ -201,7 +215,7 @@ def main():
     subparsers = parser.add_subparsers(dest="command")
 
     create_parser = subparsers.add_parser(
-        "create", help="Create a new application skeleton"
+        "create", help="Create new application/task/skill skeletons"
     )
 
     create_parser.add_argument(
@@ -251,7 +265,11 @@ def main():
     args = parser.parse_args()
 
     if not args.command:
-        print("You must select a command.\nType 'pal_app --help' for details.")
+        print(f"You must select a command.\nType '{SELF_NAME} --help' for details.")
+        sys.exit(1)
+
+    if args.command == "create" and not hasattr(args, "template"):
+        print(f"You must select a type of content.\nType '{SELF_NAME} create --help' for details.")
         sys.exit(1)
 
     intents = get_intents()
@@ -280,7 +298,7 @@ def main():
     if not j2_tpls:
         print(
             "Error! no app template found for %s. I was looking for "
-            "template files under <%s>. It seems pal_app is not correctly "
+            f"template files under <%s>. It seems {SELF_NAME} is not correctly "
             "installed."
             % (tpl, tpl_path)
         )
