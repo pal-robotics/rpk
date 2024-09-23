@@ -51,7 +51,7 @@ def generate_launch_description():
         target_lifecycle_node=node, goal_state='inactive',
         entities=[EmitEvent(event=ChangeState(
             lifecycle_node_matcher=matches_action(node),
-            transition_id=Transition.TRANSITION_ACTIVATE))], 
+            transition_id=Transition.TRANSITION_ACTIVATE))],
         handle_once=True))
 
     return LaunchDescription([
