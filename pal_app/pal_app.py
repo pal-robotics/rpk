@@ -56,12 +56,13 @@ MISSION_CTRL_TEMPLATES = {
 
 
 APPLICATION_TEMPLATES = {
-    "llm": {
-        "tpl_paths": ["apps/llm_chatbot"],
-        "short_desc": "a full sample application, with an example custom skill and a supervisor using an LLM to interact with users",
+    "llm_chatbot_python": {
+        "tpl_paths": ["apps/python/{{id}}"],
+        "short_desc": "a full sample application, using LLM to interact with users. It includes a supervisor and custom tasks and skills.",
         "post_install_help": "Check README.md in ./{path}/ to learn how to configure and start your application.",
         "skill_templates": [{"simple_python": {"id": "db_connector", "name": "Custom database connector"}}],
-        "mission_ctrl_templates": [{"simple_python": {"id": "llm", "name": "LLM-based mission controller"}}],
+        "task_templates": [{"simple_python": {"id": "greet_task", "name": "Greet task"}}],
+        "mission_ctrl_templates": [{"simple_python": {"id": "llm_supervisor", "name": "LLM-based mission controller"}}],
     }
 }
 
