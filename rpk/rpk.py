@@ -203,8 +203,24 @@ def interactive_create(id=None, family=None, template=None, robot=None):
 def generate_skeleton(data, family, tpl_name, robot, root):
     
     print(f"Generating {family} skeleton in {root}...")
-
     tpl = TEMPLATES_FAMILIES[family]["src"][tpl_name]
+
+    data["dependencies"] = []
+
+    # if needed, first generate the skeletons for the missions, skills and tasks
+    # referenced in the template
+    for additional_tpl in ["skill_templates", "task_templates", "mission_ctrl_templates"]:
+        if additional_tpl in tpl:
+            type = additional_tpl.split("_")[0]
+            for a_tpl in tpl[additional_tpl]:
+                tpl_name = list(a_tpl.keys())[0]
+                a_data = dict(data)
+                a_data["id"] = a_tpl[tpl_name]["id"]
+                data["dependencies"].append(a_data["id"])
+                a_data["name"] = a_tpl[tpl_name]["name"]
+                generate_skeleton(a_data, type, tpl_name , robot, root)
+
+    # then generate the skeleton for the current template
     tpl_paths = [PKG_PATH / "tpl" / p for p in tpl["tpl_paths"]]
 
     for tpl_path in tpl_paths:
@@ -241,10 +257,11 @@ def generate_skeleton(data, family, tpl_name, robot, root):
             with open(filename, "w") as fh:
                 fh.write(j2_tpl.render(data))
 
+
     print("\n\033[32;1mDone!")
     print("\033[33;1m")
     print(tpl["post_install_help"].format(
-        path=root, id=id))
+        path=root, id=data["id"]))
     print("\033[0m")
 
 
