@@ -28,7 +28,7 @@ PKG_PATH = (
 
 SKILL_TEMPLATES = {
     "simple_python": {
-        "tpl_path": "skills/python_skill",
+        "tpl_paths": ["skills/python/{{id}}", "skills/sample_skill_msgs"],
         "short_desc": "simple skill template, written in Python",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/skill_impl.py to implement your skill logic.",
     }
@@ -36,7 +36,7 @@ SKILL_TEMPLATES = {
 
 TASK_TEMPLATES = {
     "simple_python": {
-        "tpl_path": "tasks/python_task",
+        "tpl_paths": ["tasks/python_task"],
         "short_desc": "simple task template, written in Python",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/task_impl.py to implement your task logic.",
     }
@@ -44,7 +44,7 @@ TASK_TEMPLATES = {
 
 MISSION_CTRL_TEMPLATES = {
     "simple_python": {
-        "tpl_path": "mission_ctrls/python_script",
+        "tpl_paths": ["mission_ctrls/python_script"],
         "short_desc": "simple Python script",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/mission_controller.py to implement your application logic.",
     }
@@ -53,7 +53,7 @@ MISSION_CTRL_TEMPLATES = {
 
 APPLICATION_TEMPLATES = {
     "llm": {
-        "tpl_path": "apps/llm_chatbot",
+        "tpl_paths": ["apps/llm_chatbot"],
         "short_desc": "a full sample application, with an example custom skill and a supervisor using an LLM to interact with users",
         "post_install_help": "Check README.md in ./{path}/ to learn how to configure and start your application.",
         "skill_templates": [{"simple_python": {"id": "db_connector", "name": "Custom database connector"}}],
@@ -275,41 +275,47 @@ def main():
 
     data = {"id": id, "name": name, "intents": intents, "robot": robot}
 
-    root = Path(args.path) / id
+    root = Path(args.path)
     root.mkdir(parents=True, exist_ok=True)
 
     print(f"Generating {family} skeleton in {root}...")
 
     tpl = TEMPLATES_FAMILIES[family]["src"][tpl_name]
-    tpl_path = PKG_PATH / "tpl" / tpl["tpl_path"]
+    tpl_paths = [PKG_PATH / "tpl" / p for p in tpl["tpl_paths"]]
 
-    env = Environment(
-        loader=FileSystemLoader(str(tpl_path)),
-        autoescape=select_autoescape(),
-        trim_blocks=True,
-    )
-
-    j2_tpls = env.list_templates(extensions=TPL_EXT)
-
-    if not j2_tpls:
-        print(
-            "Error! no app template found for %s. I was looking for "
-            f"template files under <%s>. It seems {SELF_NAME} is not correctly "
-            "installed."
-            % (tpl, tpl_path)
+    for tpl_path in tpl_paths:
+        env = Environment(
+            loader=FileSystemLoader(str(tpl_path)),
+            autoescape=select_autoescape(),
+            trim_blocks=True,
         )
-        sys.exit(1)
 
-    for j2_tpl_name in j2_tpls:
-        if (("pages_only_ari" in j2_tpl_name) and (robot not in j2_tpl_name)):
-            continue
-        j2_tpl = env.get_template(j2_tpl_name)
-        j2_tpl_name = j2_tpl_name.replace("{{id}}", data["id"])
-        filename = root / j2_tpl_name[: -(1 + len(TPL_EXT))]
-        filename.parent.mkdir(parents=True, exist_ok=True)
-        print("Creating %s..." % filename)
-        with open(filename, "w") as fh:
-            fh.write(j2_tpl.render(data))
+        j2_tpls = env.list_templates(extensions=TPL_EXT)
+
+        if not j2_tpls:
+            print(
+                "Error! no app template found for %s. I was looking for "
+                f"template files under <%s>. It seems {SELF_NAME} is not correctly "
+                "installed."
+                % (tpl, tpl_path)
+            )
+            sys.exit(1)
+
+        for j2_tpl_name in j2_tpls:
+            if (("pages_only_ari" in j2_tpl_name) and (robot not in j2_tpl_name)):
+                continue
+            j2_tpl = env.get_template(j2_tpl_name)
+            j2_tpl_name = j2_tpl_name.replace("{{id}}", data["id"])
+
+            # 'base' is the name of the package directory
+            base = root / tpl_path.name.replace("{{id}}", data["id"])
+            base.mkdir(parents=True, exist_ok=True)
+
+            filename = base / j2_tpl_name[: -(1 + len(TPL_EXT))]
+            filename.parent.mkdir(parents=True, exist_ok=True)
+            print(f"Creating {filename}...")
+            with open(filename, "w") as fh:
+                fh.write(j2_tpl.render(data))
 
     print("\n\033[32;1mDone!")
     print("\033[33;1m")
