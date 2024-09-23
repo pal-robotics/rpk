@@ -36,7 +36,7 @@ SKILL_TEMPLATES = {
 
 TASK_TEMPLATES = {
     "simple_python": {
-        "tpl_paths": ["tasks/python_task"],
+        "tpl_paths": ["tasks/python/{{id}}"],
         "short_desc": "simple task template, written in Python",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/task_impl.py to implement your task logic.",
     }
@@ -44,7 +44,7 @@ TASK_TEMPLATES = {
 
 MISSION_CTRL_TEMPLATES = {
     "simple_python": {
-        "tpl_paths": ["mission_ctrls/python_script"],
+        "tpl_paths": ["mission_ctrls/python/{{id}}"],
         "short_desc": "simple Python script",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/mission_controller.py to implement your application logic.",
     }
