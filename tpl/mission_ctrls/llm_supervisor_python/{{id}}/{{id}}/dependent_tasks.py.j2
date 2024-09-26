@@ -1,0 +1,68 @@
+import ament_index_python as aip
+import xml.etree.ElementTree as ET
+import json
+import yaml
+
+
+def get_dependencies(pkg_name, type="task"):
+    """
+    Returns the tasks/skills that this application depends on.
+
+    Process:
+
+    1. get the package.xml of the package
+    2. get the dependency list from the package.xml
+    3. for each dep, get the package.xml
+    4. check if the package.xml has a <task> or <skill> tag under the <export> tag
+    5. if so, get the content, and parse it as a json or yaml content, depending on the value of the content-type attribute.
+
+    :param pkg_name: the name of the package
+    :param type: the type of the dependency to get. "task" or "skill". Default is task
+    """
+    path = aip.get_package_share_path(pkg_name)
+
+    # 1. get the package.xml of the package
+    package_xml = path / 'package.xml'
+
+    # 2. get the dependency list from the package.xml, using xml.etree
+    tree = ET.parse(package_xml)
+    root = tree.getroot()
+    deps = [d.text for d in root.findall('depend')]
+    deps += [d.text for d in root.findall('exec_depend')]
+
+    result = {}
+
+    # 3. for each dep, get the package.xml
+    for dep in deps:
+        dep_path = aip.get_package_share_path(dep)
+        dep_package_xml = dep_path / 'package.xml'
+
+        # 4. check if the package.xml has a <task|skill> tag under the <export> tag
+        dep_tree = ET.parse(dep_package_xml)
+        dep_root = dep_tree.getroot()
+        export = dep_root.find('export')
+        if export is not None:
+            res = export.find(type)
+            if res is not None:
+                content_type = res.attrib.get('content-type', 'json')
+                content = res.text
+                if not content.strip():
+                    print(f"Error while reading the manifest of {type} {dep} (from {dep_package_xml}): empty manifest! Skipping.")
+                    continue
+                if content_type == 'json':
+                    try:
+                        result[dep] = json.loads(content)
+                    except json.decoder.JSONDecodeError as jde:
+                        print(f"Error while reading the manifest of {type} {dep} (from {dep_package_xml}): {jde}. Skipping.")
+                        continue
+                elif content_type == 'yaml':
+                    result[dep] = yaml.safe_load(content)
+
+    return result
+
+if __name__ == "__main__":
+    tasks = get_dependencies("{{ id }}", "task")
+
+    print("This mission controller depends on the following tasks:")
+    for _, task in tasks.items():
+        print(f"- { task['name'] }: { task['description'] }")
