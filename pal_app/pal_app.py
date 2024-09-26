@@ -48,10 +48,16 @@ TASK_TEMPLATES = {
 }
 
 MISSION_CTRL_TEMPLATES = {
-    "simple_python": {
-        "tpl_paths": ["mission_ctrls/python/{{id}}"],
-        "short_desc": "simple Python script",
+    "base_python": {
+        "tpl_paths": ["mission_ctrls/base_python/{{id}}"],
+        "short_desc": "robot supervisor implemented as a simple Python script",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/mission_controller.py to implement your application logic.",
+    },
+    "llm_supervisor_python": {
+        "tpl_paths": ["mission_ctrls/llm_supervisor_python/{{id}}"],
+        "short_desc": "sample Python supervisor, using LLM to manage interactions with users",
+        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/mission_controller.py to customize your application logic.",
+        "task_templates": [{"greet_task_python": {"id": "greet_task", "name": "'greet' task"}}],
     }
 }
 
@@ -61,8 +67,7 @@ APPLICATION_TEMPLATES = {
         "tpl_paths": ["apps/python/{{id}}"],
         "short_desc": "a full sample application, using LLM to interact with users. It includes a supervisor and custom tasks and skills.",
         "post_install_help": "Check README.md in ./{path}/ to learn how to configure and start your application.",
-        "task_templates": [{"greet_task_python": {"id": "greet_task", "name": "'greet' task"}}],
-        "mission_ctrl_templates": [{"simple_python": {"id": "llm_supervisor", "name": "LLM-based mission controller"}}],
+        "mission_ctrl_templates": [{"llm_supervisor_python": {"id": "llm_supervisor", "name": "LLM-based mission controller"}}],
     }
 }
 

@@ -1,0 +1,285 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import json
+
+from rclpy.lifecycle import Node
+from rclpy.lifecycle import State
+from rclpy.lifecycle import TransitionCallbackReturn
+
+{% if intents %}
+{% for intent in intents %}
+{% if intent.intent == "ENGAGE_WITH"%}
+from rclpy.action import ActionClient
+from tts_msgs.action import TTS
+from play_motion2_msgs.action import PlayMotion2
+{% endif %}
+{% endfor %}
+{% endif %}
+
+from hri_actions_msgs.msg import Intent
+from lifecycle_msgs.msg import State as StateMsg
+
+from {{ id }}.change_state_helper import ChangeNodeStateHelper
+
+class MissionController(Node):
+
+    def __init__(self) -> None:
+        """Construct the node."""
+        super().__init__('app_{{ id }}')
+
+        self.get_logger().info("Initialising...")
+        self._intents_sub = None
+        self._timer = None
+
+        # We manage the state of the "communication_hub" node
+        self._change_state_helper = ChangeNodeStateHelper(
+            self,
+            'communication_hub')
+
+        #######################################
+        #
+        # TODO: Add here any other variables
+        # that you need in your node
+        # Initialisation should happen in the
+        # on_configure state.
+        #
+
+        self.inc = None
+
+    def on_intent(self, msg):
+
+        self.get_logger().info("Received an intent: %s" % msg.intent)
+
+        #######################################
+        #
+        # TODO: Define here how your application
+        # should react when receiving an user
+        # intent.
+        #
+
+        data = json.loads(msg.data) if msg.data else {}  # noqa: F841
+        source = msg.source  # noqa: F841
+        modality = msg.modality  # noqa: F841
+        confidence = msg.confidence  # noqa: F841
+        priority_hint = msg.priority  # noqa: F841
+
+        #######################################
+        #
+        # If you do not need to process specific
+        # intents, simply remove the corresponding
+        # line(s)
+        #
+
+{% if intents %}
+{% for intent in intents %}
+    {% if (robot == "ari" and intent.intent == "PRESENT_CONTENT") or 
+           (robot == "tiago" and intent.intent in ["GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT"]) or 
+           (intent.intent not in ["PRESENT_CONTENT", "GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT"]) %}
+    # Intent {{ intent.intent }}:{{ intent.description }}
+        {{ "if" if loop.index == 1 else "elif"}} msg.intent == Intent.{{ intent.intent }}:
+    {% endif %}
+{% if intent.required_thematic_roles %}
+            # the 'data' dictionary should contain at least the following keys:
+{% for role in intent.required_thematic_roles %}
+            # - {{ role }}
+{% endfor %}
+{% endif %}
+{% if intent.intent == "WAKEUP" %}
+        # The "communication_hub" is a managed node that needs to be 
+            # activated based on the received wakeup intent.
+            self._change_state_helper.change_state(StateMsg.PRIMARY_STATE_ACTIVE)
+{% elif intent.intent == "SUSPEND" %}
+        # The "communication_hub" is a managed node that needs to be 
+            # deactivated based on the received suspend intent.
+            self._change_state_helper.change_state(StateMsg.PRIMARY_STATE_INACTIVE)
+{% elif intent.intent == "ENGAGE_WITH" and (robot in ["ari", "tiago"]) %}
+        # As an example, we call here the TTS and play_motion action server
+            # to implement a very simple behaviour when someone engages with
+            # the robot.
+            tts = ActionClient(self, TTS, 'communication/say')
+            tts.wait_for_server()
+            tts_goal = TTS.Goal()
+            tts_goal.locale = "en_US"
+            {% if robot == "ari" %}
+tts_goal.input = "Hello, I'm ARI. Nice to meet you!"
+            {% elif robot == "tiago" %}
+tts_goal.input = "Hello, I'm TIAGo. Nice to meet you!"
+            {% endif%}
+
+            play_motion = ActionClient(self, PlayMotion2, 'play_motion2')
+            play_motion.wait_for_server()
+            {% if robot == "ari" %}
+motion_goal = PlayMotion2.Goal(motion_name="bow")
+            {% elif robot == "tiago" %}
+motion_goal = PlayMotion2.Goal(motion_name="head_tour")
+            {% endif %} 
+            tts.send_goal_async(tts_goal)
+            play_motion.send_goal(motion_goal)
+{% elif (robot == "generic" and intent.intent == "ENGAGE_WITH") %}
+        # Handle intents of a user to engage with the robot
+            pass
+{% elif (robot == "ari" and intent.intent == "PRESENT_CONTENT") %}
+        # Handle intents to present specific content by
+            # loading the corresponding page onto the touchscreen.
+            # Refer to "touchscreen skills": 
+            # https://docs.pal-robotics.com/sdk-dev/touchscreen/skills_list
+            pass
+{% elif (robot == "tiago" and intent.intent in ["GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT"]) %}
+        # Handle intents to manipulate an object. Refer to "manipulation
+            # skills": 
+            # https://docs.pal-robotics.com/sdk-dev/manipulation/skills_list
+            pass
+{% elif intent.intent in ["MOVE_TO", "GUIDE"] %}
+        # Handle intents to move the robot from one place to another using 
+            # its navigation skills. Refer to "navigation skills":
+            # https://docs.pal-robotics.com/sdk-dev/navigation/skills_list
+            pass
+{% elif intent.intent == "PERFORM_MOTION" %}
+        # Handle intents to perform a specific motion 
+            # (eg, a dance or a specific gesture like pointing, waving)
+            # Refer to "gestures and motions skills":
+            # https://docs.pal-robotics.com/sdk-dev/motions/skills_list
+            play_motion = ActionClient(self, PlayMotion2, 'play_motion2')
+            play_motion.wait_for_server()
+            motion_goal = PlayMotion2.Goal(motion_name=data['object'])
+            play_motion.send_goal(motion_goal)
+{% elif intent.intent in ["GREET"] %}
+        # Handle intents to greet, customised by the user
+            # Refer to: 
+            # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
+            tts = ActionClient(self, TTS, 'say')
+            tts.wait_for_server()
+            tts_goal = TTS.Goal(input="Hello, what can I do for you today?")
+            tts.send_goal_async(tts_goal)
+  {% elif intent.intent in ["SAY"] %}
+        # Handle intents to say a specific text
+            # Refer to: 
+            # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
+            tts = ActionClient(self, TTS, 'say')
+            tts.wait_for_server()
+            tts_goal = TTS.Goal(input=data['object'])
+            tts.send_goal_async(tts_goal)
+{% elif intent.intent in ["START_ACTIVITY", "STOP_ACTIVITY"] %}
+        # Handle custom/specialized activities/tasks
+            pass
+{% endif %}
+{% endfor %}
+        # custom intent?
+        else:
+            self.get_logger().warning("I don't know how to process intent "
+                                      "<%s>!" % msg.intent)
+{% else %}
+        # handle here the different intents
+        if msg.intent == "your_intent":  # or one of the Intent.msg constants
+            pass
+
+        # elif...
+
+        else:
+            self.get_logger().warning("I don't know how to process intent "
+                                      "<%s>!" % msg.intent)
+{% endif %}
+
+    #########################################################################
+
+    #################################
+    #
+    # Lifecycle transitions callbacks
+    #
+    def on_configure(self, state: State) -> TransitionCallbackReturn:
+        """
+        Configure the node
+
+        :return: The state machine either invokes a transition to the
+            "inactive" state or stays in "unconfigured" depending on the
+            return value.
+            TransitionCallbackReturn.SUCCESS transitions to "inactive".
+            TransitionCallbackReturn.FAILURE transitions to "unconfigured".
+            TransitionCallbackReturn.ERROR or any uncaught exceptions to
+            "errorprocessing"
+        """
+        self.inc = 0
+        self.get_logger().info('on_configure() is called.')
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_activate(self, state: State) -> TransitionCallbackReturn:
+        """
+        Activate the node
+
+        Subscribe to topic and start listening to /intents topic.
+        Activate the 'communication_hub' node.
+        """
+        self._intents_sub = self.create_subscription(
+            Intent,
+            '/intents',
+            self.on_intent,
+            10)
+        self.get_logger().info("Listening to %s topic" %
+                               self._intents_sub.topic_name)
+
+        # Define a timer that fires every second to call the run function
+        timer_period = 1  # in sec
+        self._timer = self.create_timer(timer_period, self.run)
+
+        # We activate the "communication_hub" node by default
+        self._change_state_helper.change_state(StateMsg.PRIMARY_STATE_ACTIVE)
+
+        self.get_logger().info("Running")
+
+        return super().on_activate(state)
+
+    def on_deactivate(self, state: State) -> TransitionCallbackReturn:
+        """Stop the timer to stop calling the `run` function (main task of your application)."""
+        self.get_logger().info("Stopping application")
+
+        self.destroy_timer(self._timer)
+        self.destroy_subscription(self._intents_sub)
+
+        return super().on_deactivate(state)
+
+    def on_shutdown(self, state: State) -> TransitionCallbackReturn:
+        """
+        Shutdown the node, after a shutting-down transition is requested.
+
+        :return: The state machine either invokes a transition to the
+            "finalized" state or stays in the current state depending on the
+            return value.
+            TransitionCallbackReturn.SUCCESS transitions to "finalized".
+            TransitionCallbackReturn.FAILURE remains in current state.
+            TransitionCallbackReturn.ERROR or any uncaught exceptions to
+            "errorprocessing"
+        """
+        self.destroy_timer(self._timer)
+        self.destroy_subscription(self._intents_sub)
+
+        self.get_logger().info('Shutting down node.')
+        return TransitionCallbackReturn.SUCCESS
+
+    def run(self) -> None:
+        """
+        Background processing of your applcation.
+
+        The main task of your application. This function will be triggered by
+        the timer in the class, and only when the timer is active.
+        """
+        #######################################
+        #
+        # TODO: Implement here any background
+        # task required by your mission controller
+        # If application has been stopped,
+        # this function will not be called
+        #
+
+        self.get_logger().info(str(self.inc))
+        self.inc += 1
+
