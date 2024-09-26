@@ -38,8 +38,17 @@
 
   <exec_depend>greet_task_msgs</exec_depend>
 
+  <!-- required skills -->
+
+  <!-- 'say' -->
+  <exec_depend>communication_hub</exec_depend>
+  <exec_depend>tts_msgs</exec_depend>
+
+  <!-- 'db_request' -->
   <exec_depend>db_connector</exec_depend>
   <exec_depend>sample_skill_msgs</exec_depend>
+
+  <!-- -->
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
@@ -48,5 +57,19 @@
 
   <export>
       <build_type>ament_python</build_type>
+
+      <task content-type="json">
+          {
+            "name": "{{ id }}",
+            "description": "This example task implements a basic greeting activity.",
+            "interface": "action",
+            "default_interface_path": "/greet",
+            "datatype": "greet_task_msgs/action/Greet",
+            "parameters": [],
+            "functional_domains": [
+                "expressive_interactions"
+            ]
+        }
+      </task>
   </export>
 </package>

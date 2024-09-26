@@ -45,5 +45,35 @@
 
   <export>
       <build_type>ament_python</build_type>
+
+      <skill content-type="json">
+          {
+            "name": "{{ id }}",
+            "description": "This example skill mocks-up the connection to a Mongo DB database.",
+            "interface": "action",
+            "default_interface_path": "/{{ id }}/db_request",
+            "datatype": "sample_skill_msgs/action/DbRequest",
+            "parameters": [
+                {
+                    "name": "db_name",
+                    "type": "string",
+                    "description": "The name of the database to connect to"
+                },
+                {
+                    "name": "collection_name",
+                    "type": "string",
+                    "description": "The name of the collection to connect to"
+                },
+                {
+                    "name": "query",
+                    "type": "string",
+                    "description": "The query to execute"
+                }
+            ],
+            "functional_domains": [
+                "external_interfaces"
+            ]
+        }
+      </skill>
   </export>
 </package>
