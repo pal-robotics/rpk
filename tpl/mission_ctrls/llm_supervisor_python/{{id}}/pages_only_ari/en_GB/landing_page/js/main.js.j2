@@ -1,0 +1,97 @@
+import * as RRLIB from '../../js/modules/rrlib.js'
+import PalLib from '../../js/modules/pallib.js'
+
+class PageManager {
+	constructor() {
+		this.ros = new RRLIB.Ros({
+			host: 'http://' + window.location.hostname
+		});
+		this.pal_lib = new PalLib();
+
+		// registering to the topic /intents
+		this.user_intent = new RRLIB.Topic({
+			ros: this.ros,
+			name: 'intents'
+		});
+
+        // Text to be shown on the screen
+		this.question = "Welcome!"; 
+		// List the tags on the buttons. For every tag, a new button
+		// will be automatically created.
+		this.answers_list = ["START"];
+	}
+
+	init() {
+		this.pal_lib.init();
+		this.setWebText();
+	}
+
+	setWebText() {
+		// inject question text into HTML
+		$("#question").html(this.question); 
+		// inject button HTML element from answers_list
+		for (let [answer_index, answer_value] of this.answers_list.entries()) {
+			$("#answers_list").append('<div class="button-item" id="answer_' + answer_index + '">' +
+										answer_value + '</div>');
+		}	
+	}
+
+    // function to publish through /intents topic, intent: PRESENT_CONTENT
+    presentContentIntent(page) {
+        if (page == "START"){
+            this.user_intent.publish({
+                intent: '__intent_present_content__',
+                data: '{"object": "question_sample_page-en_GB"}',
+                source: '__unknown_agent__',
+                modality: '__modality_touchscreen__',
+                priority: 100,
+                confidence: 1.0
+            });
+        }
+    }
+};
+
+let page_manager = new PageManager();
+
+$(document).ready(function() {
+    page_manager.init();
+    /* 
+	===== FUNCTIONS =====
+    */
+    // Exit btn click
+    $("#exit_btn").on("touchend", () => {
+        // You can navigate to a different page by publishing an intent, to be 
+        // handled by the application controller. The application controller is 
+        // then in charge of changing the page with eg the ROS action /web/go_to:
+        page_manager.presentContentIntent("landing_page");
+        $("#exit_btn").removeClass("exit-button-hover");
+    });
+    
+    // Buttons click
+    $(".button-item").on("touchend", function(){
+    	let touched_btn_index = $(this).attr("id").slice(-1);
+    	let chosen_answer = page_manager.answers_list[touched_btn_index];
+    	console.log(chosen_answer);
+    	
+    	// After button was clicked, navigate to a different page
+    	// by publishing an intent.
+    	page_manager.presentContentIntent(chosen_answer);
+    });
+    /*
+	===== HOVER STYLES =====
+    */
+    // Exit btn hover
+    $("#exit_btn").on("touchstart", () => {
+        $("#exit_btn").addClass("exit-button-hover");
+    });
+    // Clear all buttons state
+    $("body").on("touchstart", () => {
+    	$(".button-item").removeClass("button-hover");
+    });
+    // Answer button active
+    $(".button-item").on("touchstart", function(event) {
+    	event.stopPropagation();
+    	$(".button-item").removeClass("button-hover");
+    	$(this).addClass("button-hover");
+    });
+});

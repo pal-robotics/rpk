@@ -1,0 +1,29 @@
+Touchscreen content
+===================
+
+These subfolders (one per language) contain the webpage that will be displayed
+on the touchscreen of the robot.
+
+Your application controller can easily change the active (displayed) page via the ROS
+action `/web/go_to`.
+
+However, the pages must first be published on the robot, via the robot's *Touchscreen manager*.
+
+## Installing the pages on the robot
+
+- You first need to create a zip archive for each of your pages. You can either
+  manually zip the content of each subfolders, or use the provided
+  `zip_pages.sh` script:
+
+```
+cd pages
+sh zip_pages.sh
+```
+
+Each of the created zip file must then be uploaded to the robot's [Touchscreen
+manager](http://docs.pal-robotics.com/{{ robot | lower }}/sdk/latest/touchscreen/touchscreen_mgr.html).
+
+## Updating content
+
+If you modify one of the pages, you must re-zip the corresponding folder, and
+re-upload it to the Touchscreen manager.
