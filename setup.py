@@ -36,7 +36,7 @@ setup(
         ('share/ament_index/resource_index/packages', ['resource/' + NAME]),
         ('share/' + NAME, ['package.xml'])
     ],
-    install_requires=['setuptools'],
+    install_requires=['setuptools', 'jinja2'],
     zip_safe=True,
     tests_require=['pytest'],
     entry_points={
