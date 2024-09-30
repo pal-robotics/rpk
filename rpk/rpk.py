@@ -50,7 +50,7 @@ SKILL_TEMPLATES = {
 
 TASK_TEMPLATES = {
     "greet_task_python": {
-        "tpl_paths": ["tasks/python/{{id}}", "tasks/greet_task_msgs"],
+        "tpl_paths": ["tasks/greet_task_python/{{id}}", "tasks/greet_task_msgs"],
         "short_desc": "simple task template, implementing a very basic greeting activity. Written in Python",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/task_impl.py to implement your task logic.",
         "skill_templates": [{"db_connector_python": {"id": "db_connector", "name": "Custom database connector"}}],
