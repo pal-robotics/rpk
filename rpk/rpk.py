@@ -21,6 +21,10 @@ from pathlib import Path
 from jinja2 import Environment, select_autoescape, FileSystemLoader
 
 import rpk
+
+SELF_NAME = "rpk"
+
+# not using ament, so that is also work outside of a ROS environment
 PKG_PATH = (
     Path(rpk.__file__).parent.parent.parent.parent.parent / "share" /
     "rpk"
