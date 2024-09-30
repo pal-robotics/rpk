@@ -1,4 +1,4 @@
-pal_app
+rpk
 =======
 
 A tool to generate skeletons of robot application controller.
@@ -9,7 +9,7 @@ Relies on ROS 2 and the ROS 2 `Intents` interface.
 
 Installation
 ------------
-`pal_app` is written in python3.
+`rpk` is written in python3.
 
 **Installation with pip**
 
@@ -17,7 +17,7 @@ You require the following libraries:
 
 ``pip install jinja2``
 
-You can install pal_app as any other python package as follows:
+You can install rpk as any other python package as follows:
 
 ``pip install .``
 
@@ -28,12 +28,12 @@ If the location where it is installed is not yet on your path, you will get a wa
 Install the pal-alum-pal-app debian package and source ``/opt/pal/alum/setup.bash``.
 
 
-Building your first pal_app
+Building your first rpk
 ---------------------------
-Once you have installed pal_app, you are ready to create new
+Once you have installed rpk, you are ready to create new
 applications for your robots. To do so, you just have to run:
 
-``pal_app create``
+``rpk create``
 
 ... and follow the instructions!
 

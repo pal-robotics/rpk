@@ -20,14 +20,14 @@ import argparse
 from pathlib import Path
 from jinja2 import Environment, select_autoescape, FileSystemLoader
 
-import pal_app
+import rpk
 
-SELF_NAME = "pal_app"
+SELF_NAME = "rpk"
 
 # not using ament, so that is also work outside of a ROS environment
 PKG_PATH = (
-    Path(pal_app.__file__).parent.parent.parent.parent.parent / "share" /
-    "pal_app"
+    Path(rpk.__file__).parent.parent.parent.parent.parent / "share" /
+    "rpk"
 )
 
 SKILL_TEMPLATES = {

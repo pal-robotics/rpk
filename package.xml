@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>pal_app</name>
+  <name>rpk</name>
   <version>2.1.0</version>
-  <description>A tool to create application controllers skeletons for interactive robots</description>
+  <description>A tool to create and package robot applications</description>
   <maintainer email="severin.lemaignan@pal-robotics.com">Séverin Lemaignan</maintainer>
   <license>Apache License 2.0</license>
 
@@ -10,7 +10,7 @@
 
   <!--
       Note that 'rclpy' and 'hri_actions_msgs' are not strictly required
-      to run the code generator. However, the generated mission controller 
+      to run the code generator. However, generated mission controller 
       will always require them. In order to offer a better developer experience,
       it is nicer to install these 2 dependencies at the same time as the tool
       itself is installed.

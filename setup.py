@@ -13,7 +13,7 @@ from setuptools import find_packages, setup
 
 import xml.etree.ElementTree as ET
 
-NAME = "pal_app"
+NAME = "rpk"
 
 # get the version from ROS' package.xml
 DESCRIPTION = ET.parse("package.xml").find("description").text
@@ -41,7 +41,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "pal_app = " + NAME + ".pal_app:main"
+            "rpk = " + NAME + ".rpk:main"
         ],
     },
 )
