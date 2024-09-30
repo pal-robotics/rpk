@@ -1,0 +1,305 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import time
+
+from rclpy.lifecycle import Node
+from rclpy.lifecycle import State
+from rclpy.lifecycle import TransitionCallbackReturn
+from rcl_interfaces.msg import ParameterDescriptor
+
+from rclpy.action import ActionServer, GoalResponse
+
+from rclpy.action import ActionClient
+
+# custom action for this task. This has been generated
+# by rpk alongside this node.
+from greet_task_msgs.action import Greet
+
+# action for the system skill 'say'
+from tts_msgs.action import TTS
+
+# action for the custom skill 'db_request'
+from sample_skill_msgs.action import DbRequest
+
+from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
+
+
+class TaskImpl(Node):
+    """
+    Implementation of task {{id}}.
+
+    This is the main class for the task. It is a ROS2 node that uses the
+    lifecycle feature of ROS2 to manage its states.
+
+    As an example, the task uses 2 skills:
+    - a skill to connect to a (mock) database and
+      retrieve the name of the current user,
+    - a skill to say hello to that user.
+
+    A real 'greet' activity would be significantly more complex: adjust the
+    code to your own needs!
+
+    Don't forget to update accordingly the manifest of the task, included in
+    package.xml, to describe what your task is actually doing.
+    """
+
+    def __init__(self) -> None:
+        """Construct the node."""
+        super().__init__('task_{{ id }}')
+
+
+        self.get_logger().info("Initialising...")
+        self._timer = None
+        self._diag_pub = None
+        self._diag_timer = None
+
+        #######################################
+        #
+        # TODO: Add here any other variables
+        # that you need in your node
+        # Initialisation should happen in the
+        # on_configure state.
+        #
+        
+        self.task_server = None
+
+        self.db_client = None
+        self.tts_client = None
+
+        self.current_greeting_status = Greet.Goal().INACTIVE
+
+        self.get_logger().info('Task {{id}} started, but not yet configured.')
+
+    def on_request_goal(self, goal_handle):
+        """Accept incoming goal if appropriate."""
+        if self._state_machine.current_state[1] != "active":
+            self.get_logger().error("Task is not active, rejecting goal")
+            return GoalResponse.REJECT
+
+        self.get_logger().info("Accepted a new goal")
+        return GoalResponse.ACCEPT
+
+    def on_request_exec(self, goal_handle):
+        """Process incoming goal."""
+
+        self.current_greeting_status = Greet.Goal().SELECTING_USER
+
+        self.get_logger().info("Starting the greeting task")
+
+        feedback_msg = Greet.Feedback()
+        feedback_msg.status = self.current_greeting_status
+
+        goal_handle.publish_feedback(feedback_msg)
+
+        previous_status = self.current_greeting_status
+
+        # wait until the status is SUCCESSFUL_USER_ACKNOWLEDGMENT;
+        # publish feecback every time the status changes
+        while self.current_greeting_status != Greet.Goal().SUCCESSFUL_USER_ACKNOWLEDGMENT:
+
+            if previous_status != self.current_greeting_status:
+                self.get_logger().info(
+                    f"Current greeting status: {self.current_greeting_status}")
+                feedback_msg.status = self.current_greeting_status
+                goal_handle.publish_feedback(feedback_msg)
+                previous_status = self.current_greeting_status
+
+            time.sleep(0.5)
+
+        feedback_msg.status = self.current_greeting_status
+        goal_handle.publish_feedback(feedback_msg)
+
+        goal_handle.succeed()
+
+        self.current_greeting_status = Greet.Goal().INACTIVE
+
+        return Greet.Result()
+
+    #################################
+    #
+    # Lifecycle transitions callbacks
+    #
+    def on_configure(self, state: State) -> TransitionCallbackReturn:
+        """
+        Configure the skill.
+
+        You usually want to do the following in this state:
+        - Read ROS parameters (if any)
+        - Create ROS action clients and servers
+        - Create ROS publishers and subscribers
+        - Start publishing diagnostic information
+
+        While the skill is configured, but not activated, it should not
+        perform any actions that are not required for configuration, such as
+        effectively processing data or calling external services.
+        For instance, incoming goals on an action server should be rejected.
+
+        :return: The state machine either invokes a transition to the
+            "inactive" state or stays in "unconfigured" depending on the
+            return value.
+            TransitionCallbackReturn.SUCCESS transitions to "inactive".
+            TransitionCallbackReturn.FAILURE transitions to "unconfigured".
+            TransitionCallbackReturn.ERROR or any uncaught exceptions to
+            "errorprocessing"
+        """
+
+        # configure and start diagnostics publishing
+        self._diag_pub = self.create_publisher(DiagnosticArray, '/diagnostics', 1)
+        self._diag_timer = self.create_timer(1., self.publish_diagnostics)
+
+        # example API for our 'database' skill
+        self.task_server = ActionServer(
+            self, Greet, "/greet",
+            goal_callback=self.on_request_goal,
+            execute_callback=self.on_request_exec)
+
+        # create an action client for the 'say' skill
+        self.tts_client = ActionClient(self, TTS, "/say")
+
+        # create an action client for the 'db_request' skill
+        self.db_client = ActionClient(self, DbRequest, "/db_request")
+
+        self.get_logger().info("Task {{id}} is configured, but not yet active")
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_activate(self, state: State) -> TransitionCallbackReturn:
+        """
+        Activate the skill.
+
+        You usually want to do the following in this state:
+        - Create and start any timers performing periodic tasks
+        - Start processing data, and accepting action goals, if any
+
+        """
+        # Define a timer that fires every second to call the run function
+        timer_period = 1  # in sec
+        self._timer = self.create_timer(timer_period, self.run)
+
+        self.get_logger().info("Task {{id}} is active and running")
+        return super().on_activate(state)
+
+    def on_deactivate(self, state: State) -> TransitionCallbackReturn:
+        """Stop the timer to stop calling the `run` function (main task of your application)."""
+        self.get_logger().info("Stopping task...")
+        self.destroy_timer(self._timer)
+
+        self.get_logger().info("Task {{id}} is stopped (inactive)")
+        return super().on_deactivate(state)
+
+    def on_shutdown(self, state: State) -> TransitionCallbackReturn:
+        """
+        Shutdown the node, after a shutting-down transition is requested.
+
+        :return: The state machine either invokes a transition to the
+            "finalized" state or stays in the current state depending on the
+            return value.
+            TransitionCallbackReturn.SUCCESS transitions to "finalized".
+            TransitionCallbackReturn.FAILURE remains in current state.
+            TransitionCallbackReturn.ERROR or any uncaught exceptions to
+            "errorprocessing"
+        """
+        self.get_logger().info('Shutting down task {{id}}.')
+        self.destroy_timer(self._diag_timer)
+        self.destroy_publisher(self._diag_pub)
+
+        self.destroy_timer(self._timer)
+
+        self.get_logger().info("Task {{id}} finalized.")
+        return TransitionCallbackReturn.SUCCESS
+
+    #################################
+
+    def publish_diagnostics(self):
+
+        arr = DiagnosticArray()
+        msg = DiagnosticStatus(
+            level=DiagnosticStatus.OK,
+            name="/tasks/task_{{ id }}",
+            message="task {{id}} is running",
+            values=[
+                KeyValue(key="Module name", value="{{ id }}"),
+                KeyValue(key="Current lifecycle state",
+                         value=self._state_machine.current_state[1]),
+            ],
+        )
+
+        arr.header.stamp = self.get_clock().now().to_msg()
+        arr.status = [msg]
+        self._diag_pub.publish(arr)
+
+    def run(self) -> None:
+        """
+        Background task of the activity.
+
+        This function will be triggered by the timer in the class, 
+        and only when the timer is active.
+        """
+        #######################################
+        #
+        # TODO: Implement here any background
+        # task required by your task
+        # If the task is deactivated,
+        # this function is not called anymore
+        #
+        
+
+        current_username = ""
+
+        while True:
+
+            if self.current_greeting_status == Greet.Goal().INACTIVE:
+                time.sleep(0.1)
+                continue
+
+            if self.current_greeting_status == Greet.Goal().SELECTING_USER:
+
+                self.get_logger().info("Requesting user name from the database")
+                self.db_client.wait_for_server()
+                goal = DbRequest.Goal()
+                goal.query = "SELECT name FROM users WHERE id = 1"
+                future = self.db_client.send_goal_async(goal)
+                rclpy.spin_until_future_complete(self, future)
+                result = future.result()
+
+                if result is not None:
+                    current_username = result.result
+                    self.get_logger().info(f"Received user name: {result.result}")
+                    self.current_greeting_status = Greet.Goal().FACING_USER
+                else:
+                    self.get_logger().error("Failed to get user name")
+                    self.current_greeting_status = Greet.Goal().INACTIVE
+
+                continue
+
+            if self.current_greeting_status == Greet.Goal().FACING_USER:
+
+                time.sleep(1)
+                self.current_greeting_status = Greet.Goal().GREETING_USER
+                continue
+
+            if self.current_greeting_status == Greet.Goal().GREETING_USER:
+
+                self.get_logger().info("Saying hello to the user")
+                self.tts_client.wait_for_server()
+                goal = TTS.Goal()
+                goal.text = f"Hello, {current_username}!"
+                future = self.tts_client.send_goal_async(goal)
+                rclpy.spin_until_future_complete(self, future)
+                result = future.result()
+
+                if result is not None:
+                    self.get_logger().info("Greeting successful")
+                    self.current_greeting_status = Greet.Goal().SUCCESSFUL_USER_ACKNOWLEDGMENT
+                else:
+                    self.get_logger().error("Failed to greet the user")
+                    self.current_greeting_status = Greet.Goal().INACTIVE
