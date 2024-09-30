@@ -33,8 +33,8 @@
   <depend>lifecycle_msgs</depend>
   <depend>ament_index_python</depend>
 
-  <!-- tasks required by this supervisor -->
-  <exec_depend>greet_task</exec_depend>
+  <!-- tasks actions definitions -->
+  <exec_depend>greet_task_msgs</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
@@ -43,5 +43,16 @@
 
   <export>
       <build_type>ament_python</build_type>
+
+      <mission content-type="json">
+       {
+         "name": "{{ id }}",
+         "description": "This example mission controller implements a simple, LLM-based dialogue system.",
+         "dependencies": {
+             "tasks": ["greet_task"],
+             "skills": ["ollama_connector"]
+         }
+       }
+      </mission>
   </export>
 </package>

@@ -17,29 +17,31 @@ from rclpy.lifecycle import State
 from rclpy.lifecycle import TransitionCallbackReturn
 
 from rclpy.action import ActionClient
-from tts_msgs.action import TTS
+from llm_msgs.action import LLM
+from greet_task_msgs.action import Greet
 from std_msgs.msg import String
 
 from hri_actions_msgs.msg import Intent
 from lifecycle_msgs.msg import State as StateMsg
 
-from {{ id }}.dependent_tasks import get_referenced_tasks
-from {{ id }}.ollama_connector import OllamaConnector
+from {{ id }}.component_dependencies import get_component_dependencies
 
 class MissionController(Node):
 
     def __init__(self) -> None:
         """Construct the node."""
-        super().__init__('app_{{ id }}')
+        super().__init__('mission_{{ id }}')
 
         self.get_logger().info("Initialising...")
         self._intents_sub = None
         self._timer = None
 
         self._text_input_sub = None
-        self._text_output_pub = None
 
-        self._ollama = None
+        self._llm_action_client = None
+        self._intent_sub = None
+
+        self._greet_action_client = None
 
 
     def on_intent(self, msg):
