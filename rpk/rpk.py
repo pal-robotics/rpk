@@ -68,6 +68,7 @@ MISSION_CTRL_TEMPLATES = {
         "short_desc": "sample Python supervisor, using LLM to manage interactions with users",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/mission_controller.py to customize your application logic.",
         "task_templates": [{"greet_task_python": {"id": "greet_task", "name": "'greet' task"}}],
+        "skill_templates": [{"ollama_connector_python": {"id": "ollama_connector", "name": "Bridge with a ollama server"}}],
     }
 }
 
