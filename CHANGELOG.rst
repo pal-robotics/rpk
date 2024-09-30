@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.9.0 (2024-09-30)
+------------------
 * [tpl] update the app template, adding a launch file
 * [tpl] add tasks/greet_task_python}
 * [tpl] update mission ctrl template with manifest + split ollama connector to own skill
