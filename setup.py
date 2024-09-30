@@ -13,6 +13,10 @@ from setuptools import find_packages, setup
 
 import xml.etree.ElementTree as ET
 
+def readme():
+    with open('README.md') as f:
+        return f.read()
+
 NAME = "rpk"
 
 # get the version from ROS' package.xml
@@ -28,6 +32,7 @@ setup(
     name=NAME,
     version='2.3.0',
     description=DESCRIPTION,
+    long_description=readme(),
     author="Séverin Lemaignan",
     author_email="severin.lemaignan@pal-robotics.com",
     license='Apache License 2.0',
