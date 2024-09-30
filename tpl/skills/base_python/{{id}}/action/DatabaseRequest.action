@@ -1,0 +1,7 @@
+# this is an example 'database' action API. Replace it with your own API, or 
+# remove it if you don't need it (e.g. if you're using an existing ROS2 action).
+string request
+---
+string error_msgs
+---
+string feedback
