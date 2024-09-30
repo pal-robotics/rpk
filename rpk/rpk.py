@@ -31,9 +31,19 @@ PKG_PATH = (
 )
 
 SKILL_TEMPLATES = {
+    "base_python": {
+        "tpl_paths": ["skills/base_python/{{id}}"],
+        "short_desc": "base skill template. Written in Python",
+        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/skill_impl.py to implement your skill logic.",
+    },
     "db_connector_python": {
-        "tpl_paths": ["skills/python/{{id}}", "skills/sample_skill_msgs"],
+        "tpl_paths": ["skills/db_connector_python/{{id}}", "skills/sample_skill_msgs"],
         "short_desc": "simple skill template, mocking-up a database connector. Written in Python",
+        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/skill_impl.py to implement your skill logic.",
+    },
+    "ollama_connector_python": {
+        "tpl_paths": ["skills/ollama_connector_python/{{id}}", "skills/llm_msgs"],
+        "short_desc": "skill example, offering a bridge to LLMs via ollama. Written in Python",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/skill_impl.py to implement your skill logic.",
     }
 }
