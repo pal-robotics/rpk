@@ -1,0 +1,238 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import random
+
+from rclpy.lifecycle import Node
+from rclpy.lifecycle import State
+from rclpy.lifecycle import TransitionCallbackReturn
+from rcl_interfaces.msg import ParameterDescriptor
+
+from rclpy.action import ActionServer, GoalResponse
+
+from llm_msgs.action import LLM
+
+from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
+
+from {{ id }}.ollama_connector import OllamaConnector
+
+class SkillImpl(Node):
+    """
+    Implementation of {{id}}.
+
+    This is the main class for the skill. It is a ROS2 node that uses the
+    lifecycle feature of ROS2 to manage its states.
+
+    This sample skill exposes a bridge to a ollama server. Adjust the code to
+    your own needs.
+
+    Don't forget to update accordingly the manifest of the skill, included in
+    package.xml, to describe what your skill is actually doing.
+    """
+
+    def __init__(self) -> None:
+        """Construct the node."""
+        super().__init__('skill_{{ id }}')
+
+        # Declare ROS parameters. Should mimick the one listed in config/00-defaults.yaml
+        self.declare_parameter(
+            'server_url', "http://localhost:11434",
+            ParameterDescriptor(description='URL of the ollama server')
+        )
+        self.declare_parameter(
+            'model', "llama3.1:8b",
+            ParameterDescriptor(description='LLM model to use')
+        )
+        self.declare_parameter(
+            'system_prompt', "You are a helpful interactive robot.",
+            ParameterDescriptor(description='System prompt to use for the LLM')
+        )
+
+        self.get_logger().info("Initialising...")
+        self._timer = None
+        self._diag_pub = None
+        self._diag_timer = None
+
+        self._ollama = None
+
+        self._llm_server = None
+        self._intent_pub = None
+
+        self.get_logger().info('Skill {{id}} started, but not yet configured.')
+
+
+    def perform_requests(self):
+        """
+        Mock-up function to perform a request to the database.
+
+        Here, we just simulate a request returning a random name.
+        """
+        if not self.db_ready:
+            self.get_logger().error("Database not ready")
+            return
+
+        self.get_logger().info("Querying the database...")
+        # perform request here
+        self.nb_requests += random.randint(50, 100)
+        self.get_logger().info("Requests performed")
+
+        return "John"
+
+    def on_request_goal(self, goal_handle):
+        """Accept incoming goal if appropriate."""
+        if self._state_machine.current_state[1] != "active":
+            self.get_logger().error("Skill is not active, rejecting goal")
+            return GoalResponse.REJECT
+
+        self.get_logger().info("Accepted a new goal")
+        return GoalResponse.ACCEPT
+
+    def on_request_exec(self, goal_handle):
+        """Process incoming goal."""
+        self.get_logger().info(f"Executing request: {goal_handle.request.query}"
+                               f" on {goal_handle.request.db_name}")
+
+        # perform request here
+        res = self.perform_requests()
+
+        self.get_logger().info("Goal executed")
+        goal_handle.succeed()
+
+        return DbRequest.Result(result=f"{res}")
+
+    def make_action_list(self) -> str:
+        return "".join(["- %s: %s (example: %s)\n" % (a["id"], a["description"], a["example"]) for a in self.intents])
+
+    def get_prompt(self) -> str:
+        self.prompt = self.get_parameter('system_prompt').value
+        return self.prompt.format(action_list=self.make_action_list(), person_id="Alice")
+
+    #################################
+    #
+    # Lifecycle transitions callbacks
+    #
+    def on_configure(self, state: State) -> TransitionCallbackReturn:
+
+        self.ollama_server = self.get_parameter('server_url').value
+        self.ollama_model = self.get_parameter('model').value
+
+        self._ollama = OllamaConnector(
+                self.ollama_server, 
+                self.ollama_model, 
+                self.get_prompt())
+
+
+        # example API for our 'database' skill
+        self._llm_server = ActionServer(
+            self, LLM, "~/get_response",
+            goal_callback=self.on_request_goal,
+            execute_callback=self.on_request_exec)
+
+        self._intent_pub = self.create_publisher(Intent, '/intents', 1)
+
+        # configure and start diagnostics publishing
+        self._diag_pub = self.create_publisher(DiagnosticArray, '/diagnostics', 1)
+        self._diag_timer = self.create_timer(1., self.publish_diagnostics)
+
+        self.get_logger().info("Skill {{id}} is configured, but not yet active")
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_activate(self, state: State) -> TransitionCallbackReturn:
+        """
+        Activate the skill.
+
+        You usually want to do the following in this state:
+        - Create and start any timers performing periodic tasks
+        - Start processing data, and accepting action goals, if any
+
+        """
+        # Define a timer that fires every second to call the run function
+        timer_period = 1  # in sec
+        self._timer = self.create_timer(timer_period, self.run)
+
+        self.get_logger().info("Skill {{id}} is active and running")
+        return super().on_activate(state)
+
+    def on_deactivate(self, state: State) -> TransitionCallbackReturn:
+        """Stop the timer to stop calling the `run` function (main task of your application)."""
+        self.get_logger().info("Stopping skill...")
+        self.destroy_timer(self._timer)
+
+        self.get_logger().info("Skill {{id}} is stopped (inactive)")
+        return super().on_deactivate(state)
+
+    def on_shutdown(self, state: State) -> TransitionCallbackReturn:
+        """
+        Shutdown the node, after a shutting-down transition is requested.
+
+        :return: The state machine either invokes a transition to the
+            "finalized" state or stays in the current state depending on the
+            return value.
+            TransitionCallbackReturn.SUCCESS transitions to "finalized".
+            TransitionCallbackReturn.FAILURE remains in current state.
+            TransitionCallbackReturn.ERROR or any uncaught exceptions to
+            "errorprocessing"
+        """
+        self.get_logger().info('Shutting down {{id}} skill.')
+        self.destroy_timer(self._diag_timer)
+        self.destroy_publisher(self._diag_pub)
+
+        self.destroy_timer(self._timer)
+
+        self.close_database_connection()
+
+        self.get_logger().info("Skill {{id}} finalized.")
+        return TransitionCallbackReturn.SUCCESS
+
+    #################################
+
+    def publish_diagnostics(self):
+        requests_per_second = self.nb_requests / \
+                (self.get_clock().now() - self.last_time).nanoseconds * 1e9
+        self.last_time = self.get_clock().now()
+        self.nb_requests = 0
+
+        arr = DiagnosticArray()
+        msg = DiagnosticStatus(
+            level=DiagnosticStatus.OK,
+            name="/skills/skill_{{ id }}",
+            message="skill {{id}} is running",
+            values=[
+                KeyValue(key="Module name", value="{{ id }}"),
+                KeyValue(key="Current lifecycle state",
+                         value=self._state_machine.current_state[1]),
+                KeyValue(key="Database", value=self.db_url),
+                KeyValue(key="Requests/sec", value=str(requests_per_second)),
+            ],
+        )
+
+        arr.header.stamp = self.get_clock().now().to_msg()
+        arr.status = [msg]
+        self._diag_pub.publish(arr)
+
+    def run(self) -> None:
+        """
+        Background task of the skill.
+
+        The main task of your skill. This function will be triggered by
+        the timer in the class, and only when the timer is active.
+        """
+        #######################################
+        #
+        # TODO: Implement here any background
+        # task required by your skill
+        # If the skill is deactivated,
+        # this function is not called anymore
+        #
+
+        self.get_logger().info("skill {{id}}: performing background task...")
+
