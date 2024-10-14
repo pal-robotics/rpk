@@ -2,6 +2,11 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* {pal_app->rpk}
+* Contributors: Séverin Lemaignan
+
 2.1.0 (2024-08-20)
 ------------------
 * refine a little the main app template, mostly documentation
