@@ -34,26 +34,32 @@ SKILL_TEMPLATES = {
     "base_python": {
         "tpl_paths": ["skills/base_python/{{id}}"],
         "short_desc": "base skill template. Written in Python",
-        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/skill_impl.py to implement your skill logic.",
+        "post_install_help": "Check README.md in ./{path}/ and "
+                             "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
     "db_connector_python": {
         "tpl_paths": ["skills/db_connector_python/{{id}}", "skills/sample_skill_msgs"],
         "short_desc": "simple skill template, mocking-up a database connector. Written in Python",
-        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/skill_impl.py to implement your skill logic.",
+        "post_install_help": "Check README.md in ./{path}/ and "
+                             "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
     "ollama_connector_python": {
         "tpl_paths": ["skills/ollama_connector_python/{{id}}", "skills/llm_msgs"],
         "short_desc": "skill example, offering a bridge to LLMs via ollama. Written in Python",
-        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/skill_impl.py to implement your skill logic.",
+        "post_install_help": "Check README.md in ./{path}/ and "
+                             "edit src/{id}/skill_impl.py to implement your skill logic.",
     }
 }
 
 TASK_TEMPLATES = {
     "greet_task_python": {
         "tpl_paths": ["tasks/greet_task_python/{{id}}", "tasks/greet_task_msgs"],
-        "short_desc": "simple task template, implementing a very basic greeting activity. Written in Python",
-        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/task_impl.py to implement your task logic.",
-        "skill_templates": [{"db_connector_python": {"id": "db_connector", "name": "Custom database connector"}}],
+        "short_desc": "simple task template, implementing a very basic greeting "
+                      "activity. Written in Python",
+        "post_install_help": "Check README.md in ./{path}/ and "
+                             "edit src/{id}/task_impl.py to implement your task logic.",
+        "skill_templates": [{"db_connector_python": {"id": "db_connector",
+                                                     "name": "Custom database connector"}}],
     }
 }
 
@@ -61,14 +67,17 @@ MISSION_CTRL_TEMPLATES = {
     "base_python": {
         "tpl_paths": ["mission_ctrls/base_python/{{id}}"],
         "short_desc": "robot supervisor implemented as a simple Python script",
-        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/mission_controller.py to implement your application logic.",
+        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
+                             "mission_controller.py to implement your application logic.",
     },
     "llm_supervisor_python": {
         "tpl_paths": ["mission_ctrls/llm_supervisor_python/{{id}}"],
         "short_desc": "sample Python supervisor, using LLM to manage interactions with users",
-        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/mission_controller.py to customize your application logic.",
+        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
+                             "mission_controller.py to customize your application logic.",
         "task_templates": [{"greet_task_python": {"id": "greet_task", "name": "'greet' task"}}],
-        "skill_templates": [{"ollama_connector_python": {"id": "ollama_connector", "name": "Bridge with a ollama server"}}],
+        "skill_templates": [{"ollama_connector_python": {"id": "ollama_connector",
+                                                         "name": "Bridge with a ollama server"}}],
     }
 }
 
@@ -76,25 +85,33 @@ MISSION_CTRL_TEMPLATES = {
 APPLICATION_TEMPLATES = {
     "llm_chatbot_python": {
         "tpl_paths": ["apps/python/{{id}}"],
-        "short_desc": "a full sample application, using LLM to interact with users. It includes a supervisor and custom tasks and skills.",
-        "post_install_help": "Check README.md in ./{path}/ to learn how to configure and start your application.",
-        "mission_ctrl_templates": [{"llm_supervisor_python": {"id": "llm_supervisor", "name": "LLM-based mission controller"}}],
+        "short_desc": "a full sample application, using LLM to interact with users. "
+                      "It includes a supervisor and custom tasks and skills.",
+        "post_install_help": "Check README.md in ./{path}/ to learn how to configure "
+                             "and start your application.",
+        "mission_ctrl_templates": [{"llm_supervisor_python": {
+                                        "id": "llm_supervisor",
+                                        "name": "LLM-based mission controller"}}],
     }
 }
 
 TEMPLATES_FAMILIES = {
     "skill": {"src": SKILL_TEMPLATES,
               "name": "skill",
-              "help": "short-term 'atomic' robot action, to be re-used by tasks and mission controllers. Examples: 'go to', 'say', 'perform pre-recorded motion'"},
+              "help": "short-term 'atomic' robot action, to be re-used by tasks and mission "
+                      "controllers. Examples: 'go to', 'say', 'perform pre-recorded motion'"},
     "task": {"src": TASK_TEMPLATES,
-              "name": "task",
-              "help": "time-limited robot activity, started by the mission controller. Might use skills. Examples: 'greet person', 'fetch object'"},
+             "name": "task",
+             "help": "time-limited robot activity, started by the mission controller. "
+                     "Might use skills. Examples: 'greet person', 'fetch object'"},
     "mission": {"src": MISSION_CTRL_TEMPLATES,
                 "name": "mission controller",
-                "help": "manages the whole behaviour of the robot. Examples: 'receptionist', 'waiter'"},
+                "help": "manages the whole behaviour of the robot. Examples: 'receptionist', "
+                        "'waiter'"},
     "app": {"src": APPLICATION_TEMPLATES,
             "name": "application",
-            "help": "complete application including a mission controller, a sample task and skill, and sample resources"}
+            "help": "complete application including a mission controller, a sample "
+                    "task and skill, and sample resources"}
 }
 
 AVAILABLE_ROBOTS = ["generic", "ari", "tiago"]
@@ -166,8 +183,8 @@ def interactive_create(id=None, family=None, template=None, robot=None):
             id = None
 
     name = input(
-        "Full name of your skill/application? (eg 'The Receptionist Robot' or 'Database connector', press "
-        "Return to use the ID. You can change it later)\n"
+        "Full name of your skill/application? (eg 'The Receptionist Robot' or "
+        "'Database connector', press Return to use the ID. You can change it later)\n"
     )
 
     if not name:
@@ -198,7 +215,8 @@ def interactive_create(id=None, family=None, template=None, robot=None):
             if len(tpls) == 1:
                 # if only one template available, make it the default choice
                 choice = int(input(
-                    f"\nYour choice? (default: 1: {tpls[list(tpls.keys())[0]]['short_desc']}) ").strip() or 1)
+                    "\nYour choice? (default: 1: "
+                    f"{tpls[list(tpls.keys())[0]]['short_desc']}) ").strip() or 1)
             else:
                 choice = int(input("\nYour choice? ").strip())
 
@@ -221,8 +239,8 @@ def interactive_create(id=None, family=None, template=None, robot=None):
 
     return id, name, family, template, robot
 
+
 def generate_skeleton(data, family, tpl_name, robot, root):
-    
     print(f"Generating {family} skeleton in {root}...")
     tpl = TEMPLATES_FAMILIES[family]["src"][tpl_name]
 
@@ -239,7 +257,7 @@ def generate_skeleton(data, family, tpl_name, robot, root):
                 a_data["id"] = a_tpl[tpl_name]["id"]
                 data["dependencies"].append(a_data["id"])
                 a_data["name"] = a_tpl[tpl_name]["name"]
-                generate_skeleton(a_data, type, tpl_name , robot, root)
+                generate_skeleton(a_data, type, tpl_name, robot, root)
 
     # then generate the skeleton for the current template
     tpl_paths = [PKG_PATH / "tpl" / p for p in tpl["tpl_paths"]]
@@ -277,7 +295,6 @@ def generate_skeleton(data, family, tpl_name, robot, root):
             print(f"Creating {filename}...")
             with open(filename, "w") as fh:
                 fh.write(j2_tpl.render(data))
-
 
     print("\n\033[32;1mDone!")
     print("\033[33;1m")

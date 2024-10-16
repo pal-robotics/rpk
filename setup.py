@@ -13,9 +13,11 @@ from setuptools import find_packages, setup
 
 import xml.etree.ElementTree as ET
 
+
 def readme():
     with open('README.md') as f:
         return f.read()
+
 
 NAME = "rpk"
 
