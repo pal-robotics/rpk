@@ -33,19 +33,19 @@ PKG_PATH = (
 SKILL_TEMPLATES = {
     "base_python": {
         "tpl_paths": ["skills/base_python/{{id}}"],
-        "short_desc": "base skill template. Written in Python",
+        "short_desc": "base skill template [python]",
         "post_install_help": "Check README.md in ./{path}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
     "db_connector_python": {
         "tpl_paths": ["skills/db_connector_python/{{id}}", "skills/sample_skill_msgs"],
-        "short_desc": "simple skill template, mocking-up a database connector. Written in Python",
+        "short_desc": "database connector mock-up [python]",
         "post_install_help": "Check README.md in ./{path}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
     "ollama_connector_python": {
         "tpl_paths": ["skills/ollama_connector_python/{{id}}", "skills/llm_msgs"],
-        "short_desc": "skill example, offering a bridge to LLMs via ollama. Written in Python",
+        "short_desc": "complete skill example: LLM bridge using ollama [python]",
         "post_install_help": "Check README.md in ./{path}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     }
@@ -54,8 +54,7 @@ SKILL_TEMPLATES = {
 TASK_TEMPLATES = {
     "greet_task_python": {
         "tpl_paths": ["tasks/greet_task_python/{{id}}", "tasks/greet_task_msgs"],
-        "short_desc": "simple task template, implementing a very basic greeting "
-                      "activity. Written in Python",
+        "short_desc": "'greet' task mock-up [python]",
         "post_install_help": "Check README.md in ./{path}/ and "
                              "edit src/{id}/task_impl.py to implement your task logic.",
         "skill_templates": [{"db_connector_python": {"id": "db_connector",
@@ -66,13 +65,14 @@ TASK_TEMPLATES = {
 MISSION_CTRL_TEMPLATES = {
     "base_python": {
         "tpl_paths": ["mission_ctrls/base_python/{{id}}"],
-        "short_desc": "robot supervisor implemented as a simple Python script",
+        "short_desc": "base robot supervisor [python]",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
                              "mission_controller.py to implement your application logic.",
     },
     "llm_supervisor_python": {
         "tpl_paths": ["mission_ctrls/llm_supervisor_python/{{id}}"],
-        "short_desc": "sample Python supervisor, using LLM to manage interactions with users",
+        "short_desc": "complete supervisor example, using LLMs to manage interactions with "
+                      "users [python]",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
                              "mission_controller.py to customize your application logic.",
         "task_templates": [{"greet_task_python": {"id": "greet_task", "name": "'greet' task"}}],
@@ -85,8 +85,8 @@ MISSION_CTRL_TEMPLATES = {
 APPLICATION_TEMPLATES = {
     "llm_chatbot_python": {
         "tpl_paths": ["apps/python/{{id}}"],
-        "short_desc": "a full sample application, using LLM to interact with users. "
-                      "It includes a supervisor and custom tasks and skills.",
+        "short_desc": "complete sample app, using LLM to interact with users. "
+                      "It includes a supervisor and sample tasks and skills [python]",
         "post_install_help": "Check README.md in ./{path}/ to learn how to configure "
                              "and start your application.",
         "mission_ctrl_templates": [{"llm_supervisor_python": {
@@ -206,7 +206,7 @@ def interactive_create(id=None, family=None, template=None, robot=None):
 
     tpls = TEMPLATES_FAMILIES[family]["src"]
     while not template:
-        print("\nWhat kind of mission controller do you want to create?")
+        print("\nChoose a template:")
         for idx, tpl in enumerate(tpls.keys()):
             print("%s: %s" %
                   (idx + 1, tpls[tpl]["short_desc"]))
