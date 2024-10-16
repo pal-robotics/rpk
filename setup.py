@@ -26,7 +26,7 @@ TPLS = [
 
 setup(
     name=NAME,
-    version='2.2.0',
+    version='2.3.0',
     description=DESCRIPTION,
     author="Séverin Lemaignan",
     author_email="severin.lemaignan@pal-robotics.com",

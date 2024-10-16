@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.0 (2024-10-16)
+------------------
 * add missing file after renaming to rpk
 * Contributors: Séverin Lemaignan
 
