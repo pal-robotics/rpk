@@ -78,6 +78,12 @@ MISSION_CTRL_TEMPLATES = {
         "task_templates": [{"greet_task_python": {"id": "greet_task", "name": "'greet' task"}}],
         "skill_templates": [{"ollama_connector_python": {"id": "ollama_connector",
                                                          "name": "Bridge with a ollama server"}}],
+    },
+    "super_basic_python": {
+        "tpl_paths": ["mission_ctrls/super_basic_python/{{id}}"],
+        "short_desc": "super basic robot supervisor [python]",
+        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
+                             "mission_controller.py to customize your application logic."
     }
 }
 
