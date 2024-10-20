@@ -63,15 +63,15 @@ TASK_TEMPLATES = {
 }
 
 MISSION_CTRL_TEMPLATES = {
-    "super_basic_python": {
+    "base_python": {
         "tpl_paths": ["mission_ctrls/super_basic_python/{{id}}"],
         "short_desc": "base robot supervisor [python]",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
                              "mission_controller.py to customize your application logic."
     },
-    "base_python": {
+    "base_intents_python": {
         "tpl_paths": ["mission_ctrls/base_python/{{id}}"],
-        "short_desc": "base robot supervisor (with full Intents management) [python]",
+        "short_desc": "robot supervisor with intents handler [python]",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
                              "mission_controller.py to implement your application logic.",
     },
