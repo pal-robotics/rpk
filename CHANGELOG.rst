@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.0.0 (2024-10-20)
+------------------
 * do not expose yet the LLM supervisor + app
 * updated mission descriptions
 * defined super basic mission template
