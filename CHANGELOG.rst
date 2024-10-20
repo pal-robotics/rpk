@@ -2,6 +2,50 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* do not expose yet the LLM supervisor + app
+* updated mission descriptions
+* defined super basic mission template
+* tune the rpk help descriptions
+* [tpl] update the app template, adding a launch file
+* [tpl] add tasks/greet_task_python}
+* [tpl] update mission ctrl template with manifest + split ollama connector to own skill
+* [tpl] add skills/llm_msgs
+* [tpl] add skills/ollama_connector_python (not functional yet)
+* [tpl] add skills/base_python (probably not functional yet)
+* [tpl] {tasks/python -> tasks/greet_task_python}
+* [tpl] {skills/python -> skills/db_commector_python}
+* update README + add it as long_description in setup.py
+* {pal_app -> rpk}
+* add dependency on jinja2
+* small script to fetch the task/skill dependencies of a app/task
+* add manifests to the skill and task templates
+* [tpl] add initial mission_ctrl/llm_chatbot_python
+  currently, simply a copy of mission/base_python, with additional dependency on greet_task
+* [tpl] mission_ctrl/{python -> base_python}
+* completed the 'greet' task template. Starts by seems to be stuck somewhere
+  (most likely waiting for the 'say' action client to become available)
+* add basic initial template for the 'LLM' app -- just a metapkg for now
+* rpk: handle dependencies between templates
+* rpk: small refactor, no functional changes
+* move missions and tasks tpl to new folder hierarchy
+* [tpl] fully working skill template
+  This template create a mock 'mongo db connector' and include the generation of a custom message package
+  To test:
+  $ pal_app create -r generic -p src skill -t simple_python -i mongo_db_connector
+  $ colcon build --packages-select mongo_db_connector
+  $ ros2 launch mongo_db_connector mongo_db_connector.launch.py
+  You should then be able to call the skill via the /mongo_db_connector/db_request action:
+  $ ros2 action send_goal /mongo_db_connector/db_request sample_skill_msgs/action/DbRequest ...
+* support multiple template folders per type of code generation
+  Use case: create a skill package + a example action msgs package
+* prepare for tasks template + various minor bug fixes
+* [tpl] basic skill template
+* extended cmd line interface for applications and skill
+  While here, did a couple of quality of life improvements, like sane defaults
+* Contributors: Séverin Lemaignan, lorenzoferrini
+
 2.3.0 (2024-10-16)
 ------------------
 * add missing file after renaming to rpk
