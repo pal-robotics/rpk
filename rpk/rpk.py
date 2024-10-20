@@ -154,6 +154,7 @@ def get_intents():
 
 def interactive_create(id=None, family=None, template=None, robot=None):
 
+
     if id and (" " in id or "-" in id):
         print("The chosen ID can not contain spaces or hyphens.")
         id = None
@@ -191,6 +192,11 @@ def interactive_create(id=None, family=None, template=None, robot=None):
             family = ""
 
     tpls = TEMPLATES_FAMILIES[family]["src"]
+
+    if not tpls:
+        print("No templates available for %s. Exiting." % family)
+        sys.exit(1)
+
     while not template:
         print("\nChoose a template:")
         for idx, tpl in enumerate(tpls.keys()):
