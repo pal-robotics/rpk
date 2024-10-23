@@ -2,6 +2,11 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* defined template for basic chatbot
+* Contributors: lorenzoferrini
+
 3.0.0 (2024-10-20)
 ------------------
 * do not expose yet the LLM supervisor + app
