@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.1.0 (2024-10-23)
+------------------
 * defined template for basic chatbot
 * Contributors: lorenzoferrini
 
