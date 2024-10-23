@@ -37,6 +37,12 @@ SKILL_TEMPLATES = {
         "post_install_help": "Check README.md in ./{path}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
+    "basic_chatbot": {
+        "tpl_paths": ["skills/basic_chatbot/{{id}}"],
+        "short_desc": "basic chatbot template [python]",
+        "post_install_help": "Check README.md in ./{path}/ and "
+                             "edit src/{id}/skill_impl.py to implement your skill logic.",
+    },
     "db_connector_python": {
         "tpl_paths": ["skills/db_connector_python/{{id}}", "skills/sample_skill_msgs"],
         "short_desc": "database connector mock-up [python]",
