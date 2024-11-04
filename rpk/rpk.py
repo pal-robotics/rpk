@@ -15,12 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
 import argparse
-from pathlib import Path
+import datetime
 from jinja2 import Environment, select_autoescape, FileSystemLoader
 import random
 import string
+import sys
+from pathlib import Path
 
 import rpk
 
@@ -112,10 +113,12 @@ AVAILABLE_ROBOTS = ["generic", "ari", "tiago"]
 
 TPL_EXT = "j2"
 
+
 def random_id():
     rand_id = ''.join(random.choices(string.ascii_lowercase, k=5))
     print(f"Using random ID {rand_id}")
     return rand_id
+
 
 def get_intents():
 
@@ -327,6 +330,9 @@ def main(args=sys.argv[1:]):
 
     subparsers = parser.add_subparsers(dest="command")
 
+    #######################################################################################
+    # create command
+
     create_parser = subparsers.add_parser(
         "create", help="Create new application/task/skill skeletons"
     )
@@ -337,7 +343,7 @@ def main(args=sys.argv[1:]):
         choices=AVAILABLE_ROBOTS,
         type=str,
         nargs="?",
-        help="target robot.",
+        help="target robot",
     )
 
     family_subparsers = create_parser.add_subparsers(dest="family")
@@ -352,7 +358,6 @@ def main(args=sys.argv[1:]):
             action="store_true",
             help="do not ask questions, automatically accept defaults",
         )
-
 
         f_parser.add_argument(
             "-t",
@@ -383,32 +388,67 @@ def main(args=sys.argv[1:]):
              "(default: .)",
     )
 
+    #######################################################################################
+    # list command
+
+    list_tpl_parser = subparsers.add_parser(
+        "list", help="List all available templates"
+    )
+
+    list_tpl_parser.add_argument(
+        "-s",
+        "--short",
+        action="store_true",
+        help="only display the template' names",
+    )
+
+    #######################################################################################
+    #######################################################################################
+
     args = parser.parse_args(args)
 
     if not args.command:
         print(f"You must select a command.\nType '{SELF_NAME} --help' for details.")
         sys.exit(1)
 
-    if args.command == "create" and not hasattr(args, "template"):
-        print(f"You must select a type of content.\nType '{SELF_NAME} create --help' for details.")
-        sys.exit(1)
+    if args.command == "create":
 
-    intents = get_intents()
+        if not hasattr(args, "template"):
+            print(f"You must select a type of content.\nType '{SELF_NAME} create --help' for details.")
+            sys.exit(1)
 
-    id, name, family, tpl_name, robot = interactive_create(
-        args.id,
-        name=None,
-        family=args.family,
-        template=args.template,
-        robot=args.robot,
-        yes=args.yes)
+        intents = get_intents()
 
-    data = {"id": id, "name": name, "intents": intents, "robot": robot}
+        id, name, family, tpl_name, robot = interactive_create(
+            args.id,
+            name=None,
+            family=args.family,
+            template=args.template,
+            robot=args.robot,
+            yes=args.yes)
 
-    root = Path(args.path)
-    root.mkdir(parents=True, exist_ok=True)
+        data = {"id": id,
+                "name": name,
+                "intents": intents,
+                "robot": robot,
+                "author": "TODO",
+                "year": datetime.datetime.now().year}
 
-    generate_skeleton(data, family, tpl_name, robot, root)
+        root = Path(args.path)
+        root.mkdir(parents=True, exist_ok=True)
+
+        generate_skeleton(data, family, tpl_name, robot, root)
+
+    elif args.command == "list":
+
+        for family in TEMPLATES_FAMILIES.keys():
+            if not args.short:
+                print(f"\n# {TEMPLATES_FAMILIES[family]['name']} templates:")
+            for tpl in TEMPLATES_FAMILIES[family]["src"].keys():
+                if args.short:
+                    print(f"{family}/{tpl}")
+                else:
+                    print(f" - {tpl}: {TEMPLATES_FAMILIES[family]['src'][tpl]['short_desc']}")
 
 
 if __name__ == "__main__":
