@@ -114,17 +114,17 @@ class MissionController(Node):
             tts_goal = TTS.Goal()
             tts_goal.locale = "en_US"
             {% if robot == "ari" %}
-tts_goal.input = "Hello, I'm ARI. Nice to meet you!"
+            tts_goal.input = "Hello, I'm ARI. Nice to meet you!"
             {% elif robot == "tiago" %}
-tts_goal.input = "Hello, I'm TIAGo. Nice to meet you!"
+            tts_goal.input = "Hello, I'm TIAGo. Nice to meet you!"
             {% endif%}
 
             play_motion = ActionClient(self, PlayMotion2, 'play_motion2')
             play_motion.wait_for_server()
             {% if robot == "ari" %}
-motion_goal = PlayMotion2.Goal(motion_name="bow")
+            motion_goal = PlayMotion2.Goal(motion_name="bow")
             {% elif robot == "tiago" %}
-motion_goal = PlayMotion2.Goal(motion_name="head_tour")
+            motion_goal = PlayMotion2.Goal(motion_name="head_tour")
             {% endif %}
             tts.send_goal_async(tts_goal)
             play_motion.send_goal(motion_goal)

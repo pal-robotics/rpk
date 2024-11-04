@@ -25,9 +25,10 @@ rpk.PKG_PATH = (
 )
 
 
-@pytest.mark.parametrize('category, template, id, robot, path',
+@pytest.mark.parametrize('category, template, robot, path',
                          [
-                            (category, tpl, 'test_skill', 'generic', tempfile.mkdtemp())
+                            (category, tpl, robot, tempfile.mkdtemp())
+                            for robot in ['generic', 'ari', 'tiago']
                             for category, tpls in rpk.TEMPLATES_FAMILIES.items()
                             for tpl in tpls["src"].keys()
                          ])
@@ -35,7 +36,7 @@ rpk.PKG_PATH = (
 @pytest.mark.pep257
 @pytest.mark.flake8
 @pytest.mark.copyright
-def test_generation(category, template, id, robot, path):
+def test_generation(category, template, robot, path):
 
     rpk.main(['create',
               '--robot', robot,
