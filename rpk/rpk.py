@@ -285,6 +285,7 @@ def generate_skeleton(data, family, tpl_name, robot, root):
             loader=FileSystemLoader(str(tpl_path)),
             autoescape=select_autoescape(),
             trim_blocks=True,
+            lstrip_blocks=True,
         )
 
         j2_tpls = env.list_templates(extensions=TPL_EXT)
@@ -414,7 +415,8 @@ def main(args=sys.argv[1:]):
     if args.command == "create":
 
         if not hasattr(args, "template"):
-            print(f"You must select a type of content.\nType '{SELF_NAME} create --help' for details.")
+            print("You must select a type of content.\n"
+                  f"Type '{SELF_NAME} create --help' for details.")
             sys.exit(1)
 
         intents = get_intents()

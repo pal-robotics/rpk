@@ -1,3 +1,5 @@
+# Copyright (c) {{ year }} {{ author }}. All rights reserved.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -30,6 +32,7 @@ from hri_actions_msgs.msg import Intent
 from lifecycle_msgs.msg import State as StateMsg
 
 from {{ id }}.change_state_helper import ChangeNodeStateHelper
+
 
 class MissionController(Node):
 
@@ -79,13 +82,12 @@ class MissionController(Node):
         # intents, simply remove the corresponding
         # line(s)
         #
-
 {% if intents %}
 {% for intent in intents %}
-    {% if (robot == "ari" and intent.intent == "PRESENT_CONTENT") or 
-           (robot == "tiago" and intent.intent in ["GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT"]) or 
-           (intent.intent not in ["PRESENT_CONTENT", "GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT"]) %}
-    # Intent {{ intent.intent }}:{{ intent.description }}
+    {% if (robot == "ari" and intent.intent == "PRESENT_CONTENT") or
+          (robot == "tiago" and intent.intent in ["GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT"]) or
+          (intent.intent not in ["PRESENT_CONTENT", "GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT"]) %}
+
         {{ "if" if loop.index == 1 else "elif"}} msg.intent == Intent.{{ intent.intent }}:
     {% endif %}
 {% if intent.required_thematic_roles %}
@@ -93,17 +95,18 @@ class MissionController(Node):
 {% for role in intent.required_thematic_roles %}
             # - {{ role }}
 {% endfor %}
+
 {% endif %}
 {% if intent.intent == "WAKEUP" %}
-        # The "communication_hub" is a managed node that needs to be 
+            # The "communication_hub" is a managed node that needs to be
             # activated based on the received wakeup intent.
             self._change_state_helper.change_state(StateMsg.PRIMARY_STATE_ACTIVE)
 {% elif intent.intent == "SUSPEND" %}
-        # The "communication_hub" is a managed node that needs to be 
+            # The "communication_hub" is a managed node that needs to be
             # deactivated based on the received suspend intent.
             self._change_state_helper.change_state(StateMsg.PRIMARY_STATE_INACTIVE)
 {% elif intent.intent == "ENGAGE_WITH" and (robot in ["ari", "tiago"]) %}
-        # As an example, we call here the TTS and play_motion action server
+            # As an example, we call here the TTS and play_motion action server
             # to implement a very simple behaviour when someone engages with
             # the robot.
             tts = ActionClient(self, TTS, 'communication/say')
@@ -122,30 +125,30 @@ tts_goal.input = "Hello, I'm TIAGo. Nice to meet you!"
 motion_goal = PlayMotion2.Goal(motion_name="bow")
             {% elif robot == "tiago" %}
 motion_goal = PlayMotion2.Goal(motion_name="head_tour")
-            {% endif %} 
+            {% endif %}
             tts.send_goal_async(tts_goal)
             play_motion.send_goal(motion_goal)
 {% elif (robot == "generic" and intent.intent == "ENGAGE_WITH") %}
-        # Handle intents of a user to engage with the robot
+            # Handle intents of a user to engage with the robot
             pass
 {% elif (robot == "ari" and intent.intent == "PRESENT_CONTENT") %}
-        # Handle intents to present specific content by
+            # Handle intents to present specific content by
             # loading the corresponding page onto the touchscreen.
-            # Refer to "touchscreen skills": 
+            # Refer to "touchscreen skills":
             # https://docs.pal-robotics.com/sdk-dev/touchscreen/skills_list
             pass
 {% elif (robot == "tiago" and intent.intent in ["GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT"]) %}
-        # Handle intents to manipulate an object. Refer to "manipulation
-            # skills": 
+            # Handle intents to manipulate an object. Refer to "manipulation
+            # skills":
             # https://docs.pal-robotics.com/sdk-dev/manipulation/skills_list
             pass
 {% elif intent.intent in ["MOVE_TO", "GUIDE"] %}
-        # Handle intents to move the robot from one place to another using 
+            # Handle intents to move the robot from one place to another using
             # its navigation skills. Refer to "navigation skills":
             # https://docs.pal-robotics.com/sdk-dev/navigation/skills_list
             pass
 {% elif intent.intent == "PERFORM_MOTION" %}
-        # Handle intents to perform a specific motion 
+            # Handle intents to perform a specific motion
             # (eg, a dance or a specific gesture like pointing, waving)
             # Refer to "gestures and motions skills":
             # https://docs.pal-robotics.com/sdk-dev/motions/skills_list
@@ -154,26 +157,27 @@ motion_goal = PlayMotion2.Goal(motion_name="head_tour")
             motion_goal = PlayMotion2.Goal(motion_name=data['object'])
             play_motion.send_goal(motion_goal)
 {% elif intent.intent in ["GREET"] %}
-        # Handle intents to greet, customised by the user
-            # Refer to: 
+            # Handle intents to greet, customised by the user
+            # Refer to:
             # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
             tts = ActionClient(self, TTS, 'say')
             tts.wait_for_server()
             tts_goal = TTS.Goal(input="Hello, what can I do for you today?")
             tts.send_goal_async(tts_goal)
-  {% elif intent.intent in ["SAY"] %}
-        # Handle intents to say a specific text
-            # Refer to: 
+{% elif intent.intent in ["SAY"] %}
+            # Handle intents to say a specific text
+            # Refer to:
             # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
             tts = ActionClient(self, TTS, 'say')
             tts.wait_for_server()
             tts_goal = TTS.Goal(input=data['object'])
             tts.send_goal_async(tts_goal)
 {% elif intent.intent in ["START_ACTIVITY", "STOP_ACTIVITY"] %}
-        # Handle custom/specialized activities/tasks
+            # Handle custom/specialized activities/tasks
             pass
 {% endif %}
 {% endfor %}
+
         # custom intent?
         else:
             self.get_logger().warning("I don't know how to process intent "
@@ -198,7 +202,7 @@ motion_goal = PlayMotion2.Goal(motion_name="head_tour")
     #
     def on_configure(self, state: State) -> TransitionCallbackReturn:
         """
-        Configure the node
+        Configure the node.
 
         :return: The state machine either invokes a transition to the
             "inactive" state or stays in "unconfigured" depending on the
@@ -214,7 +218,7 @@ motion_goal = PlayMotion2.Goal(motion_name="head_tour")
 
     def on_activate(self, state: State) -> TransitionCallbackReturn:
         """
-        Activate the node
+        Activate the node.
 
         Subscribe to topic and start listening to /intents topic.
         Activate the 'communication_hub' node.

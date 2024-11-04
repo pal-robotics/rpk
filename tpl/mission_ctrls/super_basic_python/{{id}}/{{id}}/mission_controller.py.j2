@@ -1,3 +1,5 @@
+# Copyright (c) {{ year }} {{ author }}. All rights reserved.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,21 +13,9 @@
 # limitations under the License.
 
 import json
-
-from rclpy.lifecycle import Node
-from rclpy.lifecycle import State
-from rclpy.lifecycle import TransitionCallbackReturn
-
-{% if intents %}
-{% for intent in intents %}
-{% if intent.intent == "ENGAGE_WITH"%}
-from rclpy.action import ActionClient
-from tts_msgs.action import TTS
-{% endif %}
-{% endfor %}
-{% endif %}
-
+from rclpy.node import Node
 from hri_actions_msgs.msg import Intent
+
 
 class MissionController(Node):
 
@@ -47,14 +37,12 @@ class MissionController(Node):
         #
         # TODO: Add here any other variables
         # that you need in your node
-        # Initialisation should happen in the
-        # on_configure state.
         #
 
     def __del__(self):
         self.get_logger().info("Destroying Mission Controller")
         self.destroy_subscription(self._intents_sub)
-        
+
     def on_intent(self, msg):
 
         self.get_logger().info("Received an intent: %s" % msg.intent)
@@ -84,3 +72,4 @@ class MissionController(Node):
         else:
             self.get_logger().warning("I don't know how to process intent "
                                       "<%s>!" % msg.intent)
+

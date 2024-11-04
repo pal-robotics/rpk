@@ -1,3 +1,5 @@
+# Copyright (c) {{ year }} {{ author }}. All rights reserved.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -14,8 +16,6 @@ from rclpy.lifecycle import Node
 from rclpy.lifecycle import State
 from rclpy.lifecycle import TransitionCallbackReturn
 from rcl_interfaces.msg import ParameterDescriptor
-
-from rclpy.service import Service
 
 from chatbot_msgs.srv import GetResponse
 from hri_actions_msgs.msg import Intent
@@ -42,13 +42,12 @@ class SkillImpl(Node):
         super().__init__('skill_{{ id }}')
 
         # Declare ROS parameters. Should mimick the one listed in config/00-defaults.yaml
-        #
-        # self.declare_parameter(
-        #   'my_parameter', "my_value.",
-        #   ParameterDescriptor(description='System prompt to use for the LLM')
-        # )
-        #
-        
+
+        self.declare_parameter(
+          'my_parameter', "my_default_value.",
+          ParameterDescriptor(description='Important parameter for my chatbot')
+        )
+
         self.get_logger().info("Initialising...")
         self._timer = None
         self._llm_server = None
@@ -58,7 +57,13 @@ class SkillImpl(Node):
         self.get_logger().info('Skill {{id}} started, but not yet configured.')
 
     def on_request_cb(self, request, response):
-        """Basic service request callback."""
+        """
+        Return the chatbot's response to a text input.
+
+        Implement here the logic to process the natural text input
+        and return a reponse made of a combination of text to be spoken back, and
+        possible recognized user intents.
+        """
         self.get_logger().info(f"request: {request.input}")
         self.nb_requests += 1
 

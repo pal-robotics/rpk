@@ -1,41 +1,56 @@
-import json
+# Copyright (c) {{ year }} {{ author }}. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import sys
 import ollama
 import asyncio
 
-########################################################################################
-#  FUNCTIONS for LLM function calling
+# ########################################################################################
+# #  FUNCTIONS for LLM function calling
+# #
 #
-
-def generate_action_description(id: str, arguments=None) -> str:
-    print("[!!] generate_action_description called")
-
-    if id not in [intent['id'] for intent in INTENTS]:
-        print("[!!] Invalid action id")
-        return "Invalid action ID. Available actions are: %s" % ", ".join([intent['id'] for intent in INTENTS])
-
-    return json.dumps({"id": id, "arguments": arguments})
-
-
-def list_actions() -> str:
-    print("[!!] list_actions called")
-    return json.dumps(INTENTS)
-
-
-def get_environment() -> str:
-    print("[!!] get_environment called")
-    return json.dumps([
-        {'id': 'id23', "type": "apple", "location": "on table", "color": "red"},
-        {'id': 'id67', "type": "human", "location": "next to table"},
-        {'id': 'id89', "type": "table", "location": "in front of robot"},
-    ])
-
-
-available_functions = {
-    'generate_action_description': (generate_action_description, ["id", "arguments"]),
-    'list_actions': (list_actions, []),
-    'get_environment': (get_environment, []),
-}
+# def generate_action_description(id: str, arguments=None) -> str:
+#     print("[!!] generate_action_description called")
+#
+#     if id not in [intent['id'] for intent in INTENTS]:
+#         print("[!!] Invalid action id")
+#         return "Invalid action ID. Available actions are: %s" %
+#                 ", ".join([intent['id'] for intent in INTENTS])
+#
+#     return json.dumps({"id": id, "arguments": arguments})
+#
+#
+# def list_actions() -> str:
+#     print("[!!] list_actions called")
+#     return json.dumps(INTENTS)
+#
+#
+# def get_environment() -> str:
+#     print("[!!] get_environment called")
+#     return json.dumps([
+#         {'id': 'id23', "type": "apple", "location": "on table", "color": "red"},
+#         {'id': 'id67', "type": "human", "location": "next to table"},
+#         {'id': 'id89', "type": "table", "location": "in front of robot"},
+#     ])
+#
+#
+# available_functions = {
+#     'generate_action_description': (generate_action_description, ["id", "arguments"]),
+#     'list_actions': (list_actions, []),
+#     'get_environment': (get_environment, []),
+# }
+available_functions = {}
 
 ########################################################################################
 
@@ -51,7 +66,9 @@ TOOLS = [
     #        'type': 'function',
     #        'function': {
     #            'name': 'generate_action_description',
-    #            'description': 'Generate a JSON action description, for further execution by the robot.',
+    #            'description': 'Generate a JSON action description, for'
+    #                           'further execution by the robot.',
+    #
     #            'parameters': {
     #                'type': 'object',
     #                'properties': {
@@ -80,7 +97,7 @@ TOOLS = [
 
 class OllamaConnector:
     """
-    Connector to interact with the Ollama Language Model (LLM) server
+    Connector to interact with the Ollama Language Model (LLM) server.
 
     General usage:
     - Initialize the connector with the host, model, prompt and tools
@@ -89,13 +106,13 @@ class OllamaConnector:
     If you pass the interactive flag to True, the connector will wait for your input in the console
     and send it to the LLM server
 
-    Otherwise, you can use the input_queue and output_queue to send and receive messages programmatically
+    Otherwise, you can use the input_queue and output_queue to send and receive
+    messages programmatically.
     """
 
-    
     def __init__(self, host, model, prompt, tools=None):
         """
-        Initialize the Ollama connector with the host, model, prompt and tools
+        Initialize the Ollama connector with the host, model, prompt and tools.
 
         :param host: the host where the LLM server is running
         :param model: the model to use for the conversation (eg 'llama3.1:8b')
@@ -111,22 +128,17 @@ class OllamaConnector:
         self.output_queue = asyncio.Queue()
 
     async def ainput(self) -> str:
-        """
-        Helper for asynchronous output/input from stdin
-        """
+        """Help with asynchronous output/input from stdin."""
         last_response = await self.output_queue.get()
         await asyncio.to_thread(sys.stdout.write, f'{last_response} ')
         await self.input_queue.put(await asyncio.to_thread(sys.stdin.readline))
-
 
     async def run(self, interactive=False):
         client = ollama.AsyncClient(host=self.host)
 
         messages = [
-            {'role': 'system', 'content': self.prompt
-            },
-
-        ]
+                    {'role': 'system', 'content': self.prompt},
+                   ]
 
         print("Initializing conversation with LLM...")
         response = await client.chat(
@@ -183,7 +195,7 @@ class OllamaConnector:
                         else:
                             function_response = function_to_call(
                                 **tool['function']['arguments'])
-            #                self.tool['function']['arguments']['departure'], tool['function']['arguments']['arrival'])
+
                         # Add function response to the conversation
                         messages.append(
                             {
@@ -198,73 +210,110 @@ class OllamaConnector:
             await self.output_queue.put(response['message']['content'])
 
 
-
 if __name__ == '__main__':
 
     OLLAMA_HOST = 'http://spring-basestation:11434'
-    #OLLAMA_HOST = 'http://localhost:11434'
+    # OLLAMA_HOST = 'http://localhost:11434'
 
     MODEL = 'llama3.1:8b'  # close to good, difficult to get clean, structured output
     # MODEL = 'llama3.1:8b-instruct-q8_0'
-    # MODEL = 'mistral-nemo:12b-instruct-2407-q4_1' # not great, struggle with the tools, output not clean
-    #MODEL = 'llama3.2:1b' # inadequate to perform eg function calling or return structured data
+    # MODEL = 'mistral-nemo:12b-instruct-2407-q4_1' # not great, struggle with
+    # the tools, output not clean
+    # MODEL = 'llama3.2:1b' # inadequate to perform eg function calling or return structured data
 
-    PROMPT1 = '''You are a friendly robot. You try to help the user to the best of your abilities. You are always helpful, and ask further questions if the desires of the user are unclear. Your answers are always polite yet concise and to-the-point.
+    PROMPT1 = '''You are a friendly robot. You try to help the user to the best
+    of your abilities. You are always helpful, and ask further questions if the
+    desires of the user are unclear. Your answers are always polite yet concise
+    and to-the-point.
 
-    Your aim is to recognise which action should be taken next, and sent to the robot action controller. Actions are described in JSON format, and you can use the function `generate_action_description` to generate them.
+    Your aim is to recognise which action should be taken next, and sent to the
+    robot action controller. Actions are described in JSON format, and you can
+    use the function `generate_action_description` to generate them.
 
-    You can only call the tools `generate_action_description`, `list_actions` and `get_environment`.
+    You can only call the tools `generate_action_description`, `list_actions`
+    and `get_environment`.
 
-    The person you are talking to is: {person_id}. Always use this ID when referring to the person in your responses.
+    The person you are talking to is: {person_id}. Always use this ID when
+    referring to the person in your responses.
 
-    You can *only* return a json dictionary of the form: ["response_to_user": "<textual response>", "next_action": <json action description>].
+    You can *only* return a json dictionary of the form: ["response_to_user":
+    "<textual response>", "next_action": <json action description>].
 
-    The textual response to the user must only contain plain text, suitable for speech synthesis (no json, no html, no markdown, etc).
-    next_action must be a json dictionary, generated by the tool `generate_action_description`. Alternatively, it can be empty.
+    The textual response to the user must only contain plain text, suitable for
+    speech synthesis (no json, no html, no markdown, etc). next_action must be
+    a json dictionary, generated by the tool `generate_action_description`.
+    Alternatively, it can be empty.
     '''
 
-    PROMPT2 = '''You are a friendly robot. You try to help the user to the best of your abilities. You are always helpful, and ask further questions if the desires of the user are unclear. Your answers are always polite yet concise and to-the-point.
+    PROMPT2 = '''You are a friendly robot. You try to help the user to the best
+    of your abilities. You are always helpful, and ask further questions if the
+    desires of the user are unclear. Your answers are always polite yet concise
+    and to-the-point.
 
-    Your aim is to recognise which action should be taken next, and sent to the robot action controller. Actions are described in JSON format, here is the list of available actions:
+    Your aim is to recognise which action should be taken next, and sent to the
+    robot action controller. Actions are described in JSON format, here is the
+    list of available actions:
 
     {action_list}
 
-    If needed, you can call the tool 'get_environment' to know more about objects and people in your vicinity.
+    If needed, you can call the tool 'get_environment' to know more about
+    objects and people in your vicinity.
 
-    The person you are talking to is: {person_id}. Always use this ID when referring to the person in your responses.
+    The person you are talking to is: {person_id}. Always use this ID when
+    referring to the person in your responses.
 
-    You can *only* return a json dictionary of the form: ["response_to_user": "<textual response>", "next_action": <json action description>].
+    You can *only* return a json dictionary of the form:
+    ["response_to_user": "<textual response>", "next_action": <json action description>].
 
-    The textual response to the user must only contain plain text, suitable for speech synthesis (no json, no html, no markdown, etc).
-    next_action must be a json dictionary, like the examples above. If you are not sure about the intention of the user, return an empty action and ask for confirmation.
+    The textual response to the user must only contain plain text, suitable for
+    speech synthesis (no json, no html, no markdown, etc). next_action must be
+    a json dictionary, like the examples above. If you are not sure about the
+    intention of the user, return an empty action and ask for confirmation.
     '''
 
     SAMPLE_INTENTS = [
-        {"id": "MOVE_TO", "description": "navigates to a specific location.",
-            "example": "{\"id\": \"MOVE_TO\", \"arguments\": {\"goal\": \"kitchen\"}"},
-        {"id": "GUIDE", "description": "guides someone somewhere.",
-            "example": "{\"id\": \"GUIDE\", \"arguments\": {\"goal\": \"kitchen\", \"recipient\": \"Alice\"}"},
-        {"id": "GRAB_OBJECT", "description": "picks up a specific object.",
-            "example": "{\"id\": \"GRAB_OBJECT\", \"arguments\": {\"object\": \"apple\"}"},
-        {"id": "BRING_OBJECT", "description": "brings a specific object to a specific place.",
-            "example": "{\"id\": \"BRING_OBJECT\", \"arguments\": {\"object\": \"apple\", \"recipient\": \"Alice\"}"},
-        {"id": "PLACE_OBJECT", "description": "places an object on a support.",
-            "example": "{\"id\": \"PLACE_OBJECT\", \"arguments\": {\"object\": \"apple\", \"recipient\": \"table\"}"},
-        {"id": "GREET", "description": "greets someone.",
-            "example": "{\"id\": \"GREET\", \"arguments\": {\"recipient\": \"Alice\"}"},
-        {"id": "PRESENT_CONTENT", "description": "presents predefined content.",
-            "example": "{\"id\": \"PRESENT_CONTENT\", \"arguments\": {\"object\": \"intro_video_pal_robotics\"}"},
-        {"id": "PERFORM_MOTION", "description": "performs a motion (eg, a dance or a specific gesture like pointing, waving).",
-        "example": "{\"id\": \"PERFORM_MOTION\", \"arguments\": {\"object\": \"wave\"}"},
-        {"id": "START_ACTIVITY", "description": "starts a scripted behaviour/activity.",
-            "example": "{\"id\": \"START_ACTIVITY\", \"arguments\": {\"activity\": \"dance\"}"},
+        {"id": "MOVE_TO",
+         "description": "navigates to a specific location.",
+         "example": "{\"id\": \"MOVE_TO\", \"arguments\": {\"goal\": \"kitchen\"}"},
+        {"id": "GUIDE",
+         "description": "guides someone somewhere.",
+         "example": "{\"id\": \"GUIDE\", "
+                    "\"arguments\": {\"goal\": \"kitchen\", \"recipient\": \"Alice\"}"},
+        {"id": "GRAB_OBJECT",
+         "description": "picks up a specific object.",
+         "example": "{\"id\": \"GRAB_OBJECT\", \"arguments\": {\"object\": \"apple\"}"},
+        {"id": "BRING_OBJECT",
+         "description": "brings a specific object to a specific place.",
+         "example": "{\"id\": \"BRING_OBJECT\", "
+                    "\"arguments\": {\"object\": \"apple\", \"recipient\": \"Alice\"}"},
+        {"id": "PLACE_OBJECT",
+         "description": "places an object on a support.",
+         "example": "{\"id\": \"PLACE_OBJECT\", "
+                    "\"arguments\": {\"object\": \"apple\", \"recipient\": \"table\"}"},
+        {"id": "GREET",
+         "description": "greets someone.",
+         "example": "{\"id\": \"GREET\", "
+                    "\"arguments\": {\"recipient\": \"Alice\"}"},
+        {"id": "PRESENT_CONTENT",
+         "description": "presents predefined content.",
+         "example": "{\"id\": \"PRESENT_CONTENT\", "
+                    "\"arguments\": {\"object\": \"intro_video_pal_robotics\"}"},
+        {"id": "PERFORM_MOTION",
+         "description": "performs a motion (eg, a dance or a specific gesture "
+         "like pointing, waving).",
+         "example": "{\"id\": \"PERFORM_MOTION\", "
+                    "\"arguments\": {\"object\": \"wave\"}"},
+        {"id": "START_ACTIVITY",
+         "description": "starts a scripted behaviour/activity.",
+         "example": "{\"id\": \"START_ACTIVITY\", \"arguments\": {\"activity\": \"dance\"}"},
     ]
 
     def make_action_list() -> str:
-        return "".join(["- %s: %s (example: %s)\n" % (a["id"], a["description"], a["example"]) for a in SAMPLE_INTENTS])
+        return "".join(["- %s: %s (example: %s)\n" %
+                       (a["id"], a["description"], a["example"]) for a in SAMPLE_INTENTS])
 
     prompt = PROMPT2.format(action_list=make_action_list(), person_id="Alice")
-    
+
     connector = OllamaConnector(host=OLLAMA_HOST, model=MODEL, prompt=prompt, tools=TOOLS)
 
     print(connector.prompt)
@@ -273,3 +322,4 @@ if __name__ == '__main__':
     connector.output_queue.put_nowait("Chat with the robot:")
 
     asyncio.run(connector.run(interactive=True))
+

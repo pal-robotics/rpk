@@ -1,3 +1,5 @@
+# Copyright (c) {{ year }} {{ author }}. All rights reserved.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -20,10 +22,12 @@ from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.action import ActionServer, GoalResponse
 
 from llm_msgs.action import LLM
+from hri_action_msgs.msg import Intent
 
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
 from {{ id }}.ollama_connector import OllamaConnector
+
 
 class SkillImpl(Node):
     """
@@ -69,7 +73,6 @@ class SkillImpl(Node):
 
         self.get_logger().info('Skill {{id}} started, but not yet configured.')
 
-
     def perform_requests(self):
         """
         Mock-up function to perform a request to the database.
@@ -102,15 +105,17 @@ class SkillImpl(Node):
                                f" on {goal_handle.request.db_name}")
 
         # perform request here
-        res = self.perform_requests()
+        self.perform_requests()
 
         self.get_logger().info("Goal executed")
         goal_handle.succeed()
 
-        return DbRequest.Result(result=f"{res}")
+        # TODO: use ollama for the return value
+        return None
 
     def make_action_list(self) -> str:
-        return "".join(["- %s: %s (example: %s)\n" % (a["id"], a["description"], a["example"]) for a in self.intents])
+        return "".join(["- %s: %s (example: %s)\n" %
+                        (a["id"], a["description"], a["example"]) for a in self.intents])
 
     def get_prompt(self) -> str:
         self.prompt = self.get_parameter('system_prompt').value
@@ -126,12 +131,10 @@ class SkillImpl(Node):
         self.ollama_model = self.get_parameter('model').value
 
         self._ollama = OllamaConnector(
-                self.ollama_server, 
-                self.ollama_model, 
+                self.ollama_server,
+                self.ollama_model,
                 self.get_prompt())
 
-
-        # example API for our 'database' skill
         self._llm_server = ActionServer(
             self, LLM, "~/get_response",
             goal_callback=self.on_request_goal,
