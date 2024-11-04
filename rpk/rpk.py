@@ -84,10 +84,30 @@ MISSION_CTRL_TEMPLATES = {
         "post_install_help": "Check README.md in {path}/{id}/ and edit src/{id}/"
                              "mission_controller.py to implement your application logic.",
     },
+    "llm_supervisor_python": {
+        "tpl_paths": ["mission_ctrls/llm_supervisor_python/{{id}}"],
+        "short_desc": "complete supervisor example, using LLMs to manage interactions with "
+                      "users [python]",
+        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
+                             "mission_controller.py to customize your application logic.",
+        "task_templates": [{"greet_task_python": {"id": "greet_task", "name": "'greet' task"}}],
+        "skill_templates": [{"ollama_connector_python": {"id": "ollama_connector",
+                                                         "name": "Bridge with a ollama server"}}],
+    }
 }
 
 
 APPLICATION_TEMPLATES = {
+    "llm_chatbot_python": {
+        "tpl_paths": ["apps/python/{{id}}"],
+        "short_desc": "complete sample app, using LLM to interact with users. "
+                      "It includes a supervisor and sample tasks and skills [python]",
+        "post_install_help": "Check README.md in ./{path}/ to learn how to configure "
+                             "and start your application.",
+        "mission_ctrl_templates": [{"llm_supervisor_python": {
+                                        "id": "llm_supervisor",
+                                        "name": "LLM-based mission controller"}}],
+    }
 }
 
 TEMPLATES_FAMILIES = {
