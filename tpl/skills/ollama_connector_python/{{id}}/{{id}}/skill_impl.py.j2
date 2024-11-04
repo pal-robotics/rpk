@@ -13,20 +13,28 @@
 # limitations under the License.
 
 import random
+import httpx
+import sys
 
 from rclpy.lifecycle import Node
 from rclpy.lifecycle import State
 from rclpy.lifecycle import TransitionCallbackReturn
 from rcl_interfaces.msg import ParameterDescriptor
 
-from rclpy.action import ActionServer, GoalResponse
-
-from llm_msgs.action import LLM
-from hri_action_msgs.msg import Intent
-
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
+from chatbot_msgs.srv import GetResponse
+from hri_actions_msgs.msg import Intent
 
-from {{ id }}.ollama_connector import OllamaConnector
+try:
+    import ollama
+except ImportError:
+    print("[ERROR] The ollama Python bindings are not installed in your system."
+          " You can install them with pip install ollama.")
+    sys.exit(1)
+
+
+def random_id():
+    return "".join([random.choice("abcdefghijklmnopqrstuvwxyz") for _ in range(5)])
 
 
 class SkillImpl(Node):
@@ -53,7 +61,7 @@ class SkillImpl(Node):
             ParameterDescriptor(description='URL of the ollama server')
         )
         self.declare_parameter(
-            'model', "llama3.1:8b",
+            'model', "llama3.2:1b",
             ParameterDescriptor(description='LLM model to use')
         )
         self.declare_parameter(
@@ -66,60 +74,80 @@ class SkillImpl(Node):
         self._diag_pub = None
         self._diag_timer = None
 
+        self._nb_requests = 0
         self._ollama = None
+        self._ollama_server = ""
+        self._ollama_model = ""
+
+        # dict user_id -> list of messages exchanged with the LLM
+        self._msgs_history = {}
 
         self._llm_server = None
         self._intent_pub = None
 
+        self._available_tasks = {}
+
         self.get_logger().info('Skill {{id}} started, but not yet configured.')
 
-    def perform_requests(self):
+    def on_request_cb(self, request, response):
         """
-        Mock-up function to perform a request to the database.
+        Return the chatbot's response to a text input.
 
-        Here, we just simulate a request returning a random name.
+        Implement here the logic to process the natural text input
+        and return a reponse made of a combination of text to be spoken back, and
+        possible recognized user intents.
         """
-        if not self.db_ready:
-            self.get_logger().error("Database not ready")
-            return
+        user = request.user_id
+        if not user:
+            user = "anon_" + random_id()
 
-        self.get_logger().info("Querying the database...")
-        # perform request here
-        self.nb_requests += random.randint(50, 100)
-        self.get_logger().info("Requests performed")
+        self.get_logger().info(f"Sending input from user <{user}> "
+                               f"to LLM: {request.input}")
+        self._nb_requests += 1
 
-        return "John"
+        if not self._msgs_history.setdefault(user, None):
+            self._msgs_history[user] = [
+                    {'role': 'system', 'content': self.get_prompt(user)},
+                    ]
 
-    def on_request_goal(self, goal_handle):
-        """Accept incoming goal if appropriate."""
-        if self._state_machine.current_state[1] != "active":
-            self.get_logger().error("Skill is not active, rejecting goal")
-            return GoalResponse.REJECT
+        self._msgs_history[user].append(
+            {
+                'role': 'user',
+                'content': request.input,
+            }
+        )
 
-        self.get_logger().info("Accepted a new goal")
-        return GoalResponse.ACCEPT
+        try:
+            llm_response = self._ollama.chat(
+                model=self._ollama_model,
+                messages=self._msgs_history[user],
+                # tools=self.tools,
+            )
+        except httpx.ConnectError as ce:
+            raise RuntimeError(f"Error while connecting to the ollama server: {ce}."
+                               "Is the server installed and started, or the URL "
+                               "incorrect (eg wrong port)?")
 
-    def on_request_exec(self, goal_handle):
-        """Process incoming goal."""
-        self.get_logger().info(f"Executing request: {goal_handle.request.query}"
-                               f" on {goal_handle.request.db_name}")
+        self._msgs_history[user].append(llm_response['message'])
 
-        # perform request here
-        self.perform_requests()
+        response.response = llm_response['message']['content']
 
-        self.get_logger().info("Goal executed")
-        goal_handle.succeed()
+        # TODO: extract the actual intent(s), if any!
+        intent = Intent(
+            intent=Intent.RAW_USER_INPUT,
+            confidence=1.0,
+            data=f'"input": "{request.input}"')
+        response.intents.append(intent)
 
-        # TODO: use ollama for the return value
-        return None
+        return response
 
     def make_action_list(self) -> str:
         return "".join(["- %s: %s (example: %s)\n" %
-                        (a["id"], a["description"], a["example"]) for a in self.intents])
+                        (a["id"], a["description"], a["example"]) for a in self._available_tasks])
 
-    def get_prompt(self) -> str:
+    def get_prompt(self, person_id) -> str:
         self.prompt = self.get_parameter('system_prompt').value
-        return self.prompt.format(action_list=self.make_action_list(), person_id="Alice")
+        return self.prompt.format(action_list=self.make_action_list(), person_id=person_id)
 
     #################################
     #
@@ -127,18 +155,24 @@ class SkillImpl(Node):
     #
     def on_configure(self, state: State) -> TransitionCallbackReturn:
 
-        self.ollama_server = self.get_parameter('server_url').value
-        self.ollama_model = self.get_parameter('model').value
+        self._ollama_server = self.get_parameter('server_url').value
+        self._ollama_model = self.get_parameter('model').value
 
-        self._ollama = OllamaConnector(
-                self.ollama_server,
-                self.ollama_model,
-                self.get_prompt())
+        self.get_logger().info(f"Connecting to the ollama server on {self._ollama_server}...")
 
-        self._llm_server = ActionServer(
-            self, LLM, "~/get_response",
-            goal_callback=self.on_request_goal,
-            execute_callback=self.on_request_exec)
+        try:
+            self._ollama = ollama.Client(host=self._ollama_server)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self.get_logger().error(f"Error while connecting to ollama server: {e}")
+            raise(e)
+
+        self.get_logger().info("Connection successful to the ollama server")
+
+        self._llm_server = self.create_service(
+            GetResponse, "~/get_response",
+            self.on_request_cb)
 
         self._intent_pub = self.create_publisher(Intent, '/intents', 1)
 
@@ -147,16 +181,14 @@ class SkillImpl(Node):
         self._diag_timer = self.create_timer(1., self.publish_diagnostics)
 
         self.get_logger().info("Skill {{id}} is configured, but not yet active")
-        return TransitionCallbackReturn.SUCCESS
+        return super().on_configure(state)
 
     def on_activate(self, state: State) -> TransitionCallbackReturn:
         """
         Activate the skill.
 
-        You usually want to do the following in this state:
+        Mainly, we:
         - Create and start any timers performing periodic tasks
-        - Start processing data, and accepting action goals, if any
-
         """
         # Define a timer that fires every second to call the run function
         timer_period = 1  # in sec
@@ -194,15 +226,11 @@ class SkillImpl(Node):
         self.close_database_connection()
 
         self.get_logger().info("Skill {{id}} finalized.")
-        return TransitionCallbackReturn.SUCCESS
+        return super().on_shutdown(state)
 
     #################################
 
     def publish_diagnostics(self):
-        requests_per_second = self.nb_requests / \
-                (self.get_clock().now() - self.last_time).nanoseconds * 1e9
-        self.last_time = self.get_clock().now()
-        self.nb_requests = 0
 
         arr = DiagnosticArray()
         msg = DiagnosticStatus(
@@ -213,8 +241,9 @@ class SkillImpl(Node):
                 KeyValue(key="Module name", value="{{ id }}"),
                 KeyValue(key="Current lifecycle state",
                          value=self._state_machine.current_state[1]),
-                KeyValue(key="Database", value=self.db_url),
-                KeyValue(key="Requests/sec", value=str(requests_per_second)),
+                KeyValue(key="ollama server", value=self._ollama_server),
+                KeyValue(key="ollama model", value=self._ollama_model),
+                KeyValue(key="# requests since start", value=str(self._nb_requests)),
             ],
         )
 
@@ -223,19 +252,7 @@ class SkillImpl(Node):
         self._diag_pub.publish(arr)
 
     def run(self) -> None:
-        """
-        Background task of the skill.
-
-        The main task of your skill. This function will be triggered by
-        the timer in the class, and only when the timer is active.
-        """
-        #######################################
-        #
-        # TODO: Implement here any background
-        # task required by your skill
-        # If the skill is deactivated,
-        # this function is not called anymore
-        #
-
-        self.get_logger().info("skill {{id}}: performing background task...")
+        """Background task of the skill."""
+        # no need to do anything here, the skill is event-driven
+        pass
 

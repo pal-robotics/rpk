@@ -53,7 +53,7 @@ SKILL_TEMPLATES = {
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
     "ollama_connector_python": {
-        "tpl_paths": ["skills/ollama_connector_python/{{id}}", "skills/llm_msgs"],
+        "tpl_paths": ["skills/ollama_connector_python/{{id}}"],
         "short_desc": "complete skill example: LLM bridge using ollama [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
