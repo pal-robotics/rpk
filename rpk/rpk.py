@@ -19,6 +19,8 @@ import sys
 import argparse
 from pathlib import Path
 from jinja2 import Environment, select_autoescape, FileSystemLoader
+import random
+import string
 
 import rpk
 
@@ -34,25 +36,25 @@ SKILL_TEMPLATES = {
     "base_python": {
         "tpl_paths": ["skills/base_python/{{id}}"],
         "short_desc": "base skill template [python]",
-        "post_install_help": "Check README.md in ./{path}/ and "
+        "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
     "basic_chatbot": {
         "tpl_paths": ["skills/basic_chatbot/{{id}}"],
         "short_desc": "basic chatbot template [python]",
-        "post_install_help": "Check README.md in ./{path}/ and "
+        "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
     "db_connector_python": {
         "tpl_paths": ["skills/db_connector_python/{{id}}", "skills/sample_skill_msgs"],
         "short_desc": "database connector mock-up [python]",
-        "post_install_help": "Check README.md in ./{path}/ and "
+        "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
     "ollama_connector_python": {
         "tpl_paths": ["skills/ollama_connector_python/{{id}}", "skills/llm_msgs"],
         "short_desc": "complete skill example: LLM bridge using ollama [python]",
-        "post_install_help": "Check README.md in ./{path}/ and "
+        "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     }
 }
@@ -61,7 +63,7 @@ TASK_TEMPLATES = {
     "greet_task_python": {
         "tpl_paths": ["tasks/greet_task_python/{{id}}", "tasks/greet_task_msgs"],
         "short_desc": "'greet' task mock-up [python]",
-        "post_install_help": "Check README.md in ./{path}/ and "
+        "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/task_impl.py to implement your task logic.",
         "skill_templates": [{"db_connector_python": {"id": "db_connector",
                                                      "name": "Custom database connector"}}],
@@ -72,13 +74,13 @@ MISSION_CTRL_TEMPLATES = {
     "base_python": {
         "tpl_paths": ["mission_ctrls/super_basic_python/{{id}}"],
         "short_desc": "base robot supervisor [python]",
-        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
+        "post_install_help": "Check README.md in {path}/{id}/ and edit src/{id}/"
                              "mission_controller.py to customize your application logic."
     },
     "base_intents_python": {
         "tpl_paths": ["mission_ctrls/base_python/{{id}}"],
         "short_desc": "robot supervisor with intents handler [python]",
-        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
+        "post_install_help": "Check README.md in {path}/{id}/ and edit src/{id}/"
                              "mission_controller.py to implement your application logic.",
     },
 }
@@ -110,6 +112,10 @@ AVAILABLE_ROBOTS = ["generic", "ari", "tiago"]
 
 TPL_EXT = "j2"
 
+def random_id():
+    rand_id = ''.join(random.choices(string.ascii_lowercase, k=5))
+    print(f"Using random ID {rand_id}")
+    return rand_id
 
 def get_intents():
 
@@ -158,11 +164,19 @@ def get_intents():
     return intents
 
 
-def interactive_create(id=None, family=None, template=None, robot=None):
+def interactive_create(id=None,
+                       name=None,
+                       family=None,
+                       template=None,
+                       robot=None,
+                       yes=False):
 
     if id and (" " in id or "-" in id):
         print("The chosen ID can not contain spaces or hyphens.")
         id = None
+
+    if not id and yes:
+        id = random_id()
 
     while not id:
         id = input(
@@ -174,10 +188,11 @@ def interactive_create(id=None, family=None, template=None, robot=None):
             print("The chosen ID can not contain spaces or hyphens.")
             id = None
 
-    name = input(
-        "Full name of your skill/application? (eg 'The Receptionist Robot' or "
-        "'Database connector', press Return to use the ID. You can change it later)\n"
-    )
+    if not name and not yes:
+        name = input(
+            "Full name of your skill/application? (eg 'The Receptionist Robot' or "
+            "'Database connector', press Return to use the ID. You can change it later)\n"
+        )
 
     if not name:
         name = id
@@ -221,6 +236,9 @@ def interactive_create(id=None, family=None, template=None, robot=None):
         except IndexError:
             template = ""
 
+    if not robot and yes:
+        robot = AVAILABLE_ROBOTS[0]
+
     while not robot:
         print("\nWhat robot are you targeting?")
         for idx, r in enumerate(AVAILABLE_ROBOTS):
@@ -238,7 +256,7 @@ def interactive_create(id=None, family=None, template=None, robot=None):
 
 
 def generate_skeleton(data, family, tpl_name, robot, root):
-    print(f"Generating {family} skeleton in {root}...")
+    print(f"Generating {family} skeleton in {root.resolve()}...")
     tpl = TEMPLATES_FAMILIES[family]["src"][tpl_name]
 
     data["dependencies"] = []
@@ -296,11 +314,11 @@ def generate_skeleton(data, family, tpl_name, robot, root):
     print("\n\033[32;1mDone!")
     print("\033[33;1m")
     print(tpl["post_install_help"].format(
-        path=root, id=data["id"]))
+        path=root.resolve(), id=data["id"]))
     print("\033[0m")
 
 
-def main():
+def main(args=sys.argv[1:]):
 
     parser = argparse.ArgumentParser(
         description="Generate and manage application skeletons for ROS2-based "
@@ -327,6 +345,14 @@ def main():
         f_parser = family_subparsers.add_parser(
             family, help=TEMPLATES_FAMILIES[family]["help"]
         )
+
+        f_parser.add_argument(
+            "-y",
+            "--yes",
+            action="store_true",
+            help="do not ask questions, automatically accept defaults",
+        )
+
 
         f_parser.add_argument(
             "-t",
@@ -357,7 +383,7 @@ def main():
              "(default: .)",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     if not args.command:
         print(f"You must select a command.\nType '{SELF_NAME} --help' for details.")
@@ -370,7 +396,12 @@ def main():
     intents = get_intents()
 
     id, name, family, tpl_name, robot = interactive_create(
-        args.id, args.family, args.template, args.robot)
+        args.id,
+        name=None,
+        family=args.family,
+        template=args.template,
+        robot=args.robot,
+        yes=args.yes)
 
     data = {"id": id, "name": name, "intents": intents, "robot": robot}
 
