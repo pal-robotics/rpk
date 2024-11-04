@@ -29,7 +29,7 @@ def generate_launch_description():
     for dep in deps:
         nodes.append(IncludeLaunchDescription(
           PythonLaunchDescriptionSource([os.path.join(
-          get_package_share_directory(dep), 'launch'), f'/{dep}.launch.py'])
+            get_package_share_directory(dep), 'launch'), f'/{dep}.launch.py'])
         ))
 
     return LaunchDescription(nodes)

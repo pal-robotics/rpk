@@ -1,3 +1,5 @@
+# Copyright (c) {{ year }} {{ author }}. All rights reserved.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -20,11 +22,10 @@ from rclpy.action import ActionClient
 from llm_msgs.action import LLM
 from greet_task_msgs.action import Greet
 from std_msgs.msg import String
-
 from hri_actions_msgs.msg import Intent
-from lifecycle_msgs.msg import State as StateMsg
 
 from {{ id }}.component_dependencies import get_component_dependencies
+
 
 class MissionController(Node):
 
@@ -38,16 +39,14 @@ class MissionController(Node):
 
         self._text_input_sub = None
 
-        self._llm_action_client = None
+        self._llm_service_client = None
         self._intent_sub = None
 
         self._greet_action_client = None
 
-
     def on_intent(self, msg):
 
         self.get_logger().info("Received an intent: %s" % msg.intent)
-
 
         data = json.loads(msg.data) if msg.data else {}  # noqa: F841
         source = msg.source  # noqa: F841
@@ -63,7 +62,7 @@ class MissionController(Node):
 
     def generate_intent_list(self):
 
-        tasks = get_referenced_tasks("{{ id }}", "task")
+        tasks = get_component_dependencies("{{ id }}", "task")
 
         intents = []
 
@@ -75,35 +74,24 @@ class MissionController(Node):
                      }
                     )
 
-
     #########################################################################
 
     #################################
     #
     # Lifecycle transitions callbacks
     #
+    #################################
+
     def on_configure(self, state: State) -> TransitionCallbackReturn:
-        """
-        Configure the node
-        """
+        """Configure the node."""
+        self._llm_service_client = self.create_client(LLM, '/llm')
+        while not self._llm_service_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('LLM skill not yet available, waiting again...')
 
-        #host = 'http://spring-basestation:11434'
-        host = 'http://localhost:11434'
+        self._greeter_action_client = ActionClient(self, Greet, '/greet')
+        while not self._greeter_action_client.wait_for_server(timeout_sec=1.0):
+            self.get_logger().info('Greet task not yet available, waiting again...')
 
-        #model = 'llama3.1:8b'
-        model = 'llama3.2:1b'
-        
-        self._ollama = OllamaConnector(host=host, model=model)
-
-
-
-        self.get_logger().info('on_configure() is called.')
-        return TransitionCallbackReturn.SUCCESS
-
-    def on_activate(self, state: State) -> TransitionCallbackReturn:
-        """
-        Activate the node
-        """
         self._intents_sub = self.create_subscription(
             Intent,
             '/intents',
@@ -112,25 +100,27 @@ class MissionController(Node):
         self.get_logger().info("Listening to %s topic" %
                                self._intents_sub.topic_name)
 
-        self._text_input_sub = self.create_subscription(
-            String,
-            '/user_input',
-            lambda msg : self._ollama.input_queue.put_nowait(msg.data),
-            10)
-        self.get_logger().info("Listening to %s topic for user input" %
-                               self._text_input_sub.topic_name)
-
-
         self._text_output_pub = self.create_publisher(String, '/robot_output', 10)
         self.get_logger().info("Robot output will be published on topic %s" %
                                self._text_output_pub.topic_name)
 
+        self.get_logger().info('Node configured.')
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_activate(self, state: State) -> TransitionCallbackReturn:
+        """Activate the node."""
+        # self._text_input_sub = self.create_subscription(
+        #     String,
+        #     '/user_input',
+        #     lambda msg : self._ollama.input_queue.put_nowait(msg.data),
+        #     10)
+        # self.get_logger().info("Listening to %s topic for user input" %
+        #                        self._text_input_sub.topic_name)
 
         timer_period = 0.1  # in sec
         self._timer = self.create_timer(timer_period, self.run)
 
-        self.get_logger().info("Running")
-
+        self.get_logger().info('Node activated and running.')
         return super().on_activate(state)
 
     def on_deactivate(self, state: State) -> TransitionCallbackReturn:
@@ -140,6 +130,7 @@ class MissionController(Node):
         self.destroy_timer(self._timer)
         self.destroy_subscription(self._intents_sub)
 
+        self.get_logger().info('Node de-activated.')
         return super().on_deactivate(state)
 
     def on_shutdown(self, state: State) -> TransitionCallbackReturn:
@@ -162,9 +153,9 @@ class MissionController(Node):
 
     def run(self) -> None:
 
-        if self._ollama and not self._ollama.output_queue.empty():
-            msg = self._ollama.output_queue.get_nowait()
-            self._text_output_pub.publish(String(data=msg))
+        # if self._ollama and not self._ollama.output_queue.empty():
+        #     msg = self._ollama.output_queue.get_nowait()
+        #     self._text_output_pub.publish(String(data=msg))
 
         self.get_logger().info(str(self.inc))
 

@@ -1,10 +1,27 @@
+# Copyright (c) {{ year }} {{ author }}. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import ament_index_python as aip
 import xml.etree.ElementTree as ET
 import json
 import yaml
 
+
 def get_manifest(pkg_name):
     """
+    Return the manifest of a package, if it exports a skill, task or mission.
+
     :param pkg_name: the name of the package
     :returns: a tuple (type of component, manifest dictionary)
     """
@@ -24,28 +41,32 @@ def get_manifest(pkg_name):
                 content_type = res.attrib.get('content-type', 'json')
                 content = res.text
                 if not content.strip():
-                    print(f"Error while reading the manifest of {type} {pkg_name} ({package_xml}): empty manifest! Skipping.")
+                    print(f"Error while reading the manifest of {type} {pkg_name} "
+                          f"({package_xml}): empty manifest! Skipping.")
                     continue
                 if content_type == 'json':
                     try:
                         manifest = json.loads(content)
                         return type, manifest
                     except json.decoder.JSONDecodeError as jde:
-                        print(f"Error while reading the manifest of {type} {pkg_name} (from {package_xml}): {jde}. Skipping.")
+                        print(f"Error while reading the manifest of {type} {pkg_name} "
+                              f"(from {package_xml}): {jde}. Skipping.")
                         continue
                 elif content_type == 'yaml':
                     manifest = yaml.safe_load(content)
                     return type, manifest
     return None, None
 
+
 def get_component_dependencies(pkg_name):
     """
-    Returns the tasks/skills that this application depends on.
+    Return the list of tasks/skills that this application depends on.
 
     Process:
 
     1. get the package.xml of the package
-    2. inside the <export> tag, check if the package is a <skill>, <task> or <mission> by checking for the presence of any of these tags.
+    2. inside the <export> tag, check if the package is a <skill>, <task> or
+    <mission> by checking for the presence of any of these tags.
     3. get the content of the tag (ie, the manifest of the package), and parse
     it as a json or yaml content, depending on the value of the content-type
     attribute.
@@ -60,7 +81,6 @@ def get_component_dependencies(pkg_name):
 
     :param pkg_name: the name of the package
     """
-
     type, manifest = get_manifest(pkg_name)
 
     deps = {}
@@ -75,7 +95,7 @@ def get_component_dependencies(pkg_name):
         type, manifest = get_manifest(pkg)
         if type:
             components.setdefault(type, []).append((pkg, manifest))
-    
+
     result = {}
     for type, dep_list in deps.items():
         for dep in dep_list:
@@ -93,6 +113,7 @@ def get_component_dependencies(pkg_name):
 
     return result
 
+
 if __name__ == "__main__":
     dependencies = get_component_dependencies("{{ id }}")
 
@@ -100,3 +121,4 @@ if __name__ == "__main__":
     for type, component in dependencies.items():
         pkg, manifest = component
         print(f"- {type} {manifest['name']}, implemented by package {pkg}")
+
