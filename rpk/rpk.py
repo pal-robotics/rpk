@@ -202,79 +202,82 @@ def interactive_create(id=None,
     if not id and yes:
         id = random_id()
 
-    while not id:
-        id = input(
-            "ID of your application? (must be a valid ROS identifier without "
-            "spaces or hyphens. eg 'robot_receptionist')\n"
-        )
+    try:
+        while not id:
+            id = input(
+                "ID of your application? (must be a valid ROS identifier without "
+                "spaces or hyphens. eg 'robot_receptionist')\n"
+            )
 
-        if " " in id or "-" in id:
-            print("The chosen ID can not contain spaces or hyphens.")
-            id = None
+            if " " in id or "-" in id:
+                print("The chosen ID can not contain spaces or hyphens.")
+                id = None
 
-    if not name and not yes:
-        name = input(
-            "Full name of your skill/application? (eg 'The Receptionist Robot' or "
-            "'Database connector', press Return to use the ID. You can change it later)\n"
-        )
+        if not name and not yes:
+            name = input(
+                "Full name of your skill/application? (eg 'The Receptionist Robot' or "
+                "'Database connector', press Return to use the ID. You can change it later)\n"
+            )
 
-    if not name:
-        name = id
+        if not name:
+            name = id
 
-    # get the user to choose between mission controller, skill or full
-    # application
-    while not family:
-        print("\nWhat content do you want to create?")
-        for idx, family in enumerate(TEMPLATES_FAMILIES.keys()):
-            print("%s: %s" % (idx + 1, TEMPLATES_FAMILIES[family]["name"]))
+        # get the user to choose between mission controller, skill or full
+        # application
+        while not family:
+            print("\nWhat content do you want to create?")
+            for idx, family in enumerate(TEMPLATES_FAMILIES.keys()):
+                print("%s: %s" % (idx + 1, TEMPLATES_FAMILIES[family]["name"]))
 
-        try:
-            choice = int(input("\nYour choice? "))
+            try:
+                choice = int(input("\nYour choice? "))
 
-            family = list(TEMPLATES_FAMILIES.keys())[choice - 1]
-        except IndexError:
-            family = ""
+                family = list(TEMPLATES_FAMILIES.keys())[choice - 1]
+            except IndexError:
+                family = ""
 
-    tpls = TEMPLATES_FAMILIES[family]["src"]
+        tpls = TEMPLATES_FAMILIES[family]["src"]
 
-    if not tpls:
-        print("No templates available for %s. Exiting." % family)
+        if not tpls:
+            print("No templates available for %s. Exiting." % family)
+            sys.exit(1)
+
+        while not template:
+            print("\nChoose a template:")
+            for idx, tpl in enumerate(tpls.keys()):
+                print("%s: %s" %
+                      (idx + 1, tpls[tpl]["short_desc"]))
+
+            try:
+                if len(tpls) == 1:
+                    # if only one template available, make it the default choice
+                    choice = int(input(
+                        "\nYour choice? (default: 1: "
+                        f"{tpls[list(tpls.keys())[0]]['short_desc']}) ").strip() or 1)
+                else:
+                    choice = int(input("\nYour choice? ").strip())
+
+                template = list(tpls.keys())[choice - 1]
+            except IndexError:
+                template = ""
+
+        if not robot and yes:
+            robot = AVAILABLE_ROBOTS[0]
+
+        while not robot:
+            print("\nWhat robot are you targeting?")
+            for idx, r in enumerate(AVAILABLE_ROBOTS):
+                print("%s: %s" % (idx + 1, r))
+
+            try:
+                choice = int(
+                    input(f"\nYour choice? (default: 1: {AVAILABLE_ROBOTS[0]}) ").strip() or 1)
+
+                robot = AVAILABLE_ROBOTS[choice - 1]
+            except IndexError:
+                robot = ""
+    except KeyboardInterrupt:
         sys.exit(1)
-
-    while not template:
-        print("\nChoose a template:")
-        for idx, tpl in enumerate(tpls.keys()):
-            print("%s: %s" %
-                  (idx + 1, tpls[tpl]["short_desc"]))
-
-        try:
-            if len(tpls) == 1:
-                # if only one template available, make it the default choice
-                choice = int(input(
-                    "\nYour choice? (default: 1: "
-                    f"{tpls[list(tpls.keys())[0]]['short_desc']}) ").strip() or 1)
-            else:
-                choice = int(input("\nYour choice? ").strip())
-
-            template = list(tpls.keys())[choice - 1]
-        except IndexError:
-            template = ""
-
-    if not robot and yes:
-        robot = AVAILABLE_ROBOTS[0]
-
-    while not robot:
-        print("\nWhat robot are you targeting?")
-        for idx, r in enumerate(AVAILABLE_ROBOTS):
-            print("%s: %s" % (idx + 1, r))
-
-        try:
-            choice = int(
-                input(f"\nYour choice? (default: 1: {AVAILABLE_ROBOTS[0]}) ").strip() or 1)
-
-            robot = AVAILABLE_ROBOTS[choice - 1]
-        except IndexError:
-            robot = ""
 
     return id, name, family, template, robot
 
