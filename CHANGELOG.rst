@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.2.0 (2024-11-05)
+------------------
 * test: also enable auto-tests for ari and tiago variants
 * fix linters issues in existing templates
 * test: auto generate all possible template, and check with linters
