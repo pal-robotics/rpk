@@ -17,6 +17,7 @@
 
 import argparse
 import datetime
+from importlib.metadata import version
 from jinja2 import Environment, select_autoescape, FileSystemLoader
 import random
 import string
@@ -345,9 +346,11 @@ def generate_skeleton(data, family, tpl_name, robot, root):
 def main(args=sys.argv[1:]):
 
     parser = argparse.ArgumentParser(
-        description="Generate and manage application skeletons for ROS2-based "
+        description="Generate and manage application skeletons for ROS 2-based "
                     "robots"
     )
+
+    parser.add_argument('--version', action='version', version=f'{SELF_NAME} {version(SELF_NAME)}')
 
     subparsers = parser.add_subparsers(dest="command")
 
