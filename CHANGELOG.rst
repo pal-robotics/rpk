@@ -2,6 +2,16 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* test: also enable auto-tests for ari and tiago variants
+* fix linters issues in existing templates
+* test: auto generate all possible template, and check with linters
+* add 'rpk list' to list available templates
+* add -y option to use default values
+  while here, fix some paths on console output
+* Contributors: Séverin Lemaignan
+
 3.1.0 (2024-10-23)
 ------------------
 * defined template for basic chatbot
