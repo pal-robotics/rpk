@@ -15,8 +15,8 @@
 cmake_minimum_required(VERSION 3.8)
 project(chatbot_msgs)
 
-find_package(ament_cmake REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/GetResponse.srv"
@@ -25,8 +25,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
+  ament_auto_find_test_dependencies()
   ament_lint_auto_find_test_dependencies()
 endif()
 
-ament_package()
+ament_auto_package()

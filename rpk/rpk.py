@@ -54,7 +54,7 @@ SKILL_TEMPLATES = {
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
     "ollama_connector_python": {
-        "tpl_paths": ["skills/ollama_connector_python/{{id}}"],
+        "tpl_paths": ["skills/ollama_connector_python/{{id}}", "skills/chatbot_msgs"],
         "short_desc": "complete skill example: LLM bridge using ollama [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
@@ -73,8 +73,6 @@ TASK_TEMPLATES = {
         "short_desc": "'greet' task mock-up [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/task_impl.py to implement your task logic.",
-        "skill_templates": [{"db_connector_python": {"id": "db_connector",
-                                                     "name": "Custom database connector"}}],
     }
 }
 

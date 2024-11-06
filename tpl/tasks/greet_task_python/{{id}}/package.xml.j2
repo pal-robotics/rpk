@@ -43,9 +43,6 @@
   <!-- for 'say' -->
   <exec_depend>tts_msgs</exec_depend>
 
-  <!-- for 'db_request' -->
-  <exec_depend>sample_skill_msgs</exec_depend>
-
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
@@ -62,7 +59,7 @@
             "default_interface_path": "/greet",
             "datatype": "greet_task_msgs/action/Greet",
             "dependencies": {
-                "skills": ["say", "db_connect"]
+                "skills": ["say"]
             },
             "parameters": [],
             "functional_domains": [

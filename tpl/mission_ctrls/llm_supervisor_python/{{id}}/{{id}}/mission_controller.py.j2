@@ -19,9 +19,8 @@ from rclpy.lifecycle import State
 from rclpy.lifecycle import TransitionCallbackReturn
 
 from rclpy.action import ActionClient
-from llm_msgs.action import LLM
+from chatbot_msgs.srv import GetResponse
 from greet_task_msgs.action import Greet
-from std_msgs.msg import String
 from hri_actions_msgs.msg import Intent
 
 from {{ id }}.component_dependencies import get_component_dependencies
@@ -56,9 +55,30 @@ class MissionController(Node):
 
         if msg.intent == Intent.START_ACTIVITY:
             pass
+
+        elif msg.intent == Intent.GREET:
+            self.get_logger().info(f"Greeting user <{source}>")
+            goal = Greet.Goal()
+            goal.person_id = source
+            self._greet_action_future = self._greet_action_client.send_goal_async(
+                                           goal,
+                                           feedback_callback=self.on_feedback)
+
+            self._greet_action_future.add_done_callback(self.on_greet_done)
+
         else:
             self.get_logger().warning("I don't know how to process intent "
                                       "<%s>!" % msg.intent)
+
+    def on_feedback(self, msg):
+        self.get_logger().info("Received feedback: %s" % msg.feedback)
+
+    def on_greet_done(self, future):
+        result = future.result().result
+        if result.error_msg:
+            self.get_logger().error(f"Failed to greet user: {result.error_msg}")
+        else:
+            self.get_logger().info("Successfully greeted user")
 
     def generate_intent_list(self):
 
@@ -84,7 +104,8 @@ class MissionController(Node):
 
     def on_configure(self, state: State) -> TransitionCallbackReturn:
         """Configure the node."""
-        self._llm_service_client = self.create_client(LLM, '/llm')
+        self._llm_service_client = self.create_client(GetResponse,
+                                                      '/ollama_connector/get_response')
         while not self._llm_service_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('LLM skill not yet available, waiting again...')
 
@@ -97,26 +118,15 @@ class MissionController(Node):
             '/intents',
             self.on_intent,
             10)
-        self.get_logger().info("Listening to %s topic" %
-                               self._intents_sub.topic_name)
 
-        self._text_output_pub = self.create_publisher(String, '/robot_output', 10)
-        self.get_logger().info("Robot output will be published on topic %s" %
-                               self._text_output_pub.topic_name)
+        self.get_logger().info("Listening to incoming intents on the %s topic" %
+                               self._intents_sub.topic_name)
 
         self.get_logger().info('Node configured.')
         return TransitionCallbackReturn.SUCCESS
 
     def on_activate(self, state: State) -> TransitionCallbackReturn:
         """Activate the node."""
-        # self._text_input_sub = self.create_subscription(
-        #     String,
-        #     '/user_input',
-        #     lambda msg : self._ollama.input_queue.put_nowait(msg.data),
-        #     10)
-        # self.get_logger().info("Listening to %s topic for user input" %
-        #                        self._text_input_sub.topic_name)
-
         timer_period = 0.1  # in sec
         self._timer = self.create_timer(timer_period, self.run)
 
@@ -152,10 +162,9 @@ class MissionController(Node):
         return TransitionCallbackReturn.SUCCESS
 
     def run(self) -> None:
-
-        # if self._ollama and not self._ollama.output_queue.empty():
-        #     msg = self._ollama.output_queue.get_nowait()
-        #     self._text_output_pub.publish(String(data=msg))
-
-        self.get_logger().info(str(self.inc))
+        # This basic mission controller does nothing
+        # in the background. It only reacts to incoming intents.
+        #
+        # You can add your own background tasks here.
+        pass
 

@@ -28,9 +28,6 @@ from greet_task_msgs.action import Greet
 # action for the system skill 'say'
 from tts_msgs.action import TTS
 
-# action for the custom skill 'db_request'
-from sample_skill_msgs.action import DbRequest
-
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
 
@@ -90,9 +87,18 @@ class TaskImpl(Node):
 
     def on_request_exec(self, goal_handle):
         """Process incoming goal."""
-        self.current_greeting_status = Greet.Goal().SELECTING_USER
+        self.target_user_id = goal_handle.request.person_id
 
         self.get_logger().info("Starting the greeting task")
+
+        # if a specific user to greet is specified in the request,
+        # use it; otherwise, start in the 'SELECTING_USER' state
+        if self.target_user_id:
+            self.current_greeting_status = Greet.Goal().FACING_USER
+            self.get_logger().info(f"Greeting user <{self.target_user_id}>")
+        else:
+            self.current_greeting_status = Greet.Goal().SELECTING_USER
+            self.get_logger().info("Starting by selecting a user to greet.")
 
         feedback_msg = Greet.Feedback()
         feedback_msg.status = self.current_greeting_status
@@ -162,9 +168,6 @@ class TaskImpl(Node):
 
         # create an action client for the 'say' skill
         self.tts_client = ActionClient(self, TTS, "/say")
-
-        # create an action client for the 'db_request' skill
-        self.db_client = ActionClient(self, DbRequest, "/db_request")
 
         self.get_logger().info("Task {{id}} is configured, but not yet active")
         return TransitionCallbackReturn.SUCCESS
@@ -249,8 +252,6 @@ class TaskImpl(Node):
         # this function is not called anymore
         #
 
-        current_username = ""
-
         while True:
 
             if self.current_greeting_status == Greet.Goal().INACTIVE:
@@ -259,20 +260,19 @@ class TaskImpl(Node):
 
             if self.current_greeting_status == Greet.Goal().SELECTING_USER:
 
-                self.get_logger().info("Requesting user name from the database")
-                self.db_client.wait_for_server()
-                goal = DbRequest.Goal()
-                goal.query = "SELECT name FROM users WHERE id = 1"
-                future = self.db_client.send_goal_async(goal)
-                rclpy.spin_until_future_complete(self, future)
-                result = future.result()
+                self.get_logger().info("Identifying the user to greet")
+                # implement here logic to decide which user to greet
+                #
+                # Here, we are just using a fixed user id
+                candidate_user_id = "user1"
+                time.sleep(1)
 
-                if result is not None:
-                    current_username = result.result
-                    self.get_logger().info(f"Received user name: {result.result}")
+                if candidate_user_id is not None:
+                    self.target_user_id = candidate_user_id
+                    self.get_logger().info(f"Selecting user name: {self.target_user_id}")
                     self.current_greeting_status = Greet.Goal().FACING_USER
                 else:
-                    self.get_logger().error("Failed to get user name")
+                    self.get_logger().error("Failed to identify the person to greet")
                     self.current_greeting_status = Greet.Goal().INACTIVE
 
                 continue
@@ -288,7 +288,7 @@ class TaskImpl(Node):
                 self.get_logger().info("Saying hello to the user")
                 self.tts_client.wait_for_server()
                 goal = TTS.Goal()
-                goal.text = f"Hello, {current_username}!"
+                goal.text = f"Hello, {self.target_user_id}!"
                 future = self.tts_client.send_goal_async(goal)
                 rclpy.spin_until_future_complete(self, future)
                 result = future.result()
