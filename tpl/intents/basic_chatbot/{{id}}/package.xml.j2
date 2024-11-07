@@ -35,7 +35,6 @@
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>launch_pal</exec_depend>
 
-  <exec_depend>chatbot_msgs</exec_depend>
   <exec_depend>hri_actions_msgs</exec_depend>
   <exec_depend>diagnostic_msgs</exec_depend>
 
@@ -46,18 +45,5 @@
 
   <export>
       <build_type>ament_python</build_type>
-
-      <skill content-type="json">
-          {
-            "name": "chatbot",
-            "description": "A basic chatbot example.",
-            "interface": "service",
-            "default_interface_path": "/{{ id }}/get_response",
-            "datatype": "chatbot_msgs/srv/GetResponse",
-            "functional_domains": [
-                "communication"
-            ]
-        }
-      </skill>
   </export>
 </package>

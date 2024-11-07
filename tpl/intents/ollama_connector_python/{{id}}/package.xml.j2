@@ -31,12 +31,12 @@
   <depend>rclpy</depend>
   <depend>lifecycle_msgs</depend>
 
-  <exec_depend>action_msgs</exec_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>launch_pal</exec_depend>
 
-  <exec_depend>chatbot_msgs</exec_depend>
+  <exec_depend>hri_actions_msgs</exec_depend>
+  <exec_depend>diagnostic_msgs</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
@@ -45,25 +45,5 @@
 
   <export>
       <build_type>ament_python</build_type>
-
-      <skill content-type="json">
-          {
-            "name": "ollama_connector",
-            "description": "This example skill offers a connector to a LLM via ollama.",
-            "interface": "action",
-            "default_interface_path": "/{{ id }}/get_response",
-            "datatype": "sample_skill_msgs/action/LLM",
-            "parameters": [
-                {
-                    "name": "input",
-                    "type": "string",
-                    "description": "The input text"
-                }
-            ],
-            "functional_domains": [
-                "communication"
-            ]
-        }
-      </skill>
   </export>
 </package>

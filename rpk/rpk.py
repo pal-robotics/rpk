@@ -41,24 +41,27 @@ SKILL_TEMPLATES = {
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
-    "basic_chatbot": {
-        "tpl_paths": ["skills/basic_chatbot/{{id}}"],
-        "short_desc": "basic chatbot template [python]",
-        "post_install_help": "Check README.md in {path}/{id}/ and "
-                             "edit src/{id}/skill_impl.py to implement your skill logic.",
-    },
     "db_connector_python": {
         "tpl_paths": ["skills/db_connector_python/{{id}}", "skills/sample_skill_msgs"],
         "short_desc": "database connector mock-up [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
-    "ollama_connector_python": {
-        "tpl_paths": ["skills/ollama_connector_python/{{id}}", "skills/chatbot_msgs"],
-        "short_desc": "complete skill example: LLM bridge using ollama [python]",
+}
+
+INTENT_EXTRACTOR_TEMPLATES = {
+    "basic_chatbot": {
+        "tpl_paths": ["intents/basic_chatbot/{{id}}"],
+        "short_desc": "basic chatbot template [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
-                             "edit src/{id}/skill_impl.py to implement your skill logic.",
-    }
+                             "edit src/{id}/node_impl.py to implement your node logic.",
+    },
+    "ollama_connector_python": {
+        "tpl_paths": ["intents/ollama_connector_python/{{id}}"],
+        "short_desc": "complete intent extraction example: LLM bridge using ollama [python]",
+        "post_install_help": "Check README.md in {path}/{id}/ and "
+                             "edit src/{id}/node_impl.py to implement your node logic.",
+    },
 }
 
 TASK_TEMPLATES = {
@@ -96,7 +99,7 @@ MISSION_CTRL_TEMPLATES = {
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
                              "mission_controller.py to customize your application logic.",
         "task_templates": [{"greet_task_python": {"id": "greet_task", "name": "'greet' task"}}],
-        "skill_templates": [{"ollama_connector_python": {"id": "ollama_connector",
+        "intent_extractor_templates": [{"ollama_connector_python": {"id": "ollama_connector",
                                                          "name": "Bridge with a ollama server"}}],
     }
 }
@@ -116,6 +119,10 @@ APPLICATION_TEMPLATES = {
 }
 
 TEMPLATES_FAMILIES = {
+    "intent": {"src": INTENT_EXTRACTOR_TEMPLATES,
+              "name": "intent extractor",
+              "help": "perception module that extracts intents from user input. "
+              "Example: a chatbot"},
     "skill": {"src": SKILL_TEMPLATES,
               "name": "skill",
               "help": "short-term 'atomic' robot action, to be re-used by tasks and mission "
@@ -294,7 +301,7 @@ def generate_skeleton(data, family, tpl_name, robot, root):
 
     # if needed, first generate the skeletons for the missions, skills and tasks
     # referenced in the template
-    for additional_tpl in ["skill_templates", "task_templates", "mission_ctrl_templates"]:
+    for additional_tpl in ["intent_extractor_templates", "skill_templates", "task_templates", "mission_ctrl_templates"]:
         if additional_tpl in tpl:
             type = additional_tpl.split("_")[0]
             for a_tpl in tpl[additional_tpl]:

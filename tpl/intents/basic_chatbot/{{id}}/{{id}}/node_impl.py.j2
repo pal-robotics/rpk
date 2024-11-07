@@ -12,51 +12,54 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from functools import partial
+
 from rclpy.lifecycle import Node
 from rclpy.lifecycle import State
 from rclpy.lifecycle import TransitionCallbackReturn
 from rcl_interfaces.msg import ParameterDescriptor
 
-from chatbot_msgs.srv import GetResponse
+from hri import HRIListener
 from hri_actions_msgs.msg import Intent
 
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
 
-class SkillImpl(Node):
+class IntentExtractorImpl(Node):
     """
     Implementation of {{id}}.
 
-    This is the main class for the skill. It is a ROS2 node that uses the
-    lifecycle feature of ROS2 to manage its states.
+    This is the main class for the node. It is a ROS2  node that uses the
+    lifecycle feature of ROS 2 to manage its states.
 
-    This sample skill exposes a bridge to a ollama server. Adjust the code to
-    your own needs.
-
-    Don't forget to update accordingly the manifest of the skill, included in
-    package.xml, to describe what your skill is actually doing.
+    The purpose of this node is to recognise *user intents* using a chatbot.
+    This template is very simple, and should be used as a starting point to
+    integrate your own chatbot system.
     """
 
     def __init__(self) -> None:
         """Construct the node."""
-        super().__init__('skill_{{ id }}')
+        super().__init__('intent_extractor_{{ id }}')
 
         # Declare ROS parameters. Should mimick the one listed in config/00-defaults.yaml
-
         self.declare_parameter(
           'my_parameter', "my_default_value.",
           ParameterDescriptor(description='Important parameter for my chatbot')
         )
 
         self.get_logger().info("Initialising...")
+
+        self._intent_pub = None
+
         self._timer = None
-        self._llm_server = None
         self._diag_pub = None
         self._diag_timer = None
 
-        self.get_logger().info('Skill {{id}} started, but not yet configured.')
+        self._nb_requests = 0
 
-    def on_request_cb(self, request, response):
+        self.get_logger().info('Chatbot {{id}} started, but not yet configured.')
+
+    def on_user_input(self, input, user_id):
         """
         Return the chatbot's response to a text input.
 
@@ -64,17 +67,28 @@ class SkillImpl(Node):
         and return a reponse made of a combination of text to be spoken back, and
         possible recognized user intents.
         """
-        self.get_logger().info(f"request: {request.input}")
-        self.nb_requests += 1
+        self.get_logger().info(f"input from {user_id}: {input}")
+        self._nb_requests += 1
 
-        response.response = "I am sorry, I don't know."
-        intent = Intent(
-            intent=Intent.RAW_USER_INPUT,
-            confidence=1.0,
-            data=f'"input": "{request.input}"')
-        response.intents.append(intent)
+        # here, you need to retrieve the user intent, and map it to the
+        # Intent.msg semantics.
+        #
+        # For now, we just try to recognise a greeting
+        if "hello" in input:
+            intent = Intent(intent=Intent.GREET,
+                            source=user_id,
+                            modality=Intent.MODALITY_SPEECH,
+                            confidence=.8)
+            self.get_logger().warn(f"I think the user want to greet me. Sending a GREET intent")
+        else:
+            self.get_logger().warn(f"Unable to recognise a particular intent! forwarding a 'RAW_USER_INPUT'")
+            intent = Intent(intent=Intent.RAW_USER_INPUT,
+                            source=user_id,
+                            modality=Intent.MODALITY_SPEECH,
+                            confidence=1.0,
+                            data=f'"input": "{input}"')
 
-        return response
+        self._intent_pub.publish(intent)
 
     #################################
     #
@@ -82,41 +96,47 @@ class SkillImpl(Node):
     #
     def on_configure(self, state: State) -> TransitionCallbackReturn:
 
-        self._llm_server = self.create_service(
-            GetResponse, "~/get_response",
-            self.on_request_cb)
+        self._intent_pub = self.create_publisher(Intent, '/intents', 1)
 
         # configure and start diagnostics publishing
-        self.nb_requests = 0
-        self.last_time = self.get_clock().now()
+        self._nb_requests = 0
         self._diag_pub = self.create_publisher(DiagnosticArray, '/diagnostics', 1)
         self._diag_timer = self.create_timer(1., self.publish_diagnostics)
 
-        self.get_logger().info("Skill {{id}} is configured, but not yet active")
+        self.get_logger().info("Chatbot {{id}} is configured, but not yet active")
         return TransitionCallbackReturn.SUCCESS
 
     def on_activate(self, state: State) -> TransitionCallbackReturn:
         """
-        Activate the skill.
+        Activate the node.
 
         You usually want to do the following in this state:
         - Create and start any timers performing periodic tasks
         - Start processing data, and accepting action goals, if any
 
         """
+
+        self._hri_listener = HRIListener("__internal_{{id}}_hri__")
+        self._hri_listener.on_voice(lambda voice:
+                                      voice.on_speech(partial(self.on_user_input, user_id=voice.id))
+                                    )
+
         # Define a timer that fires every second to call the run function
         timer_period = 1  # in sec
         self._timer = self.create_timer(timer_period, self.run)
 
-        self.get_logger().info("Skill {{id}} is active and running")
+        self.get_logger().info("Chatbot {{id}} is active and running")
         return super().on_activate(state)
 
     def on_deactivate(self, state: State) -> TransitionCallbackReturn:
         """Stop the timer to stop calling the `run` function (main task of your application)."""
-        self.get_logger().info("Stopping skill...")
-        self.destroy_timer(self._timer)
+        self.get_logger().info("Stopping chatbot...")
 
-        self.get_logger().info("Skill {{id}} is stopped (inactive)")
+        self.destroy_timer(self._timer)
+        self.destroy_subscription(self._intents_sub)
+        self._hri_listener = None
+
+        self.get_logger().info("Chatbot {{id}} is stopped (inactive)")
         return super().on_deactivate(state)
 
     def on_shutdown(self, state: State) -> TransitionCallbackReturn:
@@ -131,33 +151,27 @@ class SkillImpl(Node):
             TransitionCallbackReturn.ERROR or any uncaught exceptions to
             "errorprocessing"
         """
-        self.get_logger().info('Shutting down {{id}} skill.')
+        self.get_logger().info('Shutting down {{id}} node.')
         self.destroy_timer(self._diag_timer)
         self.destroy_publisher(self._diag_pub)
 
-        self.destroy_timer(self._timer)
-
-        self.get_logger().info("Skill {{id}} finalized.")
+        self.get_logger().info("Chatbot {{id}} finalized.")
         return TransitionCallbackReturn.SUCCESS
 
     #################################
 
     def publish_diagnostics(self):
-        requests_per_second = self.nb_requests / \
-                (self.get_clock().now() - self.last_time).nanoseconds * 1e9
-        self.last_time = self.get_clock().now()
-        self.nb_requests = 0
 
         arr = DiagnosticArray()
         msg = DiagnosticStatus(
             level=DiagnosticStatus.OK,
-            name="/skills/skill_{{ id }}",
-            message="skill {{id}} is running",
+            name="/intent_extractor_{{ id }}",
+            message="chatbot {{id}} is running",
             values=[
                 KeyValue(key="Module name", value="{{ id }}"),
                 KeyValue(key="Current lifecycle state",
                          value=self._state_machine.current_state[1]),
-                KeyValue(key="Requests/sec", value=str(requests_per_second)),
+                KeyValue(key="# requests since start", value=str(self._nb_requests)),
             ],
         )
 
@@ -167,18 +181,11 @@ class SkillImpl(Node):
 
     def run(self) -> None:
         """
-        Background task of the skill.
+        Background task of the chatbot.
 
-        The main task of your skill. This function will be triggered by
-        the timer in the class, and only when the timer is active.
+        For now, we do not need to do anything here, as the chatbot is
+        event-driven, and the `on_user_input` callback is called when a new
+        user input is received.
         """
-        #######################################
-        #
-        # TODO: Implement here any background
-        # task required by your skill
-        # If the skill is deactivated,
-        # this function is not called anymore
-        #
-
-        self.get_logger().info("skill {{id}}: performing background task...")
+        pass
 
