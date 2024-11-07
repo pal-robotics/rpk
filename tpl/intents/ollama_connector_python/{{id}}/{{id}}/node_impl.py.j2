@@ -153,21 +153,21 @@ class IntentExtractorImpl(Node):
                                     "Falling back to raw response.")
             valid = False
 
-
         if valid and "next_action" not in response:
-            self.get_logger().error(f"Error while decoding LLM response: no 'next_action' field. "
+            self.get_logger().error("Error while decoding LLM response: no 'next_action' field. "
                                     "Falling back to raw response.")
             valid = False
 
         if valid and response["next_action"] not in ["GREET", "PICK_OBJECT"]:
-            self.get_logger().error(f"Intent {response['next_action']} invalid or not handled yet. "
-                                    "Falling back to raw response.")
+            self.get_logger().error(f"Intent {response['next_action']} invalid or not handled yet."
+                                    " Falling back to raw response.")
             valid = False
 
         suggested_response = response.get("suggested_response_to_user", "")
 
         if valid and response["next_action"] == "GREET":
-            self.get_logger().warn(f"I think the user want to greet me. Sending a GREET intent")
+            self.get_logger().warn("I think the user want to greet me. "
+                                   "Sending a GREET intent")
             intent = Intent(intent=Intent.GREET,
                             source=user_id,
                             modality=Intent.MODALITY_SPEECH,
@@ -175,7 +175,8 @@ class IntentExtractorImpl(Node):
                             data=f'"suggested_response": "{suggested_response}"')
 
         if valid and response["next_action"] == "PICK_OBJECT":
-            self.get_logger().warn(f"I think the user want to pick up an object. Sending a GRAB_OBJECT intent")
+            self.get_logger().warn("I think the user want to pick up an object. "
+                                   "Sending a GRAB_OBJECT intent")
             data = {"object": response.get("object_id", "unknown"),
                     "suggested_response": suggested_response}
             intent = Intent(intent=Intent.GRAB_OBJECT,
@@ -185,7 +186,7 @@ class IntentExtractorImpl(Node):
                             data=json.dumps(data))
 
         else:
-            self.get_logger().warn(f"Unable to process user input. Forwarding a 'RAW_USER_INPUT'")
+            self.get_logger().warn("Unable to process user input. Forwarding a 'RAW_USER_INPUT'")
             intent = Intent(intent=Intent.RAW_USER_INPUT,
                             source=user_id,
                             modality=Intent.MODALITY_SPEECH,
@@ -193,7 +194,6 @@ class IntentExtractorImpl(Node):
                             data=f'"input": "{input}", "suggested_response": "{raw_response}"')
 
         self._intent_pub.publish(intent)
-
 
     def make_action_list(self) -> str:
         # List all the actions available to the robot, with their corresponding
@@ -219,7 +219,6 @@ class IntentExtractorImpl(Node):
             - apple1 isOn kitchen_table
             - book1 isOn desk_1
         """
-
 
     def get_prompt(self, person_id) -> str:
         self.prompt = self.get_parameter('system_prompt').value
@@ -267,10 +266,9 @@ class IntentExtractorImpl(Node):
         - Start processing data, and accepting action goals, if any
 
         """
-
         self._hri_listener = HRIListener("__internal_{{id}}_hri__")
         self._hri_listener.on_voice(lambda voice:
-                                      voice.on_speech(partial(self.on_user_input, user_id=voice.id))
+                                    voice.on_speech(partial(self.on_user_input, user_id=voice.id))
                                     )
 
         # Define a timer that fires every second to call the run function

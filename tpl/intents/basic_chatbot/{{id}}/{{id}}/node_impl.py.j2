@@ -79,9 +79,10 @@ class IntentExtractorImpl(Node):
                             source=user_id,
                             modality=Intent.MODALITY_SPEECH,
                             confidence=.8)
-            self.get_logger().warn(f"I think the user want to greet me. Sending a GREET intent")
+            self.get_logger().warn("I think the user want to greet me. Sending a GREET intent")
         else:
-            self.get_logger().warn(f"Unable to recognise a particular intent! forwarding a 'RAW_USER_INPUT'")
+            self.get_logger().warn("Unable to recognise a particular intent! "
+                                   "forwarding a 'RAW_USER_INPUT'")
             intent = Intent(intent=Intent.RAW_USER_INPUT,
                             source=user_id,
                             modality=Intent.MODALITY_SPEECH,
@@ -115,10 +116,9 @@ class IntentExtractorImpl(Node):
         - Start processing data, and accepting action goals, if any
 
         """
-
         self._hri_listener = HRIListener("__internal_{{id}}_hri__")
         self._hri_listener.on_voice(lambda voice:
-                                      voice.on_speech(partial(self.on_user_input, user_id=voice.id))
+                                    voice.on_speech(partial(self.on_user_input, user_id=voice.id))
                                     )
 
         # Define a timer that fires every second to call the run function

@@ -51,8 +51,6 @@ def generate_launch_description():
 
     ld.add_action(activate_event)
 
-    dep_nodes = []
-
     for dep in ["greet_task", "ollama_connector"]:
         ld.add_action(IncludeLaunchDescription(
           PythonLaunchDescriptionSource([os.path.join(
@@ -60,3 +58,4 @@ def generate_launch_description():
         ))
 
     return ld
+
