@@ -16,6 +16,7 @@ import random
 from functools import partial
 import httpx
 import sys
+import json
 
 from rclpy.lifecycle import Node
 from rclpy.lifecycle import State
@@ -98,91 +99,133 @@ class IntentExtractorImpl(Node):
         Return the chatbot's response to a text input.
 
         Implement here the logic to process the natural text input
-        and return a reponse made of a combination of text to be spoken back, and
+        and return a response made of a combination of text to be spoken back, and
         possible recognized user intents.
         """
         self.get_logger().info(f"input from {user_id}: {input}")
         self._nb_requests += 1
 
-        # here, you need to retrieve the user intent, and map it to the
-        # Intent.msg semantics.
-        #
-        # For now, we just try to recognise a greeting
-        if "hello" in input:
-            intent = Intent(intent=Intent.GREET,
-                            source=user_id,
-                            modality=Intent.MODALITY_SPEECH,
-                            confidence=.8)
-            self.get_logger().warn(f"I think the user want to greet me. Sending a GREET intent")
-        else:
-            self.get_logger().warn(f"Unable to recognise a particular intent! forwarding a 'RAW_USER_INPUT'")
-            intent = Intent(intent=Intent.RAW_USER_INPUT,
-                            source=user_id,
-                            modality=Intent.MODALITY_SPEECH,
-                            confidence=1.0,
-                            data=f'"input": "{input}"')
+        if not user_id:
+            user_id = "anon_" + random_id()
 
-        self._intent_pub.publish(intent)
+        self.get_logger().info(f"Sending input from user <{user_id}> "
+                               f"to LLM: {input}")
 
-    def on_request_cb(self, request, response):
-        """
-        Return the chatbot's response to a text input.
-
-        Implement here the logic to process the natural text input
-        and return a reponse made of a combination of text to be spoken back, and
-        possible recognized user intents.
-        """
-        user = request.user_id
-        if not user:
-            user = "anon_" + random_id()
-
-        self.get_logger().info(f"Sending input from user <{user}> "
-                               f"to LLM: {request.input}")
-        self._nb_requests += 1
-
-        if not self._msgs_history.setdefault(user, None):
-            self._msgs_history[user] = [
-                    {'role': 'system', 'content': self.get_prompt(user)},
+        if not self._msgs_history.setdefault(user_id, None):
+            prompt = self.get_prompt(user_id)
+            self.get_logger().info(f"Initialising conversation with user <{user_id}>"
+                                   f" using prompt {prompt}")
+            self._msgs_history[user_id] = [
+                    {'role': 'system', 'content': prompt},
                     ]
 
-        self._msgs_history[user].append(
+        self._msgs_history[user_id].append(
             {
                 'role': 'user',
-                'content': request.input,
+                'content': input,
             }
         )
 
         try:
             llm_response = self._ollama.chat(
                 model=self._ollama_model,
-                messages=self._msgs_history[user],
-                # tools=self.tools,
+                messages=self._msgs_history[user_id],
             )
         except httpx.ConnectError as ce:
             raise RuntimeError(f"Error while connecting to the ollama server: {ce}."
                                "Is the server installed and started, or the URL "
                                "incorrect (eg wrong port)?")
 
-        self._msgs_history[user].append(llm_response['message'])
+        self._msgs_history[user_id].append(llm_response['message'])
 
-        response.response = llm_response['message']['content']
+        raw_response = llm_response['message']['content']
 
-        # TODO: extract the actual intent(s), if any!
-        intent = Intent(
-            intent=Intent.RAW_USER_INPUT,
-            confidence=1.0,
-            data=f'"input": "{request.input}"')
-        response.intents.append(intent)
+        self.get_logger().info(f"LLM response: {raw_response}")
 
-        return response
+        # here, we need to retrieve the user intent, and map it to the
+        # Intent.msg semantics.
+        valid = True
+        response = {}
+        try:
+            response = json.loads(raw_response)
+        except json.JSONDecodeError as e:
+            self.get_logger().error(f"Error while decoding LLM response: {e}. Not valid JSON. "
+                                    "Falling back to raw response.")
+            valid = False
+
+
+        if valid and "next_action" not in response:
+            self.get_logger().error(f"Error while decoding LLM response: no 'next_action' field. "
+                                    "Falling back to raw response.")
+            valid = False
+
+        if valid and response["next_action"] not in ["GREET", "PICK_OBJECT"]:
+            self.get_logger().error(f"Intent {response['next_action']} invalid or not handled yet. "
+                                    "Falling back to raw response.")
+            valid = False
+
+        suggested_response = response.get("suggested_response_to_user", "")
+
+        if valid and response["next_action"] == "GREET":
+            self.get_logger().warn(f"I think the user want to greet me. Sending a GREET intent")
+            intent = Intent(intent=Intent.GREET,
+                            source=user_id,
+                            modality=Intent.MODALITY_SPEECH,
+                            confidence=.8,
+                            data=f'"suggested_response": "{suggested_response}"')
+
+        if valid and response["next_action"] == "PICK_OBJECT":
+            self.get_logger().warn(f"I think the user want to pick up an object. Sending a GRAB_OBJECT intent")
+            data = {"object": response.get("object_id", "unknown"),
+                    "suggested_response": suggested_response}
+            intent = Intent(intent=Intent.GRAB_OBJECT,
+                            source=user_id,
+                            modality=Intent.MODALITY_SPEECH,
+                            confidence=.8,
+                            data=json.dumps(data))
+
+        else:
+            self.get_logger().warn(f"Unable to process user input. Forwarding a 'RAW_USER_INPUT'")
+            intent = Intent(intent=Intent.RAW_USER_INPUT,
+                            source=user_id,
+                            modality=Intent.MODALITY_SPEECH,
+                            confidence=1.0,
+                            data=f'"input": "{input}", "suggested_response": "{raw_response}"')
+
+        self._intent_pub.publish(intent)
+
 
     def make_action_list(self) -> str:
-        return "".join(["- %s: %s (example: %s)\n" %
-                        (a["id"], a["description"], a["example"]) for a in self._available_tasks])
+        # List all the actions available to the robot, with their corresponding
+        # intents.
+        #
+        # Here, we just hard-code a few examples.
+
+        return """
+        - GREET: say hello to the user. Parameters: user_id.
+        - GO_TO: move to a specific location. Parameters: location.
+        - PICK_OBJECT: pick an object. Parameters: object_id.
+        - PLACE_OBJECT: place an object. Parameters: object_id, location.
+        """
+
+    def get_environment_description(self) -> str:
+        # Describe the environment in which the robot is operating.
+        #
+        # Here, we just hard-code a few examples.
+
+        return """
+        - locations: desk_1, kitchen, kitchen_table.
+        - facts:
+            - apple1 isOn kitchen_table
+            - book1 isOn desk_1
+        """
+
 
     def get_prompt(self, person_id) -> str:
         self.prompt = self.get_parameter('system_prompt').value
-        return self.prompt.format(action_list=self.make_action_list(), person_id=person_id)
+        return self.prompt.format(action_list=self.make_action_list(),
+                                  environment=self.get_environment_description(),
+                                  person_id=person_id)
 
     #################################
     #
@@ -204,10 +247,6 @@ class IntentExtractorImpl(Node):
             raise(e)
 
         self.get_logger().info("Connection successful to the ollama server")
-
-        self._llm_server = self.create_service(
-            GetResponse, "~/get_response",
-            self.on_request_cb)
 
         self._intent_pub = self.create_publisher(Intent, '/intents', 1)
 

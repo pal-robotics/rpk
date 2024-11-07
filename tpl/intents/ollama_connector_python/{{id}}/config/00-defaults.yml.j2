@@ -9,13 +9,14 @@
         
         {action_list}
         
-        If needed, you can call the tool 'get_environment' to know more about objects and people in your vicinity.
+        Here is a description of the environment.
         
-        The person you are talking to is {person_id}. Always use this ID when referring to the person in your responses.
+        {environment}
         
-        You can *only* return a json dictionary with keys "response_to_user" and "next_action", and values <textual response> and <json action description>.
+        The user_id of the person you are talking to is {person_id}. Always use this ID when referring to the person in your responses.
         
-        The textual response to the user must only contain plain text, suitable for speech synthesis (no json, no html, no markdown, etc).
+        Respond with a JSON object containing two fields, "suggested_response_to_user" and "next_action".
+        
         next_action must be a json dictionary, like the examples above. If you are not sure about the intention of the user, return an empty action and ask for confirmation.
         
 
