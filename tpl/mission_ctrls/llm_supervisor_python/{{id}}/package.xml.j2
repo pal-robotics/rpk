@@ -29,12 +29,17 @@
   <!-- The *depend tags are used to specify dependencies -->
   <!-- Dependencies can be catkin packages or system dependencies -->
   <depend>rclpy</depend>
+  <depend>pyhri</depend>
   <depend>hri_actions_msgs</depend>
   <depend>lifecycle_msgs</depend>
   <depend>ament_index_python</depend>
 
-  <!-- tasks actions definitions -->
+  <!-- tasks/skills actions definitions -->
   <exec_depend>greet_task_msgs</exec_depend>
+
+  <!-- ensure the tasks and skills we need are also installed -->
+  <exec_depend>greet_task</exec_depend>
+  <exec_depend>ollama_connector</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

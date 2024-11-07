@@ -13,6 +13,9 @@
 # limitations under the License.
 
 import json
+from functools import partial
+from queue import Queue
+import hri
 
 from rclpy.lifecycle import Node
 from rclpy.lifecycle import State
@@ -33,15 +36,31 @@ class MissionController(Node):
         super().__init__('mission_{{ id }}')
 
         self.get_logger().info("Initialising...")
+
+        self._hri_listener = None
         self._intents_sub = None
         self._timer = None
 
-        self._text_input_sub = None
+        self._user_input_queue = Queue()
+        self._user_output_queue = Queue()
 
         self._llm_service_client = None
         self._intent_sub = None
 
         self._greet_action_client = None
+
+        self.get_logger().info('Node initialised. Ready to transition to configure.')
+
+    def on_input_speech(self, msg, id):
+
+        self.get_logger().info(f"Received input: <{msg}> from {id}")
+        self._user_input_queue.put((msg, id))
+
+    def on_llm_response(self, future):
+        response = future.result()
+        self.get_logger().info(f"Received response: {response}")
+
+        self._user_output_queue.put((response.response, response.intents))
 
     def on_intent(self, msg):
 
@@ -113,6 +132,17 @@ class MissionController(Node):
         while not self._greeter_action_client.wait_for_server(timeout_sec=1.0):
             self.get_logger().info('Greet task not yet available, waiting again...')
 
+        self.get_logger().info('Node configured. Ready to transition to activate.')
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_activate(self, state: State) -> TransitionCallbackReturn:
+        """Activate the node."""
+
+        self._hri_listener = hri.HRIListener("__internal_{{id}}_hri__")
+        self._hri_listener.on_voice(lambda voice:
+                                      partial(voice.on_speech(self.on_input_speech), id=voice.id)
+                                    )
+
         self._intents_sub = self.create_subscription(
             Intent,
             '/intents',
@@ -122,11 +152,6 @@ class MissionController(Node):
         self.get_logger().info("Listening to incoming intents on the %s topic" %
                                self._intents_sub.topic_name)
 
-        self.get_logger().info('Node configured.')
-        return TransitionCallbackReturn.SUCCESS
-
-    def on_activate(self, state: State) -> TransitionCallbackReturn:
-        """Activate the node."""
         timer_period = 0.1  # in sec
         self._timer = self.create_timer(timer_period, self.run)
 
@@ -139,6 +164,7 @@ class MissionController(Node):
 
         self.destroy_timer(self._timer)
         self.destroy_subscription(self._intents_sub)
+        self._hri_listener = None
 
         self.get_logger().info('Node de-activated.')
         return super().on_deactivate(state)
@@ -162,9 +188,15 @@ class MissionController(Node):
         return TransitionCallbackReturn.SUCCESS
 
     def run(self) -> None:
-        # This basic mission controller does nothing
-        # in the background. It only reacts to incoming intents.
-        #
-        # You can add your own background tasks here.
-        pass
+
+        if not self._user_input_queue.empty():
+            user_input, voice_id = self._user_input_queue.get()
+            self.get_logger().info(f"Processing user input: {user_input}")
+
+            request = GetResponse.Request()
+            request.input = user_input
+            request.person_id = voice_id # here, we are slightly abusing the person_id field
+
+            future = self._llm_service_client.call_async(request)
+            future.add_done_callback(self.on_llm_response)
 
