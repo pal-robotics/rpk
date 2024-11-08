@@ -36,13 +36,13 @@ PKG_PATH = (
 
 SKILL_TEMPLATES = {
     "base_python": {
-        "tpl_paths": ["skills/base_python/{{id}}"],
+        "tpl_paths": ["skills/base_python/{{id}}", "skills/skill_msgs"],
         "short_desc": "base skill template [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
     "db_connector_python": {
-        "tpl_paths": ["skills/db_connector_python/{{id}}", "skills/sample_skill_msgs"],
+        "tpl_paths": ["skills/db_connector_python/{{id}}", "skills/skill_msgs"],
         "short_desc": "database connector mock-up [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
