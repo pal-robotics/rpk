@@ -8,20 +8,30 @@
 
   <exec_depend>python3-jinja2</exec_depend>
 
-  <!--
-      Note that 'rclpy' and 'hri_actions_msgs' are not strictly required
-      to run the code generator. However, generated mission controller 
-      will always require them. In order to offer a better developer experience,
-      it is nicer to install these 2 dependencies at the same time as the tool
-      itself is installed.
-  -->
-  <depend>rclpy</depend>
-  <depend>hri_actions_msgs</depend>
-  
-  <test_depend>ament_copyright</test_depend>
-  <test_depend>ament_flake8</test_depend>
-  <test_depend>ament_pep257</test_depend>
+  <!-- ################################################### -->
+  <!-- Tests dependencies -->
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
   <test_depend>python3-pytest</test_depend>
+
+  <!--
+  Tests include trying to compile all the templates.
+  As such, all the dependencies of the templates must be installed.
+  -->
+
+  <test_depend>action_msgs</test_depend>
+  <test_depend>ament_cmake</test_depend>
+  <test_depend>ament_index_python</test_depend>
+  <test_depend>diagnostics_msgs</test_depend>
+  <test_depend>hri_actions_msgs</test_depend>
+  <test_depend>launch</test_depend>
+  <test_depend>launch_pal</test_depend>
+  <test_depend>launch_ros</test_depend>
+  <test_depend>lifecycle_msgs</test_depend>
+  <test_depend>pyhri</test_depend>
+  <test_depend>rclpy</test_depend>
+  <test_depend>rosidl_default_generators</test_depend>
+  <!-- ################################################### -->
 
   <export>
     <build_type>ament_python</build_type>
