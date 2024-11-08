@@ -1,0 +1,154 @@
+{{ name }}
+====================
+
+Welcome to your new robot skill template!
+
+What are the next steps?
+
+## Compile and install the skill
+
+You need a ROS 2 environment to compile the template.
+
+You can for instance use PAL Robotics public 'tutorials' Docker image:
+
+```
+> docker pull palrobotics/public-tutorials-alum-devel
+> docker run -it --name ros2_sandbox \
+             -v <path to your workspace>:/home/user/exchange/ws \
+             palrobotics/public-tutorials-alum-devel bash
+```
+
+Then, simply run:
+
+```
+> cd /home/user/exchange/ws
+> colcon build
+> source install/setup.bash
+```
+
+You can now start your skill with:
+
+```
+> ros2 launch {{id}} {{id}}.launch.py
+```
+
+## Testing
+
+This basic skill template does not do much on this own. However, we can already check it works
+as intended.
+
+Open a second terminal, and run:
+
+```
+ros2 action list
+```
+
+> Note: you can open a new terminal in the same Docker image with:
+> ```
+> docker exec -it ros2_sandbox bash
+> ```
+
+You should see your skill and its *control* action:
+
+```
+/skill_test/control
+```
+
+
+We can trigger the skill (from a third terminal):
+
+```
+ros2 action send_goal /skill_test/control skill_msgs/action/SkillControl "skill_data: 'test data'" 
+```
+
+You should get the following output:
+
+```
+Waiting for an action server to become available...
+Sending goal:
+     skill_data: test data
+
+Goal accepted with ID: a257b444a54d4f42911678d6f93e7e65
+
+Result:
+    error_msg: ''
+result: this is an important result
+
+Goal finished with status: SUCCEEDED
+```
+
+## Customize your skill
+
+By default, the template does not do anything useful. It is mainly an example of
+a complete (Python) ROS 2 lifecycle node.
+
+To implement your skill logic, have a look at `{{id}}/skill_impl.py`: this is
+the main file you will have to modify.
+
+You might want however to create a custom message type to start/configure/stop
+your skill. Check the `skill_msgs` package that has been generated alongside
+this package, and feel free to modify it & rename it as you see fit.
+
+## Install on the robot
+
+To install you app on the robot, you need to follow the following steps:
+
+1. deploy your code to the robot using PAL's `deploy` tool.
+2. install the webpages (if you are using any)
+
+### Deploy the application controller to the robot
+
+**To deploy the code to the robot, you have to run the following commands from
+*inside* your PAL OS Developer Docker image**.
+
+- from within the PAL OS Developer Docker image, go to root of the project
+- run `ros2 run pal_deploy deploy --package {{ id }} {{ robot | lower
+  }}-XXc` (replace `{{ robot | lower }}-XXc` by your actual robot)
+
+You can now `ssh` onto the robot (`ssh pal@{{ robot | lower }}-XXc`, password
+`pal`), and go to your project: `cd ~/deployed_ws/share/{{ id }}`
+
+{% if (robot == "ari") %}
+
+### Install the webpages
+
+To install your webpages onto the robot, check `pages_only_ari/README.md`.
+
+{% endif %}
+
+## Run your application
+
+`ssh` onto the robot (`ssh pal@{{ robot | lower }}-XXc`, password `pal`).
+
+There are several ways to run the application:
+
+1. Automatically launch the app and transition to an active state:
+
+`ros2 launch {{ id }} {{ id }}.launch.py`
+
+2. Manually start your skill:
+
+`ros2 run {{ id }} start_skill`
+
+Since your application controller is a lifecycle node, you need to manage it
+through the lifecycle tools. You can execute the following to transit the
+mission controller as follows:
+
+``ros2 lifecycle set /app_{{ id }} configure``
+``ros2 lifecycle set /app_{{ id }} activate``
+
+To stop it (but not reseting it's internal variables):
+``ros2 lifecycle set /app_{{ id }} activate``
+
+To stop it and clean it:
+``ros2 lifecycle set /app_{{ id }} deactivate``
+``ros2 lifecycle set /app_{{ id }} cleanup``
+
+
+3. Automatically start your application at startup:
+
+To make your application run at startup, uncomment the related lines in
+`setup.py` and reinstall the package. You can then start, stop or view the logs
+of the application as a module. See [Application
+management](https://docs.pal-robotics.com/sdk-dev/management/application-management)
+for more details. 

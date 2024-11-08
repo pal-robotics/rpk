@@ -41,6 +41,12 @@ SKILL_TEMPLATES = {
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
+    "say_python": {
+        "tpl_paths": ["skills/say_python/{{id}}", "skills/skill_msgs"],
+        "short_desc": "example implementation for a 'say' skill [python]",
+        "post_install_help": "Check README.md in {path}/{id}/ and "
+                             "edit src/{id}/skill_impl.py to implement your skill logic.",
+    },
     "db_connector_python": {
         "tpl_paths": ["skills/db_connector_python/{{id}}", "skills/skill_msgs"],
         "short_desc": "database connector mock-up [python]",
@@ -76,6 +82,7 @@ TASK_TEMPLATES = {
         "short_desc": "'greet' task mock-up [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/task_impl.py to implement your task logic.",
+        "skill_templates": [{"say_python": {"id": "basic_say", "name": "basic 'say' skill"}}],
     }
 }
 
@@ -84,11 +91,12 @@ MISSION_CTRL_TEMPLATES = {
         "tpl_paths": ["mission_ctrls/base_python/{{id}}"],
         "short_desc": "base robot supervisor [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and edit src/{id}/"
-                             "mission_controller.py to customize your application logic."
+                             "mission_controller.py to customize your application logic.",
+        "skill_templates": [{"say_python": {"id": "basic_say", "name": "basic 'say' skill"}}],
     },
     "base_intents_python": {
         "tpl_paths": ["mission_ctrls/base_intents_python/{{id}}"],
-        "short_desc": "robot supervisor with intents handler [python]",
+        "short_desc": "robot supervisor with pre-filled intent handlers [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and edit src/{id}/"
                              "mission_controller.py to implement your application logic.",
     },
@@ -99,6 +107,7 @@ MISSION_CTRL_TEMPLATES = {
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
                              "mission_controller.py to customize your application logic.",
         "task_templates": [{"greet_task_python": {"id": "greet_task", "name": "'greet' task"}}],
+        "skill_templates": [{"say_python": {"id": "say_skill", "name": "basic 'say' skill"}}],
         "intent_extractor_templates": [{"ollama_connector_python": {
                                                 "id": "ollama_connector",
                                                 "name": "Bridge with a ollama server"}}],
