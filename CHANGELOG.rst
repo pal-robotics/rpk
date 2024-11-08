@@ -2,6 +2,34 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [tpl] complete the mission/llm_chatbot
+* [tpl] various clean up
+* [tpl] add new 'say' skill template
+* [tpl] move missions templates around
+* [tpl] missions/{super_basic_python -> base_python}
+* [tpl] missions/{base_python -> base_intents_python}
+* [tpl] more work on READMEs
+* [tpl] clean up skill/base_python
+* [tpl] replace db skill msgs by generic SkillControl msg
+* [tpl] improve several READMEs
+* [test] test that all the templates compile
+* [tpl] remove unused deps from mission/super_basic_mission
+* improve performance of the ollama connector
+* mv chatbots tpl to a new 'intent extraction' category
+  While here: chatbots now directly publish intents, no need for the
+  chatbot_msgs/GetResponse.msg anymore
+* polish the complete 'LLM chatbot' app. Still missing a way to take user input
+* import chatbot_msgs for skills that require them
+* minor clean up in greet_task_python tpl
+* add a basic task python template
+* gracefully handle ctrl+c during interactive tpl creation
+* add a cmd line flag to display version
+* initial working version of the ollama connector skill
+  It includes independent dialogue histories for each user
+* Contributors: Séverin Lemaignan
+
 3.2.0 (2024-11-05)
 ------------------
 * test: also enable auto-tests for ari and tiago variants
