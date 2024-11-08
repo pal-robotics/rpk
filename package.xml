@@ -22,7 +22,7 @@
   <test_depend>action_msgs</test_depend>
   <test_depend>ament_cmake</test_depend>
   <test_depend>ament_index_python</test_depend>
-  <test_depend>diagnostics_msgs</test_depend>
+  <test_depend>diagnostic_msgs</test_depend>
   <test_depend>hri_actions_msgs</test_depend>
   <test_depend>launch</test_depend>
   <test_depend>launch_pal</test_depend>
