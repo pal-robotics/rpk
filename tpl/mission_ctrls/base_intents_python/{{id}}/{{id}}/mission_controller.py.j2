@@ -35,8 +35,9 @@ from skill_msgs.action import SkillControl
 from hri_actions_msgs.msg import Intent
 from lifecycle_msgs.msg import State as StateMsg
 
-{% if robot in ["ari", "tiago"] %}
-from {{ id }}.change_state_helper import ChangeNodeStateHelper{% endif %}
+{% if robot in ["ari", "tiago"] %}from {{ id }}.change_state_helper import ChangeNodeStateHelper
+
+{% endif %}
 
 class MissionController(Node):
 
