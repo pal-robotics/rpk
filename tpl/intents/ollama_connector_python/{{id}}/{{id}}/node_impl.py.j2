@@ -16,6 +16,7 @@ import random
 from functools import partial
 import httpx
 import sys
+import yaml
 import json
 
 from rclpy.lifecycle import Node
@@ -147,43 +148,60 @@ class IntentExtractorImpl(Node):
         valid = True
         response = {}
         try:
-            response = json.loads(raw_response)
-        except json.JSONDecodeError as e:
-            self.get_logger().error(f"Error while decoding LLM response: {e}. Not valid JSON. "
-                                    "Falling back to raw response.")
+            # use YAML instead of JSON to parse the LLM response, as
+            # YAML is more permissive and can handle JSON as well.
+            response = yaml.safe_load(raw_response)
+        except yaml.parser.ParserError as e:
+            self.get_logger().error(f"Error while decoding LLM response: {e}. "
+                                    "Not valid YAML/JSON. Falling back to raw response.")
             valid = False
 
-        if valid and "next_action" not in response:
+        intent = response.get("next_action", "")
+
+        if not intent:
             self.get_logger().error("Error while decoding LLM response: no 'next_action' field. "
                                     "Falling back to raw response.")
             valid = False
 
-        if valid and response["next_action"] not in ["GREET", "PICK_OBJECT"]:
-            self.get_logger().error(f"Intent {response['next_action']} invalid or not handled yet."
-                                    " Falling back to raw response.")
-            valid = False
-
         suggested_response = response.get("suggested_response_to_user", "")
 
-        if valid and response["next_action"] == "GREET":
-            self.get_logger().warn("I think the user want to greet me. "
-                                   "Sending a GREET intent")
-            intent = Intent(intent=Intent.GREET,
-                            source=user_id,
-                            modality=Intent.MODALITY_SPEECH,
-                            confidence=.8,
-                            data=f'"suggested_response": "{suggested_response}"')
+        if valid:
+            if intent == "GREET":
+                self.get_logger().warn("I think the user want to greet me. "
+                                       "Sending a GREET intent")
+                intent = Intent(intent=Intent.GREET,
+                                source=user_id,
+                                modality=Intent.MODALITY_SPEECH,
+                                confidence=.8,
+                                data=f'"suggested_response": "{suggested_response}"')
 
-        if valid and response["next_action"] == "PICK_OBJECT":
-            self.get_logger().warn("I think the user want to pick up an object. "
-                                   "Sending a GRAB_OBJECT intent")
-            data = {"object": response.get("object_id", "unknown"),
-                    "suggested_response": suggested_response}
-            intent = Intent(intent=Intent.GRAB_OBJECT,
-                            source=user_id,
-                            modality=Intent.MODALITY_SPEECH,
-                            confidence=.8,
-                            data=json.dumps(data))
+            elif intent == "SAY":
+                self.get_logger().warn("I think the user want to say/answer something. "
+                                       "Sending a SAY intent")
+                intent = Intent(intent=Intent.SAY,
+                                source=user_id,
+                                modality=Intent.MODALITY_SPEECH,
+                                confidence=.8,
+                                data=f'"object": "{suggested_response}"')
+
+            elif intent == "PICK_OBJECT":
+                self.get_logger().warn("I think the user want to pick up an object. "
+                                       "Sending a GRAB_OBJECT intent")
+                data = {"object": response.get("object_id", "unknown"),
+                        "suggested_response": suggested_response}
+                intent = Intent(intent=Intent.GRAB_OBJECT,
+                                source=user_id,
+                                modality=Intent.MODALITY_SPEECH,
+                                confidence=.8,
+                                data=json.dumps(data))
+
+            else:
+                self.get_logger().warn("Unrecognised intent. Forwarding a 'RAW_USER_INPUT'")
+                intent = Intent(intent=Intent.RAW_USER_INPUT,
+                                source=user_id,
+                                modality=Intent.MODALITY_SPEECH,
+                                confidence=1.0,
+                                data=f'"input": "{input}", "suggested_response": "{raw_response}"')
 
         else:
             self.get_logger().warn("Unable to process user input. Forwarding a 'RAW_USER_INPUT'")
@@ -202,6 +220,7 @@ class IntentExtractorImpl(Node):
         # Here, we just hard-code a few examples.
 
         return """
+        - SAY: generic action to tell something to the user.
         - GREET: say hello to the user. Parameters: user_id.
         - GO_TO: move to a specific location. Parameters: location.
         - PICK_OBJECT: pick an object. Parameters: object_id.

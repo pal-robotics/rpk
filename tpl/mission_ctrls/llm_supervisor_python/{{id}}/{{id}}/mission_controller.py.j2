@@ -13,20 +13,14 @@
 # limitations under the License.
 
 import json
-from functools import partial
-from queue import Queue
-import hri
 
+from greet_task_msgs.action import Greet
+from hri_actions_msgs.msg import Intent
+from rclpy.action import ActionClient
 from rclpy.lifecycle import Node
 from rclpy.lifecycle import State
 from rclpy.lifecycle import TransitionCallbackReturn
-
-from rclpy.action import ActionClient
-from chatbot_msgs.srv import GetResponse
-from greet_task_msgs.action import Greet
-from hri_actions_msgs.msg import Intent
-
-from {{ id }}.component_dependencies import get_component_dependencies
+from skill_msgs.action import SkillControl
 
 
 class MissionController(Node):
@@ -41,49 +35,50 @@ class MissionController(Node):
         self._intents_sub = None
         self._timer = None
 
-        self._user_input_queue = Queue()
-        self._user_output_queue = Queue()
-
-        self._llm_service_client = None
         self._intent_sub = None
 
-        self._greet_action_client = None
+        # in this example, the mission controller can either
+        # start a dedicated 'greet' task (in response to the 'GREET' intent)
+        # or directly call the 'say' skill (in response to eg the 'SAY' intent)
+        self._greet_task_client = None
+        self._say_skill_client = None
 
         self.get_logger().info('Node initialised. Ready to transition to configure.')
-
-    def on_input_speech(self, msg, id):
-
-        self.get_logger().info(f"Received input: <{msg}> from {id}")
-        self._user_input_queue.put((msg, id))
-
-    def on_llm_response(self, future):
-        response = future.result()
-        self.get_logger().info(f"Received response: {response}")
-
-        self._user_output_queue.put((response.response, response.intents))
 
     def on_intent(self, msg):
 
         self.get_logger().info("Received an intent: %s" % msg.intent)
 
-        data = json.loads(msg.data) if msg.data else {}  # noqa: F841
-        source = msg.source  # noqa: F841
+        try:
+            data = json.loads(msg.data) if msg.data else {}
+        except json.JSONDecodeError:
+            self.get_logger().warn("The intent's data field is not a"
+                                   f" valid json object:\n{msg.data}")
+            data = {"raw": msg.data}
+
+        source = msg.source
         modality = msg.modality  # noqa: F841
         confidence = msg.confidence  # noqa: F841
         priority_hint = msg.priority  # noqa: F841
 
-        if msg.intent == Intent.START_ACTIVITY:
-            pass
-
-        elif msg.intent == Intent.GREET:
+        if msg.intent == Intent.GREET:
             self.get_logger().info(f"Greeting user <{source}>")
             goal = Greet.Goal()
             goal.person_id = source
-            self._greet_action_future = self._greet_action_client.send_goal_async(
+            self._greet_task_future = self._greet_task_client.send_goal_async(
                                            goal,
                                            feedback_callback=self.on_feedback)
 
-            self._greet_action_future.add_done_callback(self.on_greet_done)
+            self._greet_task_future.add_done_callback(self.on_greet_done)
+        elif msg.intent == Intent.SAY:
+            self.get_logger().info(f"Saying something to <{source}>")
+            goal = SkillControl.Goal()
+            goal.skill_data = data["object"]
+            self._say_skill_future = self._say_skill_client.send_goal_async(
+                                           goal,
+                                           feedback_callback=self.on_feedback)
+
+            self._say_skill_future.add_done_callback(self.on_say_done)
 
         else:
             self.get_logger().warning("I don't know how to process intent "
@@ -99,19 +94,12 @@ class MissionController(Node):
         else:
             self.get_logger().info("Successfully greeted user")
 
-    def generate_intent_list(self):
-
-        tasks = get_component_dependencies("{{ id }}", "task")
-
-        intents = []
-
-        for task in tasks:
-            intents.append(
-                    {"id": task["name"].upper(),
-                     "description": task["description"],
-                     "example": task["examples"][0]
-                     }
-                    )
+    def on_say_done(self, future):
+        result = future.result().result
+        if result:
+            self.get_logger().error(f"Say skill returned: {result.result}")
+        else:
+            self.get_logger().info("Successfully said something")
 
     #########################################################################
 
@@ -123,25 +111,19 @@ class MissionController(Node):
 
     def on_configure(self, state: State) -> TransitionCallbackReturn:
         """Configure the node."""
-        self._llm_service_client = self.create_client(GetResponse,
-                                                      '/ollama_connector/get_response')
-        while not self._llm_service_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('LLM skill not yet available, waiting again...')
+        self._greet_task_client = ActionClient(self, Greet, '/greet')
+        while not self._greet_task_client.wait_for_server(timeout_sec=1.0):
+            self.get_logger().info("'greet' task not yet available, waiting again...")
 
-        self._greeter_action_client = ActionClient(self, Greet, '/greet')
-        while not self._greeter_action_client.wait_for_server(timeout_sec=1.0):
-            self.get_logger().info('Greet task not yet available, waiting again...')
+        self._say_skill_client = ActionClient(self, SkillControl, '/say')
+        while not self._say_skill_client.wait_for_server(timeout_sec=1.0):
+            self.get_logger().info("'say' skill skill not yet available, waiting again...")
 
         self.get_logger().info('Node configured. Ready to transition to activate.')
         return TransitionCallbackReturn.SUCCESS
 
     def on_activate(self, state: State) -> TransitionCallbackReturn:
         """Activate the node."""
-        self._hri_listener = hri.HRIListener("__internal_{{id}}_hri__")
-        self._hri_listener.on_voice(lambda voice:
-                                    partial(voice.on_speech(self.on_input_speech), id=voice.id)
-                                    )
-
         self._intents_sub = self.create_subscription(
             Intent,
             '/intents',
@@ -169,17 +151,10 @@ class MissionController(Node):
         return super().on_deactivate(state)
 
     def on_shutdown(self, state: State) -> TransitionCallbackReturn:
-        """
-        Shutdown the node, after a shutting-down transition is requested.
+        """Shutdown the node, after a shutting-down transition is requested."""
+        self._greet_task_client.destroy()
+        self._say_skill_client.destroy()
 
-        :return: The state machine either invokes a transition to the
-            "finalized" state or stays in the current state depending on the
-            return value.
-            TransitionCallbackReturn.SUCCESS transitions to "finalized".
-            TransitionCallbackReturn.FAILURE remains in current state.
-            TransitionCallbackReturn.ERROR or any uncaught exceptions to
-            "errorprocessing"
-        """
         self.destroy_timer(self._timer)
         self.destroy_subscription(self._intents_sub)
 
@@ -187,15 +162,6 @@ class MissionController(Node):
         return TransitionCallbackReturn.SUCCESS
 
     def run(self) -> None:
-
-        if not self._user_input_queue.empty():
-            user_input, voice_id = self._user_input_queue.get()
-            self.get_logger().info(f"Processing user input: {user_input}")
-
-            request = GetResponse.Request()
-            request.input = user_input
-            request.person_id = voice_id  # here, we are slightly abusing the person_id field
-
-            future = self._llm_service_client.call_async(request)
-            future.add_done_callback(self.on_llm_response)
+        """Background task of your application."""
+        pass
 
