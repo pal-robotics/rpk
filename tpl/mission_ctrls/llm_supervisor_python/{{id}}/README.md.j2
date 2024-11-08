@@ -28,13 +28,14 @@ You can for instance use PAL Robotics public 'tutorials' Docker image:
 
 ```
 > docker pull palrobotics/public-tutorials-alum-devel
-> docker run -it -v <path to your workspace>:/home/user/exchange \
+> docker run -it -v <path to your workspace>:/home/user/exchange/ws \
                palrobotics/public-tutorials-alum-devel bash
 ```
 
 Then, simply run:
 
 ```
+> cd /home/user/exchange/ws
 > colcon build
 > source install/setup.bash
 ```
@@ -51,7 +52,6 @@ This launch file will also start the Ollama connector node and the
 ## Testing
 
 You can test the application from the terminal by publishing some input speech.
-
 
 First, let's pretend that a voice is heard by the robot:
 
