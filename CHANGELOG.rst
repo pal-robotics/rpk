@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.0.0 (2024-11-08)
+------------------
 * [tpl] complete the mission/llm_chatbot
 * [tpl] various clean up
 * [tpl] add new 'say' skill template
