@@ -5,7 +5,79 @@ Welcome to your new robot skill template!
 
 What are the next steps?
 
-## Implement your skill
+## Compile and install the skill
+
+You need a ROS 2 environment to compile the template.
+
+You can for instance use PAL Robotics public 'tutorials' Docker image:
+
+```
+> docker pull palrobotics/public-tutorials-alum-devel
+> docker run -it --name ros2_sandbox \
+             -v <path to your workspace>:/home/user/exchange/ws \
+             palrobotics/public-tutorials-alum-devel bash
+```
+
+Then, simply run:
+
+```
+> cd /home/user/exchange/ws
+> colcon build
+> source install/setup.bash
+```
+
+You can now start your skill with:
+
+```
+> ros2 launch {{id}} {{id}}.launch.py
+```
+
+## Testing
+
+This basic skill template does not do much on this own. However, we can already check it works
+as intended.
+
+Open a second terminal, and run:
+
+```
+ros2 action list
+```
+
+> Note: you can open a new terminal in the same Docker image with:
+> ```
+> docker exec -it ros2_sandbox bash
+> ```
+
+You should see your skill and its *control* action:
+
+```
+/skill_test/control
+```
+
+
+We can trigger the skill (from a third terminal):
+
+```
+ros2 action send_goal /skill_test/control skill_msgs/action/SkillControl "skill_data: 'test data'" 
+```
+
+You should get the following output:
+
+```
+Waiting for an action server to become available...
+Sending goal:
+     skill_data: test data
+
+Goal accepted with ID: a257b444a54d4f42911678d6f93e7e65
+
+Result:
+    error_msg: ''
+result: this is an important result
+
+Goal finished with status: SUCCEEDED
+```
+
+## Customize your skill
 
 By default, the template does not do anything useful. It is mainly an example of
 a complete (Python) ROS 2 lifecycle node.
