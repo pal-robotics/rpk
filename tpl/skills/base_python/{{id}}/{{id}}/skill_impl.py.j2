@@ -35,8 +35,8 @@ class SkillImpl(Node):
     This is the main class for the skill. It is a ROS2 node that uses the
     lifecycle feature of ROS2 to manage its states.
 
-    As an example, the skill mocks up the connection to an external
-    database. Adjust the code to your own needs.
+    This basic skill template does not perform any particular task, and
+    should be used as a starting point to implement your own skills.
 
     Don't forget to update accordingly the manifest of the skill, included in
     package.xml, to describe what your skill is actually doing.
@@ -192,10 +192,11 @@ class SkillImpl(Node):
             "errorprocessing"
         """
         self.get_logger().info('Shutting down {{id}} skill.')
+
+        self.skill_server.destroy()
+
         self.destroy_timer(self._diag_timer)
         self.destroy_publisher(self._diag_pub)
-
-        self.destroy_timer(self._timer)
 
         self.get_logger().info("Skill {{id}} finalized.")
         return TransitionCallbackReturn.SUCCESS

@@ -22,8 +22,12 @@ from rclpy.lifecycle import TransitionCallbackReturn
 {% for intent in intents %}
 {% if intent.intent == "ENGAGE_WITH"%}
 from rclpy.action import ActionClient
+{% if robot in ["ari", "tiago"] %}
 from tts_msgs.action import TTS
 from play_motion2_msgs.action import PlayMotion2
+{% else %}
+from skill_msgs.action import SkillControl
+{% endif %}
 {% endif %}
 {% endfor %}
 {% endif %}
@@ -31,8 +35,8 @@ from play_motion2_msgs.action import PlayMotion2
 from hri_actions_msgs.msg import Intent
 from lifecycle_msgs.msg import State as StateMsg
 
-from {{ id }}.change_state_helper import ChangeNodeStateHelper
-
+{% if robot in ["ari", "tiago"] %}
+from {{ id }}.change_state_helper import ChangeNodeStateHelper{% endif %}
 
 class MissionController(Node):
 
@@ -44,11 +48,12 @@ class MissionController(Node):
         self._intents_sub = None
         self._timer = None
 
+{% if robot in ["ari", "tiago"] %}
         # We manage the state of the "communication_hub" node
         self._change_state_helper = ChangeNodeStateHelper(
             self,
             'communication_hub')
-
+{% endif %}
         #######################################
         #
         # TODO: Add here any other variables
@@ -109,7 +114,7 @@ class MissionController(Node):
             # As an example, we call here the TTS and play_motion action server
             # to implement a very simple behaviour when someone engages with
             # the robot.
-            tts = ActionClient(self, TTS, 'communication/say')
+            tts = ActionClient(self, TTS, 'say')
             tts.wait_for_server()
             tts_goal = TTS.Goal()
             tts_goal.locale = "en_US"
@@ -128,9 +133,6 @@ class MissionController(Node):
             {% endif %}
             tts.send_goal_async(tts_goal)
             play_motion.send_goal(motion_goal)
-{% elif (robot == "generic" and intent.intent == "ENGAGE_WITH") %}
-            # Handle intents of a user to engage with the robot
-            pass
 {% elif (robot == "ari" and intent.intent == "PRESENT_CONTENT") %}
             # Handle intents to present specific content by
             # loading the corresponding page onto the touchscreen.
@@ -147,7 +149,7 @@ class MissionController(Node):
             # its navigation skills. Refer to "navigation skills":
             # https://docs.pal-robotics.com/sdk-dev/navigation/skills_list
             pass
-{% elif intent.intent == "PERFORM_MOTION" %}
+{% elif intent.intent == "PERFORM_MOTION" and (robot in ["ari", "tiago"]) %}
             # Handle intents to perform a specific motion
             # (eg, a dance or a specific gesture like pointing, waving)
             # Refer to "gestures and motions skills":
@@ -156,7 +158,13 @@ class MissionController(Node):
             play_motion.wait_for_server()
             motion_goal = PlayMotion2.Goal(motion_name=data['object'])
             play_motion.send_goal(motion_goal)
-{% elif intent.intent in ["GREET"] %}
+{% elif robot == "generic" and intent.intent == "PERFORM_MOTION" %}
+            # Handle intents to perform a specific motion
+            # (eg, a dance or a specific gesture like pointing, waving)
+            # Refer to "gestures and motions skills":
+            # https://docs.pal-robotics.com/sdk-dev/motions/skills_list
+            pass
+{% elif intent.intent in ["GREET"] and (robot in ['ari', 'tiago']) %}
             # Handle intents to greet, customised by the user
             # Refer to:
             # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
@@ -164,7 +172,15 @@ class MissionController(Node):
             tts.wait_for_server()
             tts_goal = TTS.Goal(input="Hello, what can I do for you today?")
             tts.send_goal_async(tts_goal)
-{% elif intent.intent in ["SAY"] %}
+{% elif (robot == "generic" and intent.intent in ["GREET", "ENGAGE_WITH"]) %}
+            # Handle intents to greet, customised by the user
+            # Refer to:
+            # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
+            say = ActionClient(self, SkillControl, '/say')
+            say.wait_for_server()
+            say_goal = SkillControl.Goal(skill_data="Hello, what can I do for you today?")
+            say.send_goal_async(say_goal)
+{% elif intent.intent in ["SAY"] and (robot in ["ari", "tiago"]) %}
             # Handle intents to say a specific text
             # Refer to:
             # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
@@ -172,6 +188,14 @@ class MissionController(Node):
             tts.wait_for_server()
             tts_goal = TTS.Goal(input=data['object'])
             tts.send_goal_async(tts_goal)
+{% elif (robot == "generic" and intent.intent == "SAY") %}
+            # Handle intents to greet, customised by the user
+            # Refer to:
+            # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
+            say = ActionClient(self, SkillControl, '/say')
+            say.wait_for_server()
+            say_goal = SkillControl.Goal(skill_data=data['object'])
+            say.send_goal_async(say_goal)
 {% elif intent.intent in ["START_ACTIVITY", "STOP_ACTIVITY"] %}
             # Handle custom/specialized activities/tasks
             pass

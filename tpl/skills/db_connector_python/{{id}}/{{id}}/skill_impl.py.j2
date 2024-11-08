@@ -205,10 +205,11 @@ class SkillImpl(Node):
             "errorprocessing"
         """
         self.get_logger().info('Shutting down {{id}} skill.')
+
+        self.skill_server.destroy()
+
         self.destroy_timer(self._diag_timer)
         self.destroy_publisher(self._diag_pub)
-
-        self.destroy_timer(self._timer)
 
         self.close_database_connection()
 

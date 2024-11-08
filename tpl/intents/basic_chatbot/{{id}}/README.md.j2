@@ -5,7 +5,64 @@ Welcome to this chatbot template!
 
 What are the next steps?
 
-## Implement the node
+## Compile and install {{id}}
+
+You need a ROS 2 environment to compile the template.
+
+You can for instance use PAL Robotics public 'tutorials' Docker image:
+
+```
+> docker pull palrobotics/public-tutorials-alum-devel
+> docker run -it --name ros2_sandbox \
+             -v <path to your workspace>:/home/user/exchange/ws \
+             palrobotics/public-tutorials-alum-devel bash
+```
+
+Then, simply run:
+
+```
+> cd /home/user/exchange/ws
+> colcon build
+> source install/setup.bash
+```
+
+You can now start the chatbot template with:
+
+```
+> ros2 launch {{id}} {{id}}.launch.py
+```
+
+## Testing
+
+You can test the application from the terminal by publishing some input speech, and monitoring the
+`/intents` topic for results.
+
+In a second terminal, run:
+
+```
+ros2 topic echo /intents
+```
+
+> Note: you can open a new terminal in the same Docker image with:
+> ```
+> docker exec -it ros2_sandbox bash
+> ```
+
+Then (from a third terminal) let's pretend that a voice is heard by the robot:
+
+```
+ros2 topic pub -1 /humans/voices/tracked hri_msgs/msg/IdsList "ids: ['test_speaker']"
+```
+
+Then:
+
+```
+ros2 topic pub -1 /humans/voices/test_speaker/speech hri_msgs/msg/LiveSpeech "final: 'hello robot, what can you do for me?'"
+```
+
+You should now see intents being published, based on what the LLM chatbot has recognised.
+
+## Customizing the node
 
 By default, the template does not do anything useful. It simply shows how a
 chatbot can be integrated into a robotic app, via a fairly complete ROS 2 node.
@@ -76,20 +133,4 @@ To make your application run at startup, uncomment the related lines in
 of the application as a module. See [Application
 management](https://docs.pal-robotics.com/sdk-dev/management/application-management)
 for more details. 
-
-### Testing
-
-You can test the application from the terminal by sending some intents:
-
-```
-ros2 topic pub /intents hri_actions_msgs/msg/Intent "{intent: '__intent_perform_motion__', data: '{\"object\": \"inspect_surroundings\"}'}"
-```
-
-```
-ros2 topic pub /intents hri_actions_msgs/msg/Intent "{intent: '__intent_say__', data: '{\"object\": \"hello how are you?\"}'}"
-```
-
-```
-ros2 topic pub /intents hri_actions_msgs/msg/Intent "{intent: '__intent_engage_with__'}"
-```
 
