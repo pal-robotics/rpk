@@ -108,7 +108,7 @@ class TaskImpl(Node):
         self.task_running = False
 
         goal_handle.succeed()
-        return TaskControl.Result()
+        return TaskControl.Result(result="task completed")
 
     #################################
     #

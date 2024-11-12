@@ -9,7 +9,8 @@ What are the next steps?
 
 You need a ROS 2 environment to compile the template.
 
-You can for instance use PAL Robotics public 'tutorials' Docker image:
+You can for instance use the ROS humble Docker image, or PAL Robotics own 
+public 'tutorials' Docker image (itself based on ROS humble):
 
 ```
 > docker pull palrobotics/public-tutorials-alum-devel
@@ -51,14 +52,14 @@ ros2 action list
 You should see your skill and its *control* action:
 
 ```
-/skill_test/control
+/{{id}}/control
 ```
 
 
 We can trigger the skill (from a third terminal):
 
 ```
-ros2 action send_goal /skill_test/control skill_msgs/action/SkillControl "skill_data: 'test data'" 
+ros2 action send_goal /{{id}}/control skill_msgs/action/SkillControl "skill_data: 'test data'" 
 ```
 
 You should get the following output:

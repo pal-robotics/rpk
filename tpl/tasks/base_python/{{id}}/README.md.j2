@@ -1,16 +1,107 @@
 {{ name }}
 ====================
 
-Welcome to your (fairly bare bone!) task template.
+Welcome to your (fairly bare-bones!) task template.
 
 What are the next steps?
+
+
+## Compile and install the task
+
+You need a ROS 2 environment to compile the template.
+
+You can for instance use the ROS humble Docker image, or PAL Robotics own 
+public 'tutorials' Docker image (itself based on ROS humble):
+
+```
+> docker pull palrobotics/public-tutorials-alum-devel
+> docker run -it --name ros2_sandbox \
+             -v <path to your workspace>:/home/user/exchange/ws \
+             palrobotics/public-tutorials-alum-devel bash
+```
+
+Then, simply run:
+
+```
+> cd /home/user/exchange/ws
+> colcon build
+> source install/setup.bash
+```
+
+You can now start your task with:
+
+```
+> ros2 launch {{id}} {{id}}.launch.py
+```
+
+## Testing
+
+This basic task template does not do much on this own. However, we can already check it works
+as intended.
+
+Open a second terminal, and run:
+
+```
+ros2 action list
+```
+
+> Note: you can open a new terminal in the same Docker image with:
+> ```
+> docker exec -it ros2_sandbox bash
+> ```
+
+You should see your task and its *control* action:
+
+```
+/{{id}}/control
+```
+
+
+We can trigger the task (from a third terminal):
+
+```
+ros2 action send_goal --feedback /{{id}}/control task_msgs/action/TaskControl "task_data: 'test data'" 
+```
+
+You should get the following output:
+
+```
+Waiting for an action server to become available...
+Sending goal:
+     task_data: test
+
+Goal accepted with ID: d011816361164b0c9a014c572388781f
+
+Feedback:
+    status: task started
+
+Feedback:
+    status: completed 10%
+
+Feedback:
+    status: completed 20%
+
+[...]
+
+Feedback:
+    status: completed 90%
+
+Feedback:
+    status: task completed
+
+Result:
+    error_msg: ''
+
+Goal finished with status: SUCCEEDED
+```
 
 ## Implement your task
 
 By default, the template does not do anything useful. It does provide however all
-the boilerplate to quickly implement a ROS 2 task.
+the boilerplate to quickly implement your own ROS 2 task.
 
-Implement your task in `./{{ id }}/task_impl.py`
+Implement your task in `./{{ id }}/task_impl.py`. You might want to specifically look at
+the `on_request_exec` method.
 
 ## Install on the robot
 

@@ -5,12 +5,98 @@ Welcome to your (fairly bare bone!) task template.
 
 What are the next steps?
 
-## Implement your task
 
-By default, the template does not do anything useful. It does provide however all
-the boilerplate to quickly implement a ROS 2 task.
+## Compile and install the task
 
-Implement your task in `./{{ id }}/task_impl.py`
+You need a ROS 2 environment to compile the template.
+
+You can for instance use the ROS Humble Docker image, or PAL Robotics own 
+public 'tutorials' Docker image (itself based on ROS Humble):
+
+```
+> docker pull palrobotics/public-tutorials-alum-devel
+> docker run -it --name ros2_sandbox \
+             -v <path to your workspace>:/home/user/exchange/ws \
+             palrobotics/public-tutorials-alum-devel bash
+```
+
+Then, simply run:
+
+```
+> cd /home/user/exchange/ws
+> colcon build
+> source install/setup.bash
+```
+
+## Testing
+
+This 'greet' task template does not do much on this own (it simply use the 'say'
+skill to say 'Hello' to the user). We can already check it works as intended.
+
+First, we need to start the `say` skill (a basic `say` skill has been generated
+alongside the `greet` task)
+
+```
+> ros2 launch say_skill say_skill.launch.py
+```
+
+You can now start your task. Open a second terminal, and run:
+
+```
+> ros2 launch {{id}} {{id}}.launch.py
+```
+
+> Note: you can open a new terminal in the same Docker image with:
+> ```
+> docker exec -it ros2_sandbox bash
+> ```
+
+Open a third terminal and run:
+
+```
+ros2 action list
+```
+
+You should see two actions servers: one for the `/say` skill and one for the
+`/greet` task:
+
+```
+/greet
+/say
+```
+
+We can trigger the task (from yet another terminal):
+
+```
+ros2 action send_goal --feedback /greet greet_task_msgs/action/Greet "person_id: 'john_doe'" 
+```
+
+You should get the following output:
+
+```
+Waiting for an action server to become available...
+Sending goal:
+     person_id: john_doe
+
+Goal accepted with ID: da13b099e9a74859beeab2ae5e892c4c
+
+Feedback:
+    status: FACING_USER
+
+Feedback:
+    status: SUCCESSFUL_USER_ACKNOWLEDGMENT
+
+Result:
+    error_msg: ''
+
+Goal finished with status: SUCCEEDED
+```
+
+## Customize your task
+
+Open `./{{ id }}/task_impl.py` in your favourite text editor to see how this
+basic greeting task is implemented, and start from there to create your own
+task.
 
 ## Install on the robot
 
