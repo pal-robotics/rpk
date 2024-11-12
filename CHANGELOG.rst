@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.1.0 (2024-11-12)
+------------------
 * linting
 * tpl: improve performance of the ollama intent extractor
 * do not generate twice the 'say' skill
