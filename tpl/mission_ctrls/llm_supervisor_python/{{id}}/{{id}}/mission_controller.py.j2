@@ -69,7 +69,7 @@ class MissionController(Node):
                                            goal,
                                            feedback_callback=self.on_feedback)
 
-            self._greet_task_future.add_done_callback(self.on_greet_done)
+            self._greet_task_future.add_done_callback(self.on_greet_goal)
         elif msg.intent == Intent.SAY:
             self.get_logger().info(f"Saying something to <{source}>")
             goal = SkillControl.Goal()
@@ -78,14 +78,23 @@ class MissionController(Node):
                                            goal,
                                            feedback_callback=self.on_feedback)
 
-            self._say_skill_future.add_done_callback(self.on_say_done)
+            self._say_skill_future.add_done_callback(self.on_say_goal)
 
         else:
-            self.get_logger().warning("I don't know how to process intent "
-                                      "<%s>!" % msg.intent)
+            self.get_logger().warn("I don't know yet how to process intent "
+                                   "<%s>" % msg.intent)
 
     def on_feedback(self, msg):
         self.get_logger().info("Received feedback: %s" % msg.feedback)
+
+    def on_greet_goal(self, future):
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().info('Failed to greet the user. Goal rejected')
+            return
+
+        self._get_result_future = goal_handle.get_result_async()
+        self._get_result_future.add_done_callback(self.on_greet_done)
 
     def on_greet_done(self, future):
         result = future.result().result
@@ -93,6 +102,15 @@ class MissionController(Node):
             self.get_logger().error(f"Failed to greet user: {result.error_msg}")
         else:
             self.get_logger().info("Successfully greeted user")
+
+    def on_say_goal(self, future):
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().info('Failed to say something. Goal rejected')
+            return
+
+        self._get_result_future = goal_handle.get_result_async()
+        self._get_result_future.add_done_callback(self.on_say_done)
 
     def on_say_done(self, future):
         result = future.result().result
