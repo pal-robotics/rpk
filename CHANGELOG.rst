@@ -2,6 +2,17 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* linting
+* tpl: improve performance of the ollama intent extractor
+* do not generate twice the 'say' skill
+* more robust error handling during interactive tpl creation
+* tpl: fix action client semantics in llm_supervisor
+* tpl: various fixes in the greet_task_python tpl
+* tpl: improve READMEs
+* Contributors: Séverin Lemaignan
+
 4.0.0 (2024-11-08)
 ------------------
 * [tpl] complete the mission/llm_chatbot
