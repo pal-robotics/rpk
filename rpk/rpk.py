@@ -252,9 +252,8 @@ def interactive_create(id=None,
 
             try:
                 choice = int(input("\nYour choice? "))
-
                 family = list(TEMPLATES_FAMILIES.keys())[choice - 1]
-            except IndexError:
+            except (ValueError, IndexError):
                 family = ""
 
         tpls = TEMPLATES_FAMILIES[family]["src"]
@@ -279,7 +278,7 @@ def interactive_create(id=None,
                     choice = int(input("\nYour choice? ").strip())
 
                 template = list(tpls.keys())[choice - 1]
-            except IndexError:
+            except (ValueError, IndexError):
                 template = ""
 
         if not robot and yes:
@@ -295,7 +294,7 @@ def interactive_create(id=None,
                     input(f"\nYour choice? (default: 1: {AVAILABLE_ROBOTS[0]}) ").strip() or 1)
 
                 robot = AVAILABLE_ROBOTS[choice - 1]
-            except IndexError:
+            except (ValueError, IndexError):
                 robot = ""
     except KeyboardInterrupt:
         sys.exit(1)
