@@ -100,7 +100,7 @@ class IntentExtractorImpl(Node):
 
         # extract the substring between the first
         # opening and closing curly braces (accounting for nested braces).
-        start_idx=0
+        start_idx = 0
         end_idx = len(raw_text) - 1
         nested = 0
         for i, c in enumerate(raw_text):
@@ -195,14 +195,14 @@ class IntentExtractorImpl(Node):
         if intent:
             type = intent.get("type", None)
             if not type:
-                self.get_logger().warn("Error while decoding LLM response: suggested 'next_action' "
-                                        "is not specified. Falling back to raw response.")
+                self.get_logger().warn("Error while decoding LLM response: 'next_action' "
+                                       "is not specified. Falling back to raw response.")
                 valid = False
 
         else:
             if suggested_response:
                 self.get_logger().warn("LLM did not provide any 'next_action'. "
-                                        "Assuming a pure 'SAY' action.")
+                                       "Assuming a pure 'SAY' action.")
                 intent = {"type": "SAY"}
                 valid = True
             else:
@@ -210,7 +210,6 @@ class IntentExtractorImpl(Node):
                                        "or 'suggested_response_to_user' fields. Falling "
                                        "back to raw response.")
                 valid = False
-
 
         if valid:
             if type == "GREET":
@@ -291,8 +290,8 @@ class IntentExtractorImpl(Node):
         self.prompt = self.get_parameter('system_prompt').value
         tpl = Template(self.prompt)
         return tpl.safe_substitute(action_list=self.make_action_list(),
-                                  environment=self.get_environment_description(),
-                                  person_id=person_id)
+                                   environment=self.get_environment_description(),
+                                   person_id=person_id)
 
     #################################
     #

@@ -14,7 +14,6 @@
 
 import time
 
-import rclpy
 from rclpy.action import ActionServer, GoalResponse
 from rclpy.action import ActionClient
 from rclpy.lifecycle import Node
@@ -37,6 +36,7 @@ STATES = {
     Greet.Goal().GREETING_USER: "GREETING_USER",
     Greet.Goal().SUCCESSFUL_USER_ACKNOWLEDGMENT: "SUCCESSFUL_USER_ACKNOWLEDGMENT",
 }
+
 
 class TaskImpl(Node):
     """
@@ -120,11 +120,8 @@ class TaskImpl(Node):
 
         # wait until the status is SUCCESSFUL_USER_ACKNOWLEDGMENT (or INACTIVE);
         # publish feedback every time the status changes
-        while self.current_greeting_status not in \
-                        [
-                        Greet.Goal().SUCCESSFUL_USER_ACKNOWLEDGMENT,
-                        Greet.Goal().INACTIVE,
-                        ]:
+        while self.current_greeting_status not in [Greet.Goal().SUCCESSFUL_USER_ACKNOWLEDGMENT,
+                                                   Greet.Goal().INACTIVE]:
 
             if previous_status != self.current_greeting_status:
                 self.get_logger().info(
@@ -151,8 +148,7 @@ class TaskImpl(Node):
 
         goal_handle = future.result()
         if not goal_handle.accepted:
-            self.get_logger().info('Failed to greet the user. \'/say\' '\
-                                   'goal rejected')
+            self.get_logger().info("Failed to greet the user. '/say' goal rejected.")
             self.current_greeting_status = Greet.Goal().INACTIVE
             return
 
@@ -289,15 +285,6 @@ class TaskImpl(Node):
         This function will be triggered by the timer in the class,
         and only when the timer is active.
         """
-        #######################################
-        #
-        # TODO: Implement here any background
-        # task required by your task
-        # If the task is deactivated,
-        # this function is not called anymore
-        #
-
-
         if self.current_greeting_status == Greet.Goal().INACTIVE:
             time.sleep(0.1)
             return
@@ -327,7 +314,7 @@ class TaskImpl(Node):
             return
 
         if self.current_greeting_status == Greet.Goal().GREETING_USER and \
-           self._get_result_future is None: # (make sure we are not already greeting)
+           self._get_result_future is None:  # (make sure we are not already greeting)
 
             self.get_logger().info("Saying hello to the user")
             goal = SkillControl.Goal()
@@ -342,6 +329,4 @@ class TaskImpl(Node):
             # when the action is over.
             future = self.tts_client.send_goal_async(goal)
             future.add_done_callback(self.greet_goal_callback)
-
-
 
