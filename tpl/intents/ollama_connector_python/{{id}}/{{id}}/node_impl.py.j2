@@ -18,6 +18,7 @@ import httpx
 import sys
 import yaml
 import json
+from string import Template
 
 from rclpy.lifecycle import Node
 from rclpy.lifecycle import State
@@ -95,6 +96,34 @@ class IntentExtractorImpl(Node):
 
         self.get_logger().info('Chatbot {{id}} started, but not yet configured.')
 
+    def preprocess_llm_response(self, raw_text):
+
+        # extract the substring between the first
+        # opening and closing curly braces (accounting for nested braces).
+        start_idx=0
+        end_idx = len(raw_text) - 1
+        nested = 0
+        for i, c in enumerate(raw_text):
+            if c == '{':
+                start_idx = i
+                break
+        for i in range(start_idx, len(raw_text)):
+            if raw_text[i] == '{':
+                nested += 1
+            elif raw_text[i] == '}':
+                nested -= 1
+                if nested == 0:
+                    end_idx = i
+                    break
+
+        text = raw_text[start_idx:end_idx+1]
+
+        # the LLM tends to remove spaces before colons, which cause
+        # invalid YAML parsing.
+        text = text.replace(":", ": ")
+
+        return text
+
     def on_user_input(self, input, user_id):
         """
         Return the chatbot's response to a text input.
@@ -137,6 +166,10 @@ class IntentExtractorImpl(Node):
                                "Is the server installed and started, or the URL "
                                "incorrect (eg wrong port)?")
 
+        # clean-up the raw LLM answer
+        content = self.preprocess_llm_response(llm_response['message']['content'])
+        llm_response['message']['content'] = content
+
         self._msgs_history[user_id].append(llm_response['message'])
 
         raw_response = llm_response['message']['content']
@@ -156,38 +189,52 @@ class IntentExtractorImpl(Node):
                                     "Not valid YAML/JSON. Falling back to raw response.")
             valid = False
 
-        intent = response.get("next_action", "")
-
-        if not intent:
-            self.get_logger().error("Error while decoding LLM response: no 'next_action' field. "
-                                    "Falling back to raw response.")
-            valid = False
-
+        intent = response.get("next_action", {})
         suggested_response = response.get("suggested_response_to_user", "")
 
+        if intent:
+            type = intent.get("type", None)
+            if not type:
+                self.get_logger().warn("Error while decoding LLM response: suggested 'next_action' "
+                                        "is not specified. Falling back to raw response.")
+                valid = False
+
+        else:
+            if suggested_response:
+                self.get_logger().warn("LLM did not provide any 'next_action'. "
+                                        "Assuming a pure 'SAY' action.")
+                intent = {"type": "SAY"}
+                valid = True
+            else:
+                self.get_logger().warn("Error while decoding LLM response: no 'next_action' "
+                                       "or 'suggested_response_to_user' fields. Falling "
+                                       "back to raw response.")
+                valid = False
+
+
         if valid:
-            if intent == "GREET":
+            if type == "GREET":
                 self.get_logger().warn("I think the user want to greet me. "
                                        "Sending a GREET intent")
                 intent = Intent(intent=Intent.GREET,
                                 source=user_id,
                                 modality=Intent.MODALITY_SPEECH,
                                 confidence=.8,
-                                data=f'"suggested_response": "{suggested_response}"')
+                                data=json.dumps({"suggested_response": suggested_response}))
 
-            elif intent == "SAY":
+            elif type == "SAY":
                 self.get_logger().warn("I think the user want to say/answer something. "
                                        "Sending a SAY intent")
                 intent = Intent(intent=Intent.SAY,
                                 source=user_id,
                                 modality=Intent.MODALITY_SPEECH,
                                 confidence=.8,
-                                data=f'"object": "{suggested_response}"')
+                                data=json.dumps({"object": suggested_response}))
 
-            elif intent == "PICK_OBJECT":
+            elif type == "PICK_OBJECT":
                 self.get_logger().warn("I think the user want to pick up an object. "
                                        "Sending a GRAB_OBJECT intent")
-                data = {"object": response.get("object_id", "unknown"),
+                data = {"object": intent.get("object", "unknown"),
                         "suggested_response": suggested_response}
                 intent = Intent(intent=Intent.GRAB_OBJECT,
                                 source=user_id,
@@ -196,7 +243,8 @@ class IntentExtractorImpl(Node):
                                 data=json.dumps(data))
 
             else:
-                self.get_logger().warn("Unrecognised intent. Forwarding a 'RAW_USER_INPUT'")
+                self.get_logger().warn(f"Intent '{type}' not handled. "
+                                       "Forwarding a 'RAW_USER_INPUT' instead.")
                 intent = Intent(intent=Intent.RAW_USER_INPUT,
                                 source=user_id,
                                 modality=Intent.MODALITY_SPEECH,
@@ -241,7 +289,8 @@ class IntentExtractorImpl(Node):
 
     def get_prompt(self, person_id) -> str:
         self.prompt = self.get_parameter('system_prompt').value
-        return self.prompt.format(action_list=self.make_action_list(),
+        tpl = Template(self.prompt)
+        return tpl.safe_substitute(action_list=self.make_action_list(),
                                   environment=self.get_environment_description(),
                                   person_id=person_id)
 
