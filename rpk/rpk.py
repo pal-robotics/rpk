@@ -82,7 +82,7 @@ TASK_TEMPLATES = {
         "short_desc": "'greet' task mock-up [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/task_impl.py to implement your task logic.",
-        "skill_templates": [{"say_python": {"id": "basic_say", "name": "basic 'say' skill"}}],
+        "skill_templates": [{"say_python": {"id": "say_skill", "name": "basic 'say' skill"}}],
     }
 }
 
@@ -107,7 +107,6 @@ MISSION_CTRL_TEMPLATES = {
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
                              "mission_controller.py to customize your application logic.",
         "task_templates": [{"greet_task_python": {"id": "greet_task", "name": "'greet' task"}}],
-        "skill_templates": [{"say_python": {"id": "say_skill", "name": "basic 'say' skill"}}],
         "intent_extractor_templates": [{"ollama_connector_python": {
                                                 "id": "ollama_connector",
                                                 "name": "Bridge with a ollama server"}}],
