@@ -26,10 +26,17 @@ from rclpy.lifecycle import TransitionCallbackReturn
 from greet_task_msgs.action import Greet
 
 # action for the system skill 'say'
-from tts_msgs.action import TTS
+from skill_msgs.action import SkillControl
 
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
+STATES = {
+    Greet.Goal().INACTIVE: "INACTIVE",
+    Greet.Goal().SELECTING_USER: "SELECTING_USER",
+    Greet.Goal().FACING_USER: "FACING_USER",
+    Greet.Goal().GREETING_USER: "GREETING_USER",
+    Greet.Goal().SUCCESSFUL_USER_ACKNOWLEDGMENT: "SUCCESSFUL_USER_ACKNOWLEDGMENT",
+}
 
 class TaskImpl(Node):
     """
@@ -69,10 +76,13 @@ class TaskImpl(Node):
 
         self.task_server = None
 
-        self.db_client = None
         self.tts_client = None
 
         self.current_greeting_status = Greet.Goal().INACTIVE
+        self._get_result_future = None
+
+        self.target_user_id = None
+        self.custom_greetings = None
 
         self.get_logger().info('Task {{id}} started, but not yet configured.')
 
@@ -88,6 +98,7 @@ class TaskImpl(Node):
     def on_request_exec(self, goal_handle):
         """Process incoming goal."""
         self.target_user_id = goal_handle.request.person_id
+        self.custom_greetings = goal_handle.request.custom_greetings
 
         self.get_logger().info("Starting the greeting task")
 
@@ -101,33 +112,65 @@ class TaskImpl(Node):
             self.get_logger().info("Starting by selecting a user to greet.")
 
         feedback_msg = Greet.Feedback()
-        feedback_msg.status = self.current_greeting_status
+        feedback_msg.status = STATES[self.current_greeting_status]
 
         goal_handle.publish_feedback(feedback_msg)
 
         previous_status = self.current_greeting_status
 
-        # wait until the status is SUCCESSFUL_USER_ACKNOWLEDGMENT;
-        # publish feecback every time the status changes
-        while self.current_greeting_status != Greet.Goal().SUCCESSFUL_USER_ACKNOWLEDGMENT:
+        # wait until the status is SUCCESSFUL_USER_ACKNOWLEDGMENT (or INACTIVE);
+        # publish feedback every time the status changes
+        while self.current_greeting_status not in \
+                        [
+                        Greet.Goal().SUCCESSFUL_USER_ACKNOWLEDGMENT,
+                        Greet.Goal().INACTIVE,
+                        ]:
 
             if previous_status != self.current_greeting_status:
                 self.get_logger().info(
                     f"Current greeting status: {self.current_greeting_status}")
-                feedback_msg.status = self.current_greeting_status
+                feedback_msg.status = STATES[self.current_greeting_status]
                 goal_handle.publish_feedback(feedback_msg)
                 previous_status = self.current_greeting_status
 
             time.sleep(0.5)
 
-        feedback_msg.status = self.current_greeting_status
+        feedback_msg.status = STATES[self.current_greeting_status]
         goal_handle.publish_feedback(feedback_msg)
 
         goal_handle.succeed()
 
         self.current_greeting_status = Greet.Goal().INACTIVE
 
+        self.target_user_id = None
+        self.custom_greetings = None
+
         return Greet.Result()
+
+    def greet_goal_callback(self, future):
+
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().info('Failed to greet the user. \'/say\' '\
+                                   'goal rejected')
+            self.current_greeting_status = Greet.Goal().INACTIVE
+            return
+
+        self._get_result_future = goal_handle.get_result_async()
+        self._get_result_future.add_done_callback(self.greet_result_callback)
+
+    def greet_result_callback(self, future):
+
+        self._get_result_future = None
+
+        result = future.result().result
+
+        if not result.error_msg:
+            self.get_logger().info("Greeting successful")
+            self.current_greeting_status = Greet.Goal().SUCCESSFUL_USER_ACKNOWLEDGMENT
+        else:
+            self.get_logger().error(f"Failed to greet the user: {result.error_msg}")
+            self.current_greeting_status = Greet.Goal().INACTIVE
 
     #################################
     #
@@ -167,7 +210,9 @@ class TaskImpl(Node):
             execute_callback=self.on_request_exec)
 
         # create an action client for the 'say' skill
-        self.tts_client = ActionClient(self, TTS, "/say")
+        self.tts_client = ActionClient(self, SkillControl, "/say")
+        while not self.tts_client.wait_for_server(timeout_sec=1.0):
+            self.get_logger().info("'/say' skill not yet available, waiting again...")
 
         self.get_logger().info("Task {{id}} is configured, but not yet active")
         return TransitionCallbackReturn.SUCCESS
@@ -252,51 +297,51 @@ class TaskImpl(Node):
         # this function is not called anymore
         #
 
-        while True:
 
-            if self.current_greeting_status == Greet.Goal().INACTIVE:
-                time.sleep(0.1)
-                continue
+        if self.current_greeting_status == Greet.Goal().INACTIVE:
+            time.sleep(0.1)
+            return
 
-            if self.current_greeting_status == Greet.Goal().SELECTING_USER:
+        if self.current_greeting_status == Greet.Goal().SELECTING_USER:
 
-                self.get_logger().info("Identifying the user to greet")
-                # implement here logic to decide which user to greet
-                #
-                # Here, we are just using a fixed user id
-                candidate_user_id = "user1"
-                time.sleep(1)
+            self.get_logger().info("Identifying the user to greet")
+            # implement here logic to decide which user to greet
+            #
+            # Here, we are just using a fixed user id
+            candidate_user_id = "user1"
+            time.sleep(1)
 
-                if candidate_user_id is not None:
-                    self.target_user_id = candidate_user_id
-                    self.get_logger().info(f"Selecting user name: {self.target_user_id}")
-                    self.current_greeting_status = Greet.Goal().FACING_USER
-                else:
-                    self.get_logger().error("Failed to identify the person to greet")
-                    self.current_greeting_status = Greet.Goal().INACTIVE
+            if candidate_user_id is not None:
+                self.target_user_id = candidate_user_id
+                self.get_logger().info(f"Selecting user name: {self.target_user_id}")
+                self.current_greeting_status = Greet.Goal().FACING_USER
+            else:
+                self.get_logger().error("Failed to identify the person to greet")
+                self.current_greeting_status = Greet.Goal().INACTIVE
+            return
 
-                continue
+        if self.current_greeting_status == Greet.Goal().FACING_USER:
 
-            if self.current_greeting_status == Greet.Goal().FACING_USER:
+            time.sleep(1)
+            self.current_greeting_status = Greet.Goal().GREETING_USER
+            return
 
-                time.sleep(1)
-                self.current_greeting_status = Greet.Goal().GREETING_USER
-                continue
+        if self.current_greeting_status == Greet.Goal().GREETING_USER and \
+           self._get_result_future is None: # (make sure we are not already greeting)
 
-            if self.current_greeting_status == Greet.Goal().GREETING_USER:
+            self.get_logger().info("Saying hello to the user")
+            goal = SkillControl.Goal()
 
-                self.get_logger().info("Saying hello to the user")
-                self.tts_client.wait_for_server()
-                goal = TTS.Goal()
-                goal.text = f"Hello, {self.target_user_id}!"
-                future = self.tts_client.send_goal_async(goal)
-                rclpy.spin_until_future_complete(self, future)
-                result = future.result()
+            if self.custom_greetings:
+                goal.skill_data = self.custom_greetings
+            else:
+                # default greeting
+                goal.skill_data = f"Hello, {self.target_user_id}!"
 
-                if result is not None:
-                    self.get_logger().info("Greeting successful")
-                    self.current_greeting_status = Greet.Goal().SUCCESSFUL_USER_ACKNOWLEDGMENT
-                else:
-                    self.get_logger().error("Failed to greet the user")
-                    self.current_greeting_status = Greet.Goal().INACTIVE
+            # start the say action; the greet_done_callback will be called
+            # when the action is over.
+            future = self.tts_client.send_goal_async(goal)
+            future.add_done_callback(self.greet_goal_callback)
+
+
 
