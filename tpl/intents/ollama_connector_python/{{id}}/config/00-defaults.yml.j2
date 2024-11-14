@@ -1,7 +1,8 @@
 /{{id}}:
   ros__parameters:
-    server_url: 'http://localhost:11434' # URL of the ollama server
+    server_url: 'http://localhost:11434' # URL of the ollama server (or any LLM compatible with OpenAI API, including eg https://api.openai.com)
     model: llama3.2:1b # model (or model family) name
+    api_key: "" # for cloud services requiring an API key. Not needed when using eg ollama
     system_prompt: |
         You are a friendly robot. You try to help the user to the best of your abilities. You are always helpful, and ask further questions if the desires of the user are unclear. Your answers are always polite yet concise and to-the-point.
         

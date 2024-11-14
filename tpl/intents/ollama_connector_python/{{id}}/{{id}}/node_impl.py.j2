@@ -14,9 +14,9 @@
 
 import random
 from functools import partial
-import httpx
 import sys
 import yaml
+import requests
 import json
 from string import Template
 
@@ -29,13 +29,6 @@ from hri import HRIListener
 from hri_actions_msgs.msg import Intent
 
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
-
-try:
-    import ollama
-except ImportError:
-    print("[ERROR] The ollama Python bindings are not installed in your system."
-          " You can install them with pip install ollama.")
-    sys.exit(1)
 
 
 def random_id():
@@ -50,9 +43,11 @@ class IntentExtractorImpl(Node):
     lifecycle feature of ROS 2 to manage its states.
 
     The purpose of this node is to recognise *user intents* using a LLM.
-    It relies on ollama to interface with a LLM.
+    It relies on the OpenAI REST API to interface with a LLM: you can use
+    a local server like `ollama` for edge computation, or a cloud-based service
+    like ChatGPT (ie OpenAI API).
 
-    Note that you need a ollama server running to use this node.
+    Use the parameters `server_url` and `model` to configure the LLM server.
     """
 
     def __init__(self) -> None:
@@ -62,11 +57,15 @@ class IntentExtractorImpl(Node):
         # Declare ROS parameters. Should mimick the one listed in config/00-defaults.yaml
         self.declare_parameter(
             'server_url', "http://localhost:11434",
-            ParameterDescriptor(description='URL of the ollama server')
+            ParameterDescriptor(description='URL of the OpenAI-compatible LLM server')
         )
         self.declare_parameter(
             'model', "llama3.2:1b",
             ParameterDescriptor(description='LLM model to use')
+        )
+        self.declare_parameter(
+            'api_key', "",
+            ParameterDescriptor(description='API key to use for the LLM server, if any.')
         )
         self.declare_parameter(
             'system_prompt', "You are a helpful interactive robot.",
@@ -82,9 +81,9 @@ class IntentExtractorImpl(Node):
         self._diag_timer = None
 
         self._nb_requests = 0
-        self._ollama = None
-        self._ollama_server = ""
-        self._ollama_model = ""
+        self._llm_server = ""
+        self._llm_model = ""
+        self._api_key = None
 
         # dict user_id -> list of messages exchanged with the LLM
         self._msgs_history = {}
@@ -95,6 +94,33 @@ class IntentExtractorImpl(Node):
         self._available_tasks = {}
 
         self.get_logger().info('Chatbot {{id}} started, but not yet configured.')
+
+    def perform_request(self, server, model, messages, api_key=None):
+        headers = {
+                   'Content-Type': 'application/json',
+                  }
+
+        if api_key:
+            headers['Authorization'] = f"Bearer {api_key}"
+
+        url = f"{server}/v1/chat/completions"
+
+        json_data = json.dumps({
+            "model": model,
+            "messages": messages,
+        })
+
+        try:
+            self.get_logger().info("Sending request to LLM and waiting for response...")
+            response = requests.post(url, headers=headers, data=json_data)
+            response.raise_for_status()
+            self.get_logger().info(f"LLM server answered: {response.json()}")
+            return response.json()['choices'][0]
+        except requests.exceptions.RequestException as e:
+            self.get_logger().error(f"Error while sending request to {url}:\n{e}\n\n"
+                                     "Is the server running, or the URL incorrect "
+                                     f"(eg wrong port)? I was trying to connect to: {url}")
+            return None
 
     def preprocess_llm_response(self, raw_text):
 
@@ -156,15 +182,14 @@ class IntentExtractorImpl(Node):
             }
         )
 
-        try:
-            llm_response = self._ollama.chat(
-                model=self._ollama_model,
-                messages=self._msgs_history[user_id],
-            )
-        except httpx.ConnectError as ce:
-            raise RuntimeError(f"Error while connecting to the ollama server: {ce}."
-                               "Is the server installed and started, or the URL "
-                               "incorrect (eg wrong port)?")
+        llm_response = self.perform_request(
+            server=self._llm_server,
+            model=self._llm_model,
+            messages=self._msgs_history[user_id],
+            api_key=self._api_key
+        )
+        if not llm_response:
+            return
 
         # clean-up the raw LLM answer
         content = self.preprocess_llm_response(llm_response['message']['content'])
@@ -193,7 +218,7 @@ class IntentExtractorImpl(Node):
         suggested_response = response.get("suggested_response_to_user", "")
 
         if intent:
-            type = intent.get("type", None)
+            type = intent.get("type", None).upper()
             if not type:
                 self.get_logger().warn("Error while decoding LLM response: 'next_action' "
                                        "is not specified. Falling back to raw response.")
@@ -299,20 +324,10 @@ class IntentExtractorImpl(Node):
     #
     def on_configure(self, state: State) -> TransitionCallbackReturn:
 
-        self._ollama_server = self.get_parameter('server_url').value
-        self._ollama_model = self.get_parameter('model').value
-
-        self.get_logger().info(f"Connecting to the ollama server on {self._ollama_server}...")
-
-        try:
-            self._ollama = ollama.Client(host=self._ollama_server)
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            self.get_logger().error(f"Error while connecting to ollama server: {e}")
-            raise(e)
-
-        self.get_logger().info("Connection successful to the ollama server")
+        self._llm_server = self.get_parameter('server_url').value
+        self._llm_model = self.get_parameter('model').value
+        self._api_key = self.get_parameter_or('api_key', None).value
+        self.get_logger().info(f"I will connect to the LLM server on {self._llm_server}.")
 
         self._intent_pub = self.create_publisher(Intent, '/intents', 1)
 
@@ -388,8 +403,8 @@ class IntentExtractorImpl(Node):
                 KeyValue(key="Module name", value="{{ id }}"),
                 KeyValue(key="Current lifecycle state",
                          value=self._state_machine.current_state[1]),
-                KeyValue(key="ollama server", value=self._ollama_server),
-                KeyValue(key="ollama model", value=self._ollama_model),
+                KeyValue(key="llm server", value=self._llm_server),
+                KeyValue(key="llm model", value=self._llm_model),
                 KeyValue(key="# requests since start", value=str(self._nb_requests)),
             ],
         )
