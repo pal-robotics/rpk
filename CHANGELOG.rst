@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.2.0 (2024-11-14)
+------------------
 * linting
 * tpl: {ollama -> llm}_bridge_python
 * tpl: apps: remove erroneous dep on db_connector
