@@ -51,7 +51,7 @@ def generate_launch_description():
 
     ld.add_action(activate_event)
 
-    for dep in ["say_skill", "greet_task", "ollama_connector"]:
+    for dep in ["say_skill", "greet_task", "llm_bridge"]:
         ld.add_action(IncludeLaunchDescription(
           PythonLaunchDescriptionSource([os.path.join(
             get_package_share_directory(dep), 'launch'), f'/{dep}.launch.py'])

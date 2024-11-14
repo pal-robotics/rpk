@@ -62,9 +62,9 @@ INTENT_EXTRACTOR_TEMPLATES = {
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/node_impl.py to implement your node logic.",
     },
-    "ollama_connector_python": {
-        "tpl_paths": ["intents/ollama_connector_python/{{id}}"],
-        "short_desc": "complete intent extraction example: LLM bridge using ollama [python]",
+    "llm_bridge_python": {
+        "tpl_paths": ["intents/llm_connector_python/{{id}}"],
+        "short_desc": "complete intent extraction example: LLM bridge using the OpenAI REST API (ollama, chatgpt) [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/node_impl.py to implement your node logic.",
     },
@@ -107,9 +107,9 @@ MISSION_CTRL_TEMPLATES = {
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
                              "mission_controller.py to customize your application logic.",
         "task_templates": [{"greet_task_python": {"id": "greet_task", "name": "'greet' task"}}],
-        "intent_extractor_templates": [{"ollama_connector_python": {
-                                                "id": "ollama_connector",
-                                                "name": "Bridge with a ollama server"}}],
+        "intent_extractor_templates": [{"llm_bridge_python": {
+                                                "id": "llm_bridge",
+                                                "name": "LLM bridge"}}],
     }
 }
 

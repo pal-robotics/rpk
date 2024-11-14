@@ -1,15 +1,15 @@
 {{ name }}
 ====================
 
-Welcome to this LLM chatbot example! It uses `ollama` to bridge your ROS 2
-application with an LLM.
+Welcome to this LLM chatbot example! It uses the OpenAI REST API to bridge your
+ROS 2 application with an LLM. That might include a local server like `ollama`
+or a cloud-based service like ChatGPT.
 
 What are the next steps?
 
 ## Prerequisites
 
-Before being able to use this bridge, you need to install `ollama` and the
-`ollama` python bindings:
+If you want to use a local server, you need to install eg `ollama`:
 
 - install `ollama`: https://ollama.com/download
 - download a LLM model. For instance: `ollama pull llama3.2:1b`
@@ -17,7 +17,8 @@ Before being able to use this bridge, you need to install `ollama` and the
 
 > Note: you can configure `ollama` to [start at startup](https://github.com/ollama/ollama/blob/main/docs/linux.md#adding-ollama-as-a-startup-service-recommended).
 
-- install the `ollama` python bindings: `pip install ollama`
+If you want to use eg ChatGPT, you need to generate an API key. See
+https://platform.openai.com/docs/quickstart
 
 ## Compile and install {{id}}
 
@@ -99,8 +100,9 @@ And copy-paste the following:
 ```
 /{{id}}:
   ros__parameters:
-    server_url: 'http://localhost:11434' # URL of the ollama server
+    server_url: 'http://localhost:11434' # URL of the LLM server
     model: llama3.2:1b # model (or model family) name
+    api_key: '' # API key (for eg ChatGPT)
     system_prompt: |
         This is a new custom prompt. Modify it as you want.
 
@@ -111,8 +113,12 @@ And copy-paste the following:
 The main advantage of the override is that you do not need to re-install the
 node. Simply stop and start it again to use the new prompt.
 
-> Note: you can also change here the LLM model and `ollama` server URL if you
+> Note: you can also change here the LLM model and server URL if you
 > wish.
+>
+> For instance, to use ChatGPT, you might want to set `server_url` to
+> `https://api.openai.com` and `model` to `gpt-4o-mini`. Do not forget to
+> also set your `api_key`.
 
 ### Extend the template code
 

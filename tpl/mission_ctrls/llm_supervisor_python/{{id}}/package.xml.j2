@@ -39,7 +39,7 @@
 
   <!-- ensure the tasks and skills we need are also installed -->
   <exec_depend>greet_task</exec_depend>
-  <exec_depend>ollama_connector</exec_depend>
+  <exec_depend>llm_bridge</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
@@ -55,7 +55,7 @@
          "description": "This example mission controller implements a simple, LLM-based dialogue system.",
          "dependencies": {
              "tasks": ["greet_task"],
-             "skills": ["ollama_connector"]
+             "skills": ["say"]
          }
        }
       </mission>
