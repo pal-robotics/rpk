@@ -64,7 +64,8 @@ INTENT_EXTRACTOR_TEMPLATES = {
     },
     "llm_bridge_python": {
         "tpl_paths": ["intents/llm_connector_python/{{id}}"],
-        "short_desc": "complete intent extraction example: LLM bridge using the OpenAI REST API (ollama, chatgpt) [python]",
+        "short_desc": "complete intent extraction example: LLM bridge using the OpenAI "
+                      "API (ollama, chatgpt) [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/node_impl.py to implement your node logic.",
     },

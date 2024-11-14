@@ -14,7 +14,6 @@
 
 import random
 from functools import partial
-import sys
 import yaml
 import requests
 import json
@@ -118,8 +117,8 @@ class IntentExtractorImpl(Node):
             return response.json()['choices'][0]
         except requests.exceptions.RequestException as e:
             self.get_logger().error(f"Error while sending request to {url}:\n{e}\n\n"
-                                     "Is the server running, or the URL incorrect "
-                                     f"(eg wrong port)? I was trying to connect to: {url}")
+                                    "Is the server running, or the URL incorrect "
+                                    f"(eg wrong port)? I was trying to connect to: {url}")
             return None
 
     def preprocess_llm_response(self, raw_text):
