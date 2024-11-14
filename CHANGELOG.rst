@@ -2,6 +2,15 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* linting
+* tpl: {ollama -> llm}_bridge_python
+* tpl: apps: remove erroneous dep on db_connector
+* tpl: ollama: use OpenAI REST API to get compat with both ollama and chatgpt
+  As a nice side effect, no more dependency on python-ollama
+* Contributors: Séverin Lemaignan
+
 4.1.0 (2024-11-12)
 ------------------
 * linting
