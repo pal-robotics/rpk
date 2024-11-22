@@ -23,6 +23,7 @@ import random
 import string
 import sys
 from pathlib import Path
+import shutil
 
 import rpk
 
@@ -335,7 +336,7 @@ def generate_skeleton(data, family, tpl_name, robot, root):
             lstrip_blocks=True,
         )
 
-        j2_tpls = env.list_templates(extensions=TPL_EXT)
+        j2_tpls = env.list_templates()
 
         if not j2_tpls:
             print(
@@ -349,18 +350,27 @@ def generate_skeleton(data, family, tpl_name, robot, root):
         for j2_tpl_name in j2_tpls:
             if (("pages_only_ari" in j2_tpl_name) and (robot not in j2_tpl_name)):
                 continue
-            j2_tpl = env.get_template(j2_tpl_name)
-            j2_tpl_name = j2_tpl_name.replace("{{id}}", data["id"])
 
             # 'base' is the name of the package directory
             base = root / tpl_path.name.replace("{{id}}", data["id"])
             base.mkdir(parents=True, exist_ok=True)
 
-            filename = base / j2_tpl_name[: -(1 + len(TPL_EXT))]
-            filename.parent.mkdir(parents=True, exist_ok=True)
-            print(f"Creating {filename}...")
-            with open(filename, "w") as fh:
-                fh.write(j2_tpl.render(data))
+            # Non-template file, copy file as is
+            if j2_tpl_name.split('.')[-1] != TPL_EXT:
+                source_filename = tpl_path / j2_tpl_name
+                filename = base / j2_tpl_name
+                filename.parent.mkdir(parents=True, exist_ok=True)
+                print(f"Creating {filename}...")
+                shutil.copy(source_filename, filename)
+            else:
+                j2_tpl = env.get_template(j2_tpl_name)
+                j2_tpl_name = j2_tpl_name.replace("{{id}}", data["id"])
+
+                filename = base / j2_tpl_name[: -(1 + len(TPL_EXT))]
+                filename.parent.mkdir(parents=True, exist_ok=True)
+                print(f"Creating {filename}...")
+                with open(filename, "w") as fh:
+                    fh.write(j2_tpl.render(data))
 
     print("\n\033[32;1mDone!")
     print("\033[33;1m")
