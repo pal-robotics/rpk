@@ -27,7 +27,7 @@ def get_locales():
 
 
 # Compile existing transalations: automatically generate MO files
-subprocess.run(['pybabel compile -d locales'], 
+subprocess.run(['pybabel compile -d locales'],
                shell=True, capture_output=True, text=True)
 
 setup(
