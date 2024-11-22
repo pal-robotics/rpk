@@ -56,6 +56,8 @@ There are several ways to run the application:
 
 `ros2 launch {{ id }} {{ id }}.launch.py`
 
+or, 
+
 2. Manually run your application:
 
 `ros2 run {{ id }} run_app`
@@ -74,6 +76,7 @@ To stop it and clean it:
 ``ros2 lifecycle set /app_{{ id }} deactivate``
 ``ros2 lifecycle set /app_{{ id }} cleanup``
 
+or, 
 
 3. Automatically start your application at startup:
 
@@ -82,6 +85,32 @@ To make your application run at startup, uncomment the related lines in
 of the application as a module. See [Application
 management](https://docs.pal-robotics.com/sdk-dev/management/application-management)
 for more details. 
+
+### Internationalisation
+
+The application supports internationalisation management. If you would like to add new translations, follow the next steps:
+
+1. In the package root initiate a new language, eg. in French (fr_FR):
+``python3 setup.py init_catalog -l fr_FR``
+
+It will generate a new structure for the chosen language in the ``locales`` directory
+
+2. Update the translations in the ``locales/LANG/LC_MESSAGES/messages.po`` file using your favorite editor.
+
+3. Compile the new translations.
+``python3 setup.py compile_catalog -l fr_FR``
+
+It will generate a new MO file. 
+
+4. Re-install the application in your robot.
+
+5. To switch from one language to another, use the [Interanationaliation_manager] (https://docs.pal-robotics.com/sdk-dev/management/internationalization).
+
+- List available languages:
+``ros2 service call /i18n_manager/get_supported_locales i18n_msgs/srv/GetLocales``
+
+- Change language:
+``ros2 action send_goal /i18n_manager/set_default_locale i18n_msgs/action/SetLocale "locale: 'fr_FR'"``
 
 ### Testing
 
