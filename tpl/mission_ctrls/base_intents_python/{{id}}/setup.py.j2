@@ -3,9 +3,32 @@
 
 from setuptools import find_packages, setup
 from glob import glob
+from pathlib import Path
+from babel.messages import frontend as babel
+import subprocess
+
 
 NAME = "{{ id }}"
 
+
+def get_locales():
+    locales_dir = Path('locales')
+    locales_data = []
+
+    # Iterate through all language directories in 'locales'
+    for lang in locales_dir.iterdir():
+        lang_path = lang / 'LC_MESSAGES'
+        if lang_path.is_dir():
+            locales_data.append(
+                (f'share/{NAME}/locales/{lang.name}/LC_MESSAGES',
+                 [f'locales/{lang.name}/LC_MESSAGES/messages.mo']))
+
+    return locales_data
+
+
+# Compile existing transalations: automatically generate MO files
+subprocess.run(['pybabel compile -d locales'], 
+               shell=True, capture_output=True, text=True)
 
 setup(
     name=NAME,
@@ -18,13 +41,15 @@ setup(
     data_files=[
         ('share/' + NAME, ['package.xml']),
         ('share/ament_index/resource_index/packages', ['res/' + NAME]),
-        ('share/ament_index/resource_index/pal_system_module', ['module/' + NAME]),
+        ('share/ament_index/resource_index/pal_system_module', ['res/module/' + NAME]),
         ('share/' + NAME + '/launch', glob('launch/*.launch.py')),
-        ('share/' + NAME + '/module', ['module/' + NAME + '_module.yaml']),
+        ('share/' + NAME + '/module', ['res/module/' + NAME + '_module.yaml']),
         # uncomment the next two lines to make the application be launched automatically at startup
-        # ('share/ament_index/resource_index/pal_system_module_set', ['module_set/' + NAME]),
-        # ('share/' + NAME + '/module_set', ['module_set/' + NAME + '_module_set.yaml'])
-    ],
+        # ('share/ament_index/resource_index/pal_system_module_set', ['res/module_set/' + NAME]),
+        # ('share/' + NAME + '/module_set', ['res/module_set/' + NAME + '_module_set.yaml']),
+        ('share/ament_index/resource_index/i18n.localized_nodes',
+            ['res/localized_nodes/' + NAME])
+    ] + get_locales(),
     tests_require=['pytest'],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -33,5 +58,9 @@ setup(
             'run_app = ' + NAME + '.run_app:main'
         ],
     },
+    cmdclass={'compile_catalog': babel.compile_catalog,
+              'extract_messages': babel.extract_messages,
+              'init_catalog': babel.init_catalog,
+              'update_catalog': babel.update_catalog}
 )
 

@@ -1,0 +1,104 @@
+# Copyright (c) 2024 PAL Robotics S.L. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from pathlib import Path
+import gettext
+from rclpy.action import ActionServer, GoalResponse
+from i18n_msgs.action import SetLocale
+from i18n_msgs.srv import GetLocales
+from rclpy.parameter import Parameter
+from rcl_interfaces.msg import ParameterDescriptor
+from ament_index_python.packages import get_package_share_directory
+
+
+class I18nSupport:
+
+    def __init__(self, node, name):
+
+        self.node = node
+        self.name = name
+
+        self.set_default_locale_server = ActionServer(
+            self.node, SetLocale, "~/set_default_locale",
+            goal_callback=self.on_set_default_locale_goal,
+            execute_callback=self.on_set_default_locale_exec)
+
+        self.get_supported_locales_service = self.node.create_service(
+            GetLocales, "~/get_supported_locales",
+            self.on_get_supported_locales)
+
+        self.available_locales = []
+
+        pkg_path = get_package_share_directory(self.name)
+        self.locale_path = Path(pkg_path) / 'locales'
+
+    def tr(self, message: str):
+        return self._tr(message)
+
+    def _tr(self, message: str):
+        return message
+
+    def configure(self):
+
+        for subfolder in self.locale_path.iterdir():
+            if subfolder.is_dir():
+                self.available_locales.append(subfolder.name)
+
+        default_locale = 'en_US'
+        self.node.declare_parameter(
+            'default_locale', default_locale,
+            ParameterDescriptor(description='Default locale'))
+
+        self._configure_locale(default_locale)
+
+    def shutdown(self):
+        self.set_default_locale_server.destroy()
+        self.get_supported_locales_service.destroy()
+
+    def _configure_locale(self, locale):
+        try:
+            self.node.get_logger().info('Loading locale %s' % locale)
+            lang = gettext.translation(
+                "messages", localedir=self.locale_path, languages=[locale])
+            lang.install()
+            self._tr = lang.gettext
+        except Exception as e:
+            error_msg = f'Failed to load locale {locale}: {str(e)}'
+            self.node.get_logger().error(error_msg)
+            return False, error_msg
+
+        return True, ""
+
+    def on_get_supported_locales(self, request, response):
+        response.locales = self.available_locales
+        return response
+
+    def on_set_default_locale_goal(self, goal_request):
+        if goal_request.locale in self.available_locales:
+            return GoalResponse.ACCEPT
+        else:
+            return GoalResponse.REJECT
+
+    def on_set_default_locale_exec(self, goal_handle):
+        locale = goal_handle.request.locale
+        result = SetLocale.Result()
+        loaded_text, error_msg = self._configure_locale(locale)
+        if loaded_text:
+            self.node.set_parameters([Parameter('default_locale', value=locale)])
+            goal_handle.succeed()
+        else:
+            goal_handle.abort()
+            result.error_msg = error_msg
+        return result
+

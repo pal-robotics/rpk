@@ -30,9 +30,20 @@
   <!-- Dependencies can be catkin packages or system dependencies -->
   <depend>rclpy</depend>
   <depend>hri_actions_msgs</depend>
+{% if robot in ["ari", "tiago"] %}
   <depend>lifecycle_msgs</depend>
+{% endif %}
   <depend>ament_index_python</depend>
 
+  <!-- Internationalization support -->
+  <depend>gettext-base</depend>
+  <depend>python3-babel</depend>
+  <depend>i18n_msgs</depend>
+
+{% if robot in ["ari", "tiago"] %}
+  <!-- If using PAL robots, we need the communication_hub to -->
+  <!-- provide communicative acts to the user -->
+  <depend>communication_hub</depend>
   <!-- As an example, we are going to use the TTS and play_motion -->
   <!-- actions. We need to list the corresponding ROS actions as -->
   <!-- dependencies. Similary, we will publish in the touchscreen, -->
@@ -40,6 +51,10 @@
   <depend>tts_msgs</depend>
   <depend>play_motion2_msgs</depend>
   <!-- <depend>pal_web_msgs</depend> -->  <!-- Waiting for ros 2 porting -->
+{% else %}
+  <!-- We use a generic skill action -->
+  <depend>skill_msgs</depend>
+{% endif %}
 
   <!-- If we wanted to use navigation, we would likely need nav2_msgs and/or twist_mux_msgs-->
   <!-- You can check the msgs that each interface needs i.e. -->
