@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.3.0 (2024-11-27)
+------------------
 * Fix trailing whitespace
 * Moving module-related files to res/ directory
 * Adding i18 support
