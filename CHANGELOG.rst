@@ -2,6 +2,16 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix trailing whitespace
+* Moving module-related files to res/ directory
+* Adding i18 support
+* Updating instructions to create new translations
+* Binary files shall be copied as is, and not parsed by jinja.
+* tpl: add python3-requests as a dep of llm_bridge
+* Contributors: Raquel Ros, Séverin Lemaignan
+
 4.2.0 (2024-11-14)
 ------------------
 * linting
