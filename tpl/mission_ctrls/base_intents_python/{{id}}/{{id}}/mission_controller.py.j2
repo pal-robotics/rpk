@@ -22,10 +22,13 @@ from rclpy.lifecycle import TransitionCallbackReturn
 {% for intent in intents %}
 {% if intent.intent == "ENGAGE_WITH"%}
 from rclpy.action import ActionClient
-{% if robot in ["ari", "tiago"] %}
+{% if "communication" in features or "pal_arch" in features %}
 from tts_msgs.action import TTS
+{% endif %}
+{% if "gestures" in features %}
 from play_motion2_msgs.action import PlayMotion2
-{% else %}
+{% endif %}
+{% if "pal_arch" not in features %}
 from skill_msgs.action import SkillControl
 {% endif %}
 {% endif %}
@@ -33,7 +36,7 @@ from skill_msgs.action import SkillControl
 {% endif %}
 
 from hri_actions_msgs.msg import Intent
-{% if robot in ["ari", "tiago"] %}
+{% if "pal_arch" in features %}
 from lifecycle_msgs.msg import State as StateMsg
 from {{ id }}.change_state_helper import ChangeNodeStateHelper
 {% endif %}
@@ -54,7 +57,7 @@ class MissionController(Node):
         self._intents_sub = None
         self._timer = None
 
-{% if robot in ["ari", "tiago"] %}
+{% if "pal_arch" in features %}
         # We manage the state of the "communication_hub" node
         self._change_state_helper = ChangeNodeStateHelper(
             self,
@@ -96,14 +99,17 @@ class MissionController(Node):
         # intents, simply remove the corresponding
         # line(s)
         #
-{% if intents %}
+{% if intents %}{% set ns = namespace(first_intent = true) %}
 {% for intent in intents %}
-    {% if (robot == "ari" and intent.intent == "PRESENT_CONTENT") or
-          (robot == "tiago" and intent.intent in ["GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT"]) or
-          (intent.intent not in ["PRESENT_CONTENT", "GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT"]) %}
+    {% if ("manipulation" in features and intent.intent in ["GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT"]) or
+          (("social" in features or "pal_arch" not in features) and intent.intent in ["ENGAGE_WITH"]) or
+          (("gestures" in features or "pal_arch" not in features) and intent.intent in ["PERFORM_MOTION"]) or
+          ("navigation" in features and intent.intent in ["MOVE_TO", "GUIDE"]) or
+          (robot == "ari" and intent.intent in ["PRESENT_CONTENT"]) or
+          (intent.intent not in ["PRESENT_CONTENT", "ENGAGE_WITH", "PERFORM_MOTION", "GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT", "MOVE_TO", "GUIDE"]) %}
 
-        {{ "if" if loop.index == 1 else "elif"}} msg.intent == Intent.{{ intent.intent }}:
-    {% endif %}
+        {{ "if" if ns.first_intent else "elif"}} msg.intent == Intent.{{ intent.intent }}:
+{% if ns.first_intent %}{% set ns.first_intent = false %}{% endif %}
 {% if intent.required_thematic_roles %}
             # the 'data' dictionary should contain at least the following keys:
 {% for role in intent.required_thematic_roles %}
@@ -113,7 +119,7 @@ class MissionController(Node):
 {% endif %}
 {% if intent.intent == "WAKEUP" %}
             # Handle intents to wakeup the robot
-    {% if robot in ["ari", "tiago"] %}
+    {% if "pal_arch" in features %}
             # The "communication_hub" is a managed node that needs to be
             # activated based on the received wakeup intent.
             self._change_state_helper.change_state(StateMsg.PRIMARY_STATE_ACTIVE)
@@ -122,14 +128,15 @@ class MissionController(Node):
     {% endif %}
 {% elif intent.intent == "SUSPEND" %}
             # Handle intents to suspend the robot
-    {% if robot in ["ari", "tiago"] %}
+    {% if "pal_arch" in features %}
             # The "communication_hub" is a managed node that needs to be
             # deactivated based on the received suspend intent.
             self._change_state_helper.change_state(StateMsg.PRIMARY_STATE_INACTIVE)
     {% else %}
             pass
     {% endif %}
-{% elif intent.intent == "ENGAGE_WITH" and (robot in ["ari", "tiago"]) %}
+{% elif intent.intent == "ENGAGE_WITH" and ("social" in features) %}
+            {% if "communication" in features %}
             # As an example, we call here the TTS and play_motion action server
             # to implement a very simple behaviour when someone engages with
             # the robot.
@@ -137,6 +144,9 @@ class MissionController(Node):
             tts.wait_for_server()
             tts_goal = TTS.Goal()
             tts_goal.input = _("engage with msg")
+            tts.send_goal_async(tts_goal)
+            {% endif %}
+            {% if "gestures" in features %}
 
             play_motion = ActionClient(self, PlayMotion2, 'play_motion2')
             play_motion.wait_for_server()
@@ -144,53 +154,49 @@ class MissionController(Node):
             motion_goal = PlayMotion2.Goal(motion_name="bow")
             {% elif robot == "tiago" %}
             motion_goal = PlayMotion2.Goal(motion_name="head_tour")
-            {% endif %}
-            tts.send_goal_async(tts_goal)
             play_motion.send_goal_async(motion_goal)
-{% elif (robot == "ari" and intent.intent == "PRESENT_CONTENT") %}
-            # Handle intents to present specific content by
-            # loading the corresponding page onto the touchscreen.
-            # Refer to "touchscreen skills":
-            # https://docs.pal-robotics.com/sdk-dev/touchscreen/skills_list
-            pass
-{% elif (robot == "tiago" and intent.intent in ["GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT"]) %}
+            {% endif %}
+            {% endif %}
+{% elif intent.intent in ["GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT"] %}
             # Handle intents to manipulate an object. Refer to "manipulation
             # skills":
             # https://docs.pal-robotics.com/sdk-dev/manipulation/skills_list
+            pass
+{% elif intent.intent in ["PRESENT_CONTENT"] %}
+            # Handle intents to present content to the user: information
+            # about a product, a service, etc.
             pass
 {% elif intent.intent in ["MOVE_TO", "GUIDE"] %}
             # Handle intents to move the robot from one place to another using
             # its navigation skills. Refer to "navigation skills":
             # https://docs.pal-robotics.com/sdk-dev/navigation/skills_list
             pass
-{% elif intent.intent == "PERFORM_MOTION" and (robot in ["ari", "tiago"]) %}
+{% elif intent.intent == "PERFORM_MOTION" %}
             # Handle intents to perform a specific motion
             # (eg, a dance or a specific gesture like pointing, waving)
             # Refer to "gestures and motions skills":
             # https://docs.pal-robotics.com/sdk-dev/motions/skills_list
+            {% if "gestures" in features %}
             play_motion = ActionClient(self, PlayMotion2, 'play_motion2')
             play_motion.wait_for_server()
             motion_goal = PlayMotion2.Goal(motion_name=data['object'])
             play_motion.send_goal(motion_goal)
-{% elif robot == "generic" and intent.intent == "PERFORM_MOTION" %}
-            # Handle intents to perform a specific motion
-            # (eg, a dance or a specific gesture like pointing, waving)
-            # Refer to "gestures and motions skills":
-            # https://docs.pal-robotics.com/sdk-dev/motions/skills_list
+            {% else %}
             pass
-{% elif intent.intent in ["GREET"] and (robot in ['ari', 'tiago']) %}
+            {% endif %}
+{% elif intent.intent in ["GREET"] and "pal_arch" in features %}
             # Handle intents to greet, customised by the user
             # Refer to:
             # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
             tts = ActionClient(self, TTS, 'say')
             tts.wait_for_server()
-            {% if robot == "ari" %}
-            tts_goal = TTS.Goal(input=_("Hello, I'm ARI. Nice to meet you!"))
-            {% elif robot == "tiago" %}
-            tts_goal = TTS.Goal(input=_("Hello, I'm TIAGo. Nice to meet you!"))
+            {% if robot != "generic-pal" %}
+            tts_goal = TTS.Goal(input=_("Hello, I'm {{robot_name}}. Nice to meet you!"))
+            {% else %}
+            tts_goal = TTS.Goal(input=_("Hello. Nice to meet you!"))
             {% endif %}
             tts.send_goal_async(tts_goal)
-{% elif (robot == "generic" and intent.intent in ["GREET", "ENGAGE_WITH"]) %}
+{% elif intent.intent in ["GREET", "ENGAGE_WITH"] and "pal_arch" not in features %}
             # Handle intents to greet, customised by the user
             # Refer to:
             # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
@@ -198,7 +204,7 @@ class MissionController(Node):
             say.wait_for_server()
             say_goal = SkillControl.Goal(skill_data=_("Hello, what can I do for you today?"))
             say.send_goal_async(say_goal)
-{% elif intent.intent in ["SAY"] and (robot in ["ari", "tiago"]) %}
+{% elif intent.intent in ["SAY"] and "pal_arch" in features %}
             # Handle intents to say a specific text
             # Refer to:
             # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
@@ -206,7 +212,7 @@ class MissionController(Node):
             tts.wait_for_server()
             tts_goal = TTS.Goal(input=data['object'])
             tts.send_goal_async(tts_goal)
-{% elif (robot == "generic" and intent.intent == "SAY") %}
+{% elif intent.intent == "SAY" and "pal_arch" not in features %}
             # Handle intents to greet, customised by the user
             # Refer to:
             # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
@@ -217,6 +223,7 @@ class MissionController(Node):
 {% elif intent.intent in ["START_ACTIVITY", "STOP_ACTIVITY"] %}
             # Handle custom/specialized activities/tasks
             pass
+{% endif %}
 {% endif %}
 {% endfor %}
 
@@ -281,7 +288,7 @@ class MissionController(Node):
         timer_period = 1  # in sec
         self._timer = self.create_timer(timer_period, self.run)
 
-{% if robot in ["ari", "tiago"] %}
+{% if "pal_arch" in features %}
         # We activate the "communication_hub" node by default
         self._change_state_helper.change_state(StateMsg.PRIMARY_STATE_ACTIVE)
 {% endif %}

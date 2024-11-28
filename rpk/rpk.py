@@ -152,7 +152,58 @@ TEMPLATES_FAMILIES = {
                     "task and skill, and sample resources"}
 }
 
-AVAILABLE_ROBOTS = ["generic", "ari", "tiago"]
+ROBOTS_NAMES = {"generic": "Generic robot",
+                "generic-pal": "Generic PAL robot/simualtor",
+                "ari": "PAL ARI",
+                "tiago": "PAL TIAGo",
+                "tiago-pro": "PAL TIAGo Pro",
+                "tiago-head": "PAL TIAGo Head"}
+AVAILABLE_ROBOTS = list(ROBOTS_NAMES.keys())
+
+FEAT_NAV = "navigation"
+FEAT_VISION = "vision"
+FEAT_SOCIAL = "social"
+FEAT_COMMUNICATION = "communication"
+FEAT_MANIPULATION = "manipulation"
+FEAT_GESTURES = "gestures"
+FEAT_EXPRESSIONS = "expressions"
+FEAT_PAL_ARCH = "pal_arch"
+
+ROBOTS_FEATURES = {
+    "generic": [],
+    "generic-pal": [FEAT_PAL_ARCH],
+    "ari":         [FEAT_PAL_ARCH,
+                    FEAT_NAV,
+                    FEAT_VISION,
+                    FEAT_SOCIAL,
+                    FEAT_COMMUNICATION,
+                    FEAT_GESTURES,
+                    FEAT_EXPRESSIONS,
+                    ],
+    "tiago":       [FEAT_PAL_ARCH,
+                    FEAT_NAV,
+                    FEAT_VISION,
+                    FEAT_SOCIAL,
+                    FEAT_COMMUNICATION,
+                    FEAT_MANIPULATION,
+                    FEAT_GESTURES,
+                    ],
+    "tiago-pro":   [FEAT_PAL_ARCH,
+                    FEAT_NAV,
+                    FEAT_VISION,
+                    FEAT_SOCIAL,
+                    FEAT_COMMUNICATION,
+                    FEAT_MANIPULATION,
+                    FEAT_GESTURES,
+                    FEAT_EXPRESSIONS],
+    "tiago-head":  [FEAT_PAL_ARCH,
+                    FEAT_VISION,
+                    FEAT_SOCIAL,
+                    FEAT_COMMUNICATION,
+                    FEAT_EXPRESSIONS,
+                    ],
+    }
+
 
 TPL_EXT = "j2"
 
@@ -288,7 +339,7 @@ def interactive_create(id=None,
         while not robot:
             print("\nWhat robot are you targeting?")
             for idx, r in enumerate(AVAILABLE_ROBOTS):
-                print("%s: %s" % (idx + 1, r))
+                print(f"{idx + 1}: {ROBOTS_NAMES[r]} ({r})")
 
             try:
                 choice = int(
@@ -492,6 +543,8 @@ def main(args=sys.argv[1:]):
                 "name": name,
                 "intents": intents,
                 "robot": robot,
+                "robot_name": ROBOTS_NAMES[robot],
+                "features": ROBOTS_FEATURES[robot],
                 "author": "TODO",
                 "year": datetime.datetime.now().year}
 

@@ -65,7 +65,7 @@ def test_generation_linting(category, template, robot):
                          [
                             (category, tpl, robot)
                             # for robot in rpk.AVAILABLE_ROBOTS
-                            for robot in ['generic']
+                            for robot in ['generic', 'generic-pal']
                             for category, tpls in rpk.TEMPLATES_FAMILIES.items()
                             for tpl in tpls["src"].keys()
                          ])
