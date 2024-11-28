@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+{% if "pal_arch" not in features %}
 from functools import partial
 
+{% endif %}
 from rclpy.lifecycle import Node
 from rclpy.lifecycle import State
 from rclpy.lifecycle import TransitionCallbackReturn
@@ -74,7 +76,6 @@ class IntentExtractorImpl(Node):
 
         self.get_logger().info('Chatbot {{id}} started, but not yet configured.')
 
-
 {% if "pal_arch" in features %}
     def on_get_response(self, request: GetResponse.Request, response: GetResponse.Response):
 
@@ -107,7 +108,8 @@ class IntentExtractorImpl(Node):
                             modality=Intent.MODALITY_SPEECH,
                             confidence=1.0,
                             data=f'"input": "{input}"')
-            suggested_response = "I'm sorry, I did not understand. My basic chatbot is not very smart yet."
+            suggested_response = "I'm sorry, I did not understand. " \
+                                 "My basic chatbot is not very smart yet."
 
             suggested_response += " However, I can tell you about my last holidays:"
             suggested_response += [
@@ -181,7 +183,6 @@ class IntentExtractorImpl(Node):
 {% if "pal_arch" not in features %}
         self._intent_pub = self.create_publisher(Intent, '/intents', 1)
 {% endif %}
-
         # configure and start diagnostics publishing
         self._nb_requests = 0
         self._diag_pub = self.create_publisher(DiagnosticArray, '/diagnostics', 1)
