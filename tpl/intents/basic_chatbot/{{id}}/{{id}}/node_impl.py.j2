@@ -18,9 +18,16 @@ from rclpy.lifecycle import Node
 from rclpy.lifecycle import State
 from rclpy.lifecycle import TransitionCallbackReturn
 from rcl_interfaces.msg import ParameterDescriptor
+from rclpy.action import ActionServer, GoalResponse
 
+{% if "pal_arch" in features %}
+from chatbot_msgs.srv import GetResponse, ResetModel
+{% else %}
 from hri import HRIListener
+{% endif %}
 from hri_actions_msgs.msg import Intent
+from i18n_msgs.action import SetLocale
+from i18n_msgs.srv import GetLocales
 
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
@@ -49,7 +56,15 @@ class IntentExtractorImpl(Node):
 
         self.get_logger().info("Initialising...")
 
+{% if "pal_arch" in features %}
+        self._get_response_srv = None
+        self._reset_srv = None
+{% else %}
+        self._hri_listener = None
         self._intent_pub = None
+{% endif %}
+        self._get_supported_locales_server = None
+        self._set_default_locale_server = None
 
         self._timer = None
         self._diag_pub = None
@@ -59,6 +74,58 @@ class IntentExtractorImpl(Node):
 
         self.get_logger().info('Chatbot {{id}} started, but not yet configured.')
 
+
+{% if "pal_arch" in features %}
+    def on_get_response(self, request: GetResponse.Request, response: GetResponse.Response):
+
+        user_id = request.user_id
+        input = request.input
+
+        self.get_logger().info(f"input from {user_id}: {input}")
+        self._nb_requests += 1
+
+        # implement here the logic to process the natural text input
+        #
+        # You might want to:
+        # - recognise and return the user intent (if any), and map it to the
+        # Intent.msg semantics.
+        # - return a suggested response to the user (if any)
+        #
+        # For now, we just try to recognise a greeting
+        if "hello" in input.lower() or "hi" in input.lower():
+            self.get_logger().warn("I think the user want to greet me. Sending a GREET intent")
+            intent = Intent(intent=Intent.GREET,
+                            source=user_id,
+                            modality=Intent.MODALITY_SPEECH,
+                            confidence=.8)
+            suggested_response = "Hello! How can I help you?"
+        else:
+            self.get_logger().warn("Unable to recognise a particular intent! "
+                                   "forwarding a 'RAW_USER_INPUT'")
+            intent = Intent(intent=Intent.RAW_USER_INPUT,
+                            source=user_id,
+                            modality=Intent.MODALITY_SPEECH,
+                            confidence=1.0,
+                            data=f'"input": "{input}"')
+            suggested_response = "I'm sorry, I did not understand. My basic chatbot is not very smart yet."
+
+            suggested_response += " However, I can tell you about my last holidays:"
+            suggested_response += [
+                " I went to the beach and had a great time!",
+                " I visited my family and we had a great dinner together.",
+                " I stayed at home and watched movies all day.",
+                " I went to the mountains and did some hiking.",
+                " I went to the city and visited a museum."][self._nb_requests % 5]
+
+        response.response = suggested_response
+        response.intents = [intent]
+
+        return response
+
+    def on_reset(self, request: ResetModel.Request, response: ResetModel.Response):
+        self.get_logger().info('Received reset request. Not implemented yet.')
+        return response
+{% else %}
     def on_user_input(self, input, user_id):
         """
         Return the chatbot's response to a text input.
@@ -74,7 +141,7 @@ class IntentExtractorImpl(Node):
         # Intent.msg semantics.
         #
         # For now, we just try to recognise a greeting
-        if "hello" in input:
+        if "hello" in input.lower() or "hi" in input.lower():
             intent = Intent(intent=Intent.GREET,
                             source=user_id,
                             modality=Intent.MODALITY_SPEECH,
@@ -90,6 +157,20 @@ class IntentExtractorImpl(Node):
                             data=f'"input": "{input}"')
 
         self._intent_pub.publish(intent)
+{% endif %}
+
+    def on_get_supported_locales(self, request, response):
+        response.locales = []  # list of supported locales; empty means any
+        return response
+
+    def on_set_default_locale_goal(self, goal_request):
+        return GoalResponse.ACCEPT
+
+    def on_set_default_locale_exec(self, goal_handle):
+        """Change here the default locale of the chatbot."""
+        result = SetLocale.Result()
+        goal_handle.succeed()
+        return result
 
     #################################
     #
@@ -97,12 +178,23 @@ class IntentExtractorImpl(Node):
     #
     def on_configure(self, state: State) -> TransitionCallbackReturn:
 
+{% if "pal_arch" not in features %}
         self._intent_pub = self.create_publisher(Intent, '/intents', 1)
+{% endif %}
 
         # configure and start diagnostics publishing
         self._nb_requests = 0
         self._diag_pub = self.create_publisher(DiagnosticArray, '/diagnostics', 1)
         self._diag_timer = self.create_timer(1., self.publish_diagnostics)
+
+        # start advertising supported locales
+        self._get_supported_locales_server = self.create_service(
+            GetLocales, "~/get_supported_locales", self.on_get_supported_locales)
+
+        self._set_default_locale_server = ActionServer(
+            self, SetLocale, "~/set_default_locale",
+            goal_callback=self.on_set_default_locale_goal,
+            execute_callback=self.on_set_default_locale_exec)
 
         self.get_logger().info("Chatbot {{id}} is configured, but not yet active")
         return TransitionCallbackReturn.SUCCESS
@@ -116,10 +208,17 @@ class IntentExtractorImpl(Node):
         - Start processing data, and accepting action goals, if any
 
         """
+{% if "pal_arch" in features %}
+        self._get_response_srv = self.create_service(
+            GetResponse, '/chatbot/get_response', self.on_get_response)
+        self._reset_srv = self.create_service(
+            ResetModel, '/chatbot/reset', self.on_reset)
+{% else %}
         self._hri_listener = HRIListener("__internal_{{id}}_hri__")
         self._hri_listener.on_voice(lambda voice:
                                     voice.on_speech(partial(self.on_user_input, user_id=voice.id))
                                     )
+{% endif %}
 
         # Define a timer that fires every second to call the run function
         timer_period = 1  # in sec
@@ -133,8 +232,13 @@ class IntentExtractorImpl(Node):
         self.get_logger().info("Stopping chatbot...")
 
         self.destroy_timer(self._timer)
-        self.destroy_subscription(self._intents_sub)
+{% if "pal_arch" in features %}
+        self.destroy_service(self._get_response_srv)
+        self.destroy_service(self._reset_srv)
+{% else %}
         self._hri_listener = None
+        self.destroy_publisher(self._intent_pub)
+{% endif %}
 
         self.get_logger().info("Chatbot {{id}} is stopped (inactive)")
         return super().on_deactivate(state)
@@ -154,6 +258,9 @@ class IntentExtractorImpl(Node):
         self.get_logger().info('Shutting down {{id}} node.')
         self.destroy_timer(self._diag_timer)
         self.destroy_publisher(self._diag_pub)
+
+        self.destroy_service(self._get_supported_locales_server)
+        self._set_default_locale_server.destroy()
 
         self.get_logger().info("Chatbot {{id}} finalized.")
         return TransitionCallbackReturn.SUCCESS

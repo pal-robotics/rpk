@@ -30,12 +30,17 @@
   <!-- Dependencies can be catkin packages or system dependencies -->
   <depend>rclpy</depend>
   <depend>lifecycle_msgs</depend>
-
+{% if "pal_arch" not in features %}
+  <exec_depend>pyhri</exec_depend>
+{% endif %}
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>launch_pal</exec_depend>
-
   <exec_depend>hri_actions_msgs</exec_depend>
+  <exec_depend>i18n_msgs</exec_depend>
+{% if "pal_arch" in features %}
+  <exec_depend>chatbot_msgs</exec_depend>
+{% endif %}
   <exec_depend>diagnostic_msgs</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
