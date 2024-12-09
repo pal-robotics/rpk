@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>rpk</name>
-  <version>4.3.0</version>
+  <version>4.4.0</version>
   <description>A tool to create and package ROS 2 robot applications</description>
   <maintainer email="severin.lemaignan@pal-robotics.com">Séverin Lemaignan</maintainer>
   <license>Apache License 2.0</license>

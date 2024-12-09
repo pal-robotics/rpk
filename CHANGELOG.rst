@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.4.0 (2024-12-09)
+------------------
 * tpl: add app template for a basic chatbot (ie, no llm)
 * tpl: intents/llm_bridge_python now compliant with PAL arch + support for setting locale
   While here, fix some error case when handling LLM responses
