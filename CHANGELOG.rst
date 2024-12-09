@@ -2,6 +2,20 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* tpl: add app template for a basic chatbot (ie, no llm)
+* tpl: intents/llm_bridge_python now compliant with PAL arch + support for setting locale
+  While here, fix some error case when handling LLM responses
+* tpl: intent/basic_chatbot now compliant with PAL arch + support for setting locale
+* add a mapping between robots and features
+  This enables us to have eg all PAL robots following the 'pal_arch' feature
+  and adapt the templates accordingly.
+  While here, added generic-pal, tiago-pro and tiago-head robots
+  Also, adapt the tpl/mission/base_intents_python to use the
+  new feature
+* Contributors: Séverin Lemaignan
+
 4.3.0 (2024-11-27)
 ------------------
 * Fix trailing whitespace
