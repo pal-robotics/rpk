@@ -43,11 +43,15 @@ def generate_launch_description():
         output='both', emulate_tty=True,
         )
 
+    ld.add_action(node)
+
     # automatically perform the lifecycle transitions to configure and activate
     # the node at startup
     configure_event = EmitEvent(event=ChangeState(
         lifecycle_node_matcher=matches_action(node),
         transition_id=Transition.TRANSITION_CONFIGURE))
+
+    ld.add_action(configure_event)
 
     activate_event = RegisterEventHandler(OnStateTransition(
         target_lifecycle_node=node, goal_state='inactive',
@@ -56,8 +60,7 @@ def generate_launch_description():
             transition_id=Transition.TRANSITION_ACTIVATE))],
         handle_once=True))
 
-    return LaunchDescription([
-        node,
-        configure_event,
-        activate_event])
+    ld.add_action(activate_event)
+
+    return ld
 
