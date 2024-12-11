@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.5.0 (2024-12-11)
+------------------
 * tpl: fix launch files not returning the correct LaunchDescription
 * Contributors: Séverin Lemaignan
 
