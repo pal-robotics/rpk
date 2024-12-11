@@ -2,6 +2,11 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* tpl: fix launch files not returning the correct LaunchDescription
+* Contributors: Séverin Lemaignan
+
 4.4.0 (2024-12-09)
 ------------------
 * tpl: add app template for a basic chatbot (ie, no llm)
