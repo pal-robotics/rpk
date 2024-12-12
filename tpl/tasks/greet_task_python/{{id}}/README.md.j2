@@ -117,17 +117,28 @@ compile your task (using ROS' `colcon`) and copy the resulting artifacts to the
 You can now `ssh` onto the robot (`ssh pal@{{ robot | lower }}-XXc`, password
 `pal`), and go to your project: `cd ~/deployed_ws/share/{{ id }}`
 
-## Run your application
+## Run your task
 
 `ssh` onto the robot (`ssh pal@{{ robot | lower }}-XXc`, password `pal`).
 
-There are several ways to run the application:
+There are several ways to run the task:
 
-1. Automatically launch the app and transition to an active state:
+1. Automatically launch the task and transition to an active state:
 
 `ros2 launch {{ id }} {{ id }}.launch.py`
 
-2. Manually start your skill:
+The task should print:
+
+```
+[start_task-1] [INFO] [{{ id }}]: Initialising...
+[start_task-1] [INFO] [{{ id }}]: Task {{ id }} started, but not yet configured.
+[start_task-1] [INFO] [{{ id }}]: Task {{ id }} is configured, but not yet active
+[start_task-1] [INFO] [{{ id }}]: Task {{ id }} is active and running
+```
+
+To actually trigger the task behaviour, see section Testing above.
+
+2. Manually start your task:
 
 `ros2 run {{ id }} start_task`
 
@@ -146,7 +157,7 @@ To stop it and clean it:
 ``ros2 lifecycle set /task_{{ id }} cleanup``
 
 
-3. Automatically start your application at startup:
+3. Automatically start your task at startup:
 
 See [Application
 management](https://docs.pal-robotics.com/sdk-dev/management/application-management). 
