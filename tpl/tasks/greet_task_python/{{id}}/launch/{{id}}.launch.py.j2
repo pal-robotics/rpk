@@ -14,7 +14,7 @@
 
 from launch import LaunchDescription
 from launch.actions import EmitEvent, RegisterEventHandler
-from launch.events import matches_action
+from launch.events import matches_action, Shutdown
 from launch_ros.actions import LifecycleNode
 from launch_ros.events.lifecycle import ChangeState
 from launch_ros.event_handlers import OnStateTransition
@@ -41,6 +41,7 @@ def generate_launch_description():
         remappings=config["remappings"],
         arguments=config["arguments"],
         output='both', emulate_tty=True,
+        on_exit=Shutdown()
         )
 
     ld.add_action(node)

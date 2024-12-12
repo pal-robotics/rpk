@@ -79,6 +79,12 @@ TASK_TEMPLATES = {
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/task_impl.py to implement your task logic.",
     },
+    "simple_ui": {
+        "tpl_paths": ["tasks/simple_ui/{{id}}", "tasks/task_msgs"],
+        "short_desc": "simple task template with a graphical user interface [python]",
+        "post_install_help": "Check README.md in {path}/{id}/ and "
+                             "edit src/{id}/task_impl.py to implement your task logic.",
+    },
     "greet_task_python": {
         "tpl_paths": ["tasks/greet_task_python/{{id}}", "tasks/greet_task_msgs"],
         "short_desc": "'greet' task mock-up [python]",
