@@ -1,0 +1,104 @@
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+
+import Ros 2.0
+
+Rectangle {
+
+    property alias alertMsg: popup.msg
+    property alias popupVisible: popup.visible
+
+    anchors.fill: parent
+
+    color: "#18272e"
+
+    IntentTopic {
+        id: intentTopic
+        topic: "/intents"
+        modality: ModalityTouchscreen
+        value: StartActivity
+    }
+
+    Image {
+        source: "images/background.png"
+        anchors.fill: parent
+        fillMode: Image.PreserveAspectCrop
+    }
+
+
+    Image {
+        id: logo
+        source: "images/logo.svg"
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: 140
+        width: 150
+        height: 70
+    }
+
+    Text {
+        id: label
+        font.pixelSize: 40
+        color: "black"
+        text: "Hi there!\nWhat do you want to do?"
+        horizontalAlignment: Text.AlignHCenter
+        anchors.top: logo.bottom
+        anchors.topMargin: 140
+        anchors.horizontalCenter: parent.horizontalCenter
+    }
+
+    Row {
+        anchors.top: label.bottom
+        anchors.topMargin: 20
+        anchors.horizontalCenter: parent.horizontalCenter
+        spacing: 20
+
+        MyButton {
+            id: btn1
+            text: "Start task 1"
+            color: "teal"
+            onClicked: {
+                intentTopic.data = JSON.stringify(
+                    {
+                        "object": "sample_task_1",
+                    });
+                intentTopic.publish();
+            }
+        }
+
+        MyButton {
+            id: btn2
+            text: "Start task 2"
+            color: "orange"
+            onClicked: {
+                intentTopic.data = JSON.stringify(
+                    {
+                        "object": "sample_task_2",
+                    });
+                intentTopic.publish();
+            }
+        }
+    }
+
+
+    Popup {
+        id: popup
+        property alias msg: content.text
+        anchors.centerIn: parent
+        width: 400
+        height: 300
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        padding: 10
+
+        background: Rectangle {
+            color: "orange"
+            radius: 10
+        }
+        contentItem: Text {
+            id: content
+            text: "Content"
+            horizontalAlignment: Text.AlignHCenter
+        }
+    }
+}

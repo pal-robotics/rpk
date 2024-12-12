@@ -1,0 +1,97 @@
+# Copyright (c) {{ year }} {{ author }}. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import asyncio
+from lifecycle_msgs.msg import State, Transition
+from lifecycle_msgs.srv import ChangeState, GetState
+import rclpy
+import rclpy.callback_groups
+import rclpy.executors
+import rclpy.node
+import rclpy.lifecycle
+import time
+from typing import Callable
+
+
+class ChangeNodeStateHelper:
+    """
+    Helper class to change the state of a node using the lifecycle interface.
+
+    This class relies on async functions and expects to be executed by a multi-threaded executor.
+    """
+
+    transitions = {
+        State.PRIMARY_STATE_UNCONFIGURED: {
+            State.PRIMARY_STATE_INACTIVE: Transition.TRANSITION_CONFIGURE,
+            State.PRIMARY_STATE_ACTIVE: Transition.TRANSITION_CONFIGURE,
+            State.PRIMARY_STATE_FINALIZED: Transition.TRANSITION_UNCONFIGURED_SHUTDOWN},
+        State.PRIMARY_STATE_INACTIVE: {
+            State.PRIMARY_STATE_UNCONFIGURED: Transition.TRANSITION_CLEANUP,
+            State.PRIMARY_STATE_ACTIVE: Transition.TRANSITION_ACTIVATE,
+            State.PRIMARY_STATE_FINALIZED: Transition.TRANSITION_INACTIVE_SHUTDOWN},
+        State.PRIMARY_STATE_ACTIVE: {
+            State.PRIMARY_STATE_UNCONFIGURED: Transition.TRANSITION_DEACTIVATE,
+            State.PRIMARY_STATE_INACTIVE: Transition.TRANSITION_DEACTIVATE,
+            State.PRIMARY_STATE_FINALIZED: Transition.TRANSITION_ACTIVE_SHUTDOWN}
+    }
+
+    def __init__(self, source_node: rclpy.node.Node | rclpy.lifecycle.Node, target_node_name: str):
+        self.node = source_node
+        self.cb_group = rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
+        self.state = State.PRIMARY_STATE_UNKNOWN
+
+        self.get_state_client = self.node.create_client(
+            GetState, target_node_name + '/get_state', callback_group=self.cb_group)
+        self.change_state_client = self.node.create_client(
+            ChangeState, target_node_name + '/change_state', callback_group=self.cb_group)
+        if (
+            not self.get_state_client.wait_for_service(1.) or
+            not self.change_state_client.wait_for_service(1.)
+        ):
+            raise RuntimeError('Lifecycle services servers not available')
+
+    async def get_state_async(self):
+        future = self.get_state_client.call_async(GetState.Request())
+        await future
+        self.state = future.result().current_state.id
+
+    async def change_state_async(self, target_state: State, timeout_sec: float = 5.):
+        if target_state == State.PRIMARY_STATE_UNKNOWN:
+            raise ValueError('Cannot change to unknown state')
+        start = time.time()
+        while target_state != self.state:
+            if time.time() - start > timeout_sec:
+                raise TimeoutError()
+            if self.state in [State.PRIMARY_STATE_FINALIZED]:
+                raise RuntimeError(f'Cannot reach {target_state} from {self.change_state}')
+            await self.get_state_async()
+            try:
+                transition = self.transitions[self.state][target_state]
+                await self.change_state_client.call_async(
+                    ChangeState.Request(transition=Transition(id=transition)))
+            except KeyError:
+                pass
+
+    def get_state(self, callback: Callable[[State], None] = None):
+        asyncio.run(self.get_state_async())
+        if callback is not None:
+            callback(self.state)
+
+    def change_state(
+            self, target_state: State, timeout_sec: float = 5.,
+            callback: Callable[[State], None] = None):
+        asyncio.run(self.change_state_async(target_state, timeout_sec))
+        if callback is not None:
+            callback(self.state)
+

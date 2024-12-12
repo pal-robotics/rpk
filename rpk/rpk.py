@@ -108,6 +108,13 @@ MISSION_CTRL_TEMPLATES = {
         "post_install_help": "Check README.md in {path}/{id}/ and edit src/{id}/"
                              "mission_controller.py to implement your application logic.",
     },
+    "base_intents_ui_python": {
+        "tpl_paths": ["mission_ctrls/base_intents_ui_python/{{id}}"],
+        "short_desc": "robot supervisor with a GUI and pre-filled intent handlers [python]",
+        "post_install_help": "Check README.md in {path}/{id}/ and edit src/{id}/"
+                             "mission_controller.py to implement your application logic.",
+        "task_templates": [{"simple_ui": {"id": "sample_gui_task", "name": "Sample GUI task"}}],
+    },
     "chatbot_supervisor_python": {
         "tpl_paths": ["mission_ctrls/llm_supervisor_python/{{id}}"],
         "short_desc": "complete supervisor example, using a basic chatbot to manage interactions "

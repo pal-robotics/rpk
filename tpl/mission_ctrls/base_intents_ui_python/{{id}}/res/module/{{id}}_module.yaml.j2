@@ -1,0 +1,5 @@
+{{ id }}:
+  launch: "{{ id }} {{ id }}.launch.py"
+{% if robot in ["ari", "tiago"] %}
+  after: "communication_hub"
+{% endif %}

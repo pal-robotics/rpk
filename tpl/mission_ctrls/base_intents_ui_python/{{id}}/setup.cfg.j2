@@ -1,0 +1,20 @@
+[develop]
+script_dir=$base/lib/{{ id }}
+[install]
+install_scripts=$base/lib/{{ id }}
+
+# babel configuration
+[extract_messages]
+output_file=locales/messages.pot
+
+[compile_catalog]
+directory=locales
+output_file=locales
+
+[init_catalog]
+input_file=locales/messages.pot
+output_dir=locales
+
+[update_catalog]
+input_file=locales/messages.pot
+output_dir=locales
