@@ -187,7 +187,7 @@ TEMPLATES_FAMILIES = {
 }
 
 ROBOTS_NAMES = {"generic": "Generic robot",
-                "generic-pal": "Generic PAL robot/simualtor",
+                "generic-pal": "Generic PAL robot/simulator",
                 "ari": "PAL ARI",
                 "tiago": "PAL TIAGo",
                 "tiago-pro": "PAL TIAGo Pro",
