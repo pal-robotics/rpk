@@ -76,6 +76,8 @@ class MissionController(Node):
 
         self.inc = None
 
+        self.get_logger().info('Mission controller initialized, but not yet configured.')
+
     def on_intent(self, msg):
 
         self.get_logger().info("Received an intent: %s" % msg.intent)
@@ -266,7 +268,7 @@ class MissionController(Node):
         _ = self.i18n.tr
 
         self.inc = 0
-        self.get_logger().info('on_configure() is called.')
+        self.get_logger().info('Mission controller configured, but not yet active.')
         return TransitionCallbackReturn.SUCCESS
 
     def on_activate(self, state: State) -> TransitionCallbackReturn:
@@ -292,8 +294,8 @@ class MissionController(Node):
         # We activate the "communication_hub" node by default
         self._change_state_helper.change_state(StateMsg.PRIMARY_STATE_ACTIVE)
 {% endif %}
-        self.get_logger().info("Running")
-
+        
+        self.get_logger().info('Mission controller active.')
         return super().on_activate(state)
 
     def on_deactivate(self, state: State) -> TransitionCallbackReturn:
@@ -303,6 +305,7 @@ class MissionController(Node):
         self.destroy_timer(self._timer)
         self.destroy_subscription(self._intents_sub)
 
+        self.get_logger().info('Mission controller deactivated.')
         return super().on_deactivate(state)
 
     def on_shutdown(self, state: State) -> TransitionCallbackReturn:
@@ -319,10 +322,7 @@ class MissionController(Node):
         """
         self.i18n.shutdown()
 
-        self.destroy_timer(self._timer)
-        self.destroy_subscription(self._intents_sub)
-
-        self.get_logger().info('Shutting down node.')
+        self.get_logger().info('Mission controller shutting down now.')
         return TransitionCallbackReturn.SUCCESS
 
     def run(self) -> None:
