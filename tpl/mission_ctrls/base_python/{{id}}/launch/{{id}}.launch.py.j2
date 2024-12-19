@@ -18,7 +18,7 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    app_node = Node(
+    node = Node(
         package='{{ id }}',
         executable='run_app',
         namespace='',
@@ -26,6 +26,5 @@ def generate_launch_description():
         output='both', emulate_tty=True,
         on_exit=Shutdown())
 
-    return LaunchDescription([
-        app_node])
+    return LaunchDescription([node])
 

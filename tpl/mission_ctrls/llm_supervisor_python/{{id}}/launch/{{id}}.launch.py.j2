@@ -49,8 +49,6 @@ def generate_launch_description():
         on_exit=Shutdown()
         )
 
-    ld.add_action(app_node)
-
     ld.add_action(node)
 
     # automatically perform the lifecycle transitions to configure and activate

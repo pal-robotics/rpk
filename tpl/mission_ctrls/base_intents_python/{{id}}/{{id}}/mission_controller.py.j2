@@ -293,8 +293,8 @@ class MissionController(Node):
 {% if "pal_arch" in features %}
         # We activate the "communication_hub" node by default
         self._change_state_helper.change_state(StateMsg.PRIMARY_STATE_ACTIVE)
+
 {% endif %}
-        
         self.get_logger().info('Mission controller active.')
         return super().on_activate(state)
 
