@@ -29,11 +29,14 @@
   <!-- The *depend tags are used to specify dependencies -->
   <!-- Dependencies can be catkin packages or system dependencies -->
   <depend>rclpy</depend>
+  <depend>ament_index_python</depend>
+  <depend>launch</depend>
+  <depend>launch_ros</depend>
+  <depend>launch_pal</depend>
   <depend>hri_actions_msgs</depend>
-{% if robot in ["ari", "tiago"] %}
+{% if "pal_arch" in features %}
   <depend>lifecycle_msgs</depend>
 {% endif %}
-  <depend>ament_index_python</depend>
 
   <!-- Internationalization support -->
   <depend>gettext-base</depend>
