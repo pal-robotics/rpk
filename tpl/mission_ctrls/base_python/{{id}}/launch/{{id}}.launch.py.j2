@@ -13,13 +13,18 @@
 # limitations under the License.
 
 from launch import LaunchDescription
+from launch.events import Shutdown
 from launch_ros.actions import Node
 
 
 def generate_launch_description():
     app_node = Node(
-        package='{{ id }}', executable='run_app', namespace='',
-        name='{{ id }}')
+        package='{{ id }}',
+        executable='run_app',
+        namespace='',
+        name='{{ id }}',
+        output='both', emulate_tty=True,
+        on_exit=Shutdown())
 
     return LaunchDescription([
         app_node])
