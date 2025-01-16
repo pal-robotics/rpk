@@ -22,10 +22,10 @@ from ament_index_python.packages import get_package_share_directory
 from task_msgs.action import TaskControl
 from ui_msgs.srv import SetUiFragment
 
+from rclpy.action import ActionClient
 {% if intents %}
 {% for intent in intents %}
 {% if intent.intent == "ENGAGE_WITH"%}
-from rclpy.action import ActionClient
 {% if "communication" in features or "pal_arch" in features %}
 from tts_msgs.action import TTS
 {% endif %}
