@@ -40,8 +40,15 @@
 
   <!-- skills actions definitions -->
 
-  <!-- for 'say' -->
-  <exec_depend>tts_msgs</exec_depend>
+{% if "pal_arch" in features %}
+  <!-- Use tts_msgs for the 'say' skill -->
+  <depend>tts_msgs</depend>
+{% else %}
+  <!-- We use a sample skill with a string to call the 'say'
+  skill. On your real system, you'd want to use instead your
+  own topic/service/action types. -->
+  <depend>sample_skill_msgs</depend>
+{% endif %}
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

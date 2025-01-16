@@ -45,17 +45,21 @@
   <depend>task_msgs</depend>
   <depend>ui_msgs</depend>
 
-{% if robot in ["ari", "tiago"] %}
+{% if "pal_arch" in features %}
   <!-- If using PAL robots, we need the communication_hub to -->
   <!-- provide communicative acts to the user -->
   <depend>communication_hub</depend>
+{% if "gesture" in features %}
   <!-- As an example, we are going to use the TTS and play_motion -->
   <!-- actions. We need to list the corresponding ROS actions as -->
-  <!-- dependencies. Similary, we will publish in the touchscreen, -->
-  <!-- so we need to add dependencies to the pal_web_msgs topic -->
+  <!-- dependencies. -->
   <depend>tts_msgs</depend>
   <depend>play_motion2_msgs</depend>
-  <!-- <depend>pal_web_msgs</depend> -->  <!-- Waiting for ros 2 porting -->
+{% else %}
+  <!-- As an example, we are going to use the TTS action. -->
+  <!-- We need to list the corresponding ROS actions as dependencies. -->
+  <depend>tts_msgs</depend>
+{% endif %}
 {% else %}
   <!-- We use a generic skill action -->
   <depend>sample_skill_msgs</depend>

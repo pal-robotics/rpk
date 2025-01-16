@@ -25,7 +25,11 @@ from rclpy.lifecycle import TransitionCallbackReturn
 from greet_task_msgs.action import Greet
 
 # action for the system skill 'say'
+{% if "pal_arch" in features %}
+from tts_msgs.action import TTS
+{% else %}
 from sample_skill_msgs.action import SkillControl
+{% endif %}
 
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
@@ -199,14 +203,18 @@ class TaskImpl(Node):
         self._diag_pub = self.create_publisher(DiagnosticArray, '/diagnostics', 1)
         self._diag_timer = self.create_timer(1., self.publish_diagnostics)
 
-        # example API for our 'database' skill
+        # example API for our 'greet' task
         self.task_server = ActionServer(
             self, Greet, "/greet",
             goal_callback=self.on_request_goal,
             execute_callback=self.on_request_exec)
 
         # create an action client for the 'say' skill
+{% if "pal_arch" in features %}
+        self.tts_client = ActionClient(self, TTS, "/say")
+{% else %}
         self.tts_client = ActionClient(self, SkillControl, "/say")
+{% endif %}
         while not self.tts_client.wait_for_server(timeout_sec=1.0):
             self.get_logger().info("'/say' skill not yet available, waiting again...")
 
@@ -317,6 +325,15 @@ class TaskImpl(Node):
            self._get_result_future is None:  # (make sure we are not already greeting)
 
             self.get_logger().info("Saying hello to the user")
+{% if "pal_arch" in features %}
+            goal = TTS.Goal()
+
+            if self.custom_greetings:
+                goal.input = self.custom_greetings
+            else:
+                # default greeting
+                goal.input = f"Hello, {self.target_user_id}!"
+{% else %}
             goal = SkillControl.Goal()
 
             if self.custom_greetings:
@@ -324,6 +341,7 @@ class TaskImpl(Node):
             else:
                 # default greeting
                 goal.skill_data = f"Hello, {self.target_user_id}!"
+{% endif %}
 
             # start the say action; the greet_done_callback will be called
             # when the action is over.
