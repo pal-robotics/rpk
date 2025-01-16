@@ -58,7 +58,7 @@ You should see your skill and its *control* action:
 We can trigger the skill (from a third terminal):
 
 ```
-ros2 action send_goal /skill_test/control skill_msgs/action/SkillControl "skill_data: 'test data'" 
+ros2 action send_goal /skill_test/control sample_skill_msgs/action/SkillControl "skill_data: 'test data'" 
 ```
 
 You should get the following output:
@@ -86,7 +86,7 @@ To implement your skill logic, have a look at `{{id}}/skill_impl.py`: this is
 the main file you will have to modify.
 
 You might want however to create a custom message type to start/configure/stop
-your skill. Check the `skill_msgs` package that has been generated alongside
+your skill. Check the `sample_skill_msgs` package that has been generated alongside
 this package, and feel free to modify it & rename it as you see fit.
 
 ## Install on the robot

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>skill_msgs</name>
+  <name>sample_skill_msgs</name>
   <version>0.1.0</version>
   <description>Sample action messages to control a skill</description>
 
@@ -12,7 +12,7 @@
   <!-- One license tag required, multiple allowed, one license per tag -->
   <!-- Commonly used license strings: -->
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>Apache-2.0</license>
+  <license>Apache License 2.0</license>
 
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
@@ -25,10 +25,12 @@
   <!-- Example: -->
   <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
+  <depend>std_skills</depend>
   <depend>action_msgs</depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

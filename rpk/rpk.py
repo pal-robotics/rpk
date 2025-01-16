@@ -37,19 +37,19 @@ PKG_PATH = (
 
 SKILL_TEMPLATES = {
     "base_python": {
-        "tpl_paths": ["skills/base_python/{{id}}", "skills/skill_msgs"],
+        "tpl_paths": ["skills/base_python/{{id}}", "skills/sample_skill_msgs"],
         "short_desc": "base skill template [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
     "say_python": {
-        "tpl_paths": ["skills/say_python/{{id}}", "skills/skill_msgs"],
+        "tpl_paths": ["skills/say_python/{{id}}", "skills/sample_skill_msgs"],
         "short_desc": "example implementation for a 'say' skill [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
     "db_connector_python": {
-        "tpl_paths": ["skills/db_connector_python/{{id}}", "skills/skill_msgs"],
+        "tpl_paths": ["skills/db_connector_python/{{id}}", "skills/sample_skill_msgs"],
         "short_desc": "database connector mock-up [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
@@ -123,8 +123,8 @@ MISSION_CTRL_TEMPLATES = {
                              "mission_controller.py to customize your application logic.",
         "task_templates": [{"greet_task_python": {"id": "greet_task", "name": "'greet' task"}}],
         "intent_extractor_templates": [{"basic_chatbot": {
-                                                "id": "basic_chatbot",
-                                                "name": "Basic Python chatbot"}}],
+            "id": "basic_chatbot",
+            "name": "Basic Python chatbot"}}],
     },
     "llm_supervisor_python": {
         "tpl_paths": ["mission_ctrls/llm_supervisor_python/{{id}}"],
@@ -134,8 +134,8 @@ MISSION_CTRL_TEMPLATES = {
                              "mission_controller.py to customize your application logic.",
         "task_templates": [{"greet_task_python": {"id": "greet_task", "name": "'greet' task"}}],
         "intent_extractor_templates": [{"llm_bridge_python": {
-                                                "id": "llm_bridge",
-                                                "name": "LLM bridge"}}],
+            "id": "llm_bridge",
+            "name": "LLM bridge"}}],
     }
 }
 
@@ -148,8 +148,8 @@ APPLICATION_TEMPLATES = {
         "post_install_help": "Check README.md in ./{path}/ to learn how to configure "
                              "and start your application.",
         "mission_ctrl_templates": [{"chatbot_supervisor_python": {
-                                        "id": "chatbot_supervisor",
-                                        "name": "Mission controller"}}],
+            "id": "chatbot_supervisor",
+            "name": "Mission controller"}}],
     },
     "llm_chatbot_python": {
         "tpl_paths": ["apps/python/{{id}}"],
@@ -158,8 +158,8 @@ APPLICATION_TEMPLATES = {
         "post_install_help": "Check README.md in ./{path}/ to learn how to configure "
                              "and start your application.",
         "mission_ctrl_templates": [{"llm_supervisor_python": {
-                                        "id": "llm_supervisor",
-                                        "name": "LLM-based mission controller"}}],
+            "id": "llm_supervisor",
+            "name": "LLM-based mission controller"}}],
     }
 }
 
@@ -236,7 +236,7 @@ ROBOTS_FEATURES = {
                     FEAT_COMMUNICATION,
                     FEAT_EXPRESSIONS,
                     ],
-    }
+}
 
 
 TPL_EXT = "j2"
@@ -471,7 +471,8 @@ def main(args=sys.argv[1:]):
                     "robots"
     )
 
-    parser.add_argument('--version', action='version', version=f'{SELF_NAME} {version(SELF_NAME)}')
+    parser.add_argument('--version', action='version',
+                        version=f'{SELF_NAME} {version(SELF_NAME)}')
 
     subparsers = parser.add_subparsers(dest="command")
 
@@ -553,7 +554,8 @@ def main(args=sys.argv[1:]):
     args = parser.parse_args(args)
 
     if not args.command:
-        print(f"You must select a command.\nType '{SELF_NAME} --help' for details.")
+        print(
+            f"You must select a command.\nType '{SELF_NAME} --help' for details.")
         sys.exit(1)
 
     if args.command == "create":
@@ -596,7 +598,8 @@ def main(args=sys.argv[1:]):
                 if args.short:
                     print(f"{family}/{tpl}")
                 else:
-                    print(f" - {tpl}: {TEMPLATES_FAMILIES[family]['src'][tpl]['short_desc']}")
+                    print(
+                        f" - {tpl}: {TEMPLATES_FAMILIES[family]['src'][tpl]['short_desc']}")
 
 
 if __name__ == "__main__":

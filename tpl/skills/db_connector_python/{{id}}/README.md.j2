@@ -58,7 +58,7 @@ You should see your skill and its *control* action:
 We can trigger the skill (from a third terminal):
 
 ```
-ros2 action send_goal /db_test/db_request skill_msgs/action/SkillControl "skill_data: 'db request'"
+ros2 action send_goal /db_test/db_request sample_skill_msgs/action/SkillControl "skill_data: 'db request'"
 ```
 
 You should get the following output:
@@ -86,7 +86,7 @@ To implement your skill logic (...ie, an actual database connector!), have a loo
 at `{{id}}/skill_impl.py`: this is the main file you will have to modify.
 
 You might want however to create a custom message type to start/configure/stop
-your skill. Check the `skill_msgs` package that has been generated alongside
+your skill. Check the `sample_skill_msgs` package that has been generated alongside
 this package, and feel free to modify it & rename it as you see fit with eq a 
 `query` field, a `db_name` field, etc.
 

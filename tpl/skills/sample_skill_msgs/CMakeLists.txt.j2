@@ -1,0 +1,22 @@
+cmake_minimum_required(VERSION 3.8)
+project(sample_skill_msgs)
+
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
+find_package(action_msgs REQUIRED)
+find_package(std_skills REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "action/SkillControl.action"
+  DEPENDENCIES action_msgs std_skills
+)
+
+ament_export_dependencies(rosidl_default_runtime)
+
+if(BUILD_TESTING)
+  ament_auto_find_test_dependencies()
+  ament_lint_auto_find_test_dependencies()
+endif()
+
+ament_auto_package()
