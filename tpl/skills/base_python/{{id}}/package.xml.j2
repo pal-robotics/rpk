@@ -41,6 +41,7 @@
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
+  <test_depend>ament_skilllint</test_depend>
   <test_depend>python3-pytest</test_depend>
 
   <export>
@@ -48,13 +49,13 @@
 
       <skill content-type="json">
           {
-            "name": "{{ id }}",
-            "description": "This example skill mocks-up the connection to a Mongo DB database.",
+            "id": "{{ id }}",
+            "description": "This is a basic example skill. Write here an actual description.",
             "interface": "action",
             "default_interface_path": "/{{ id }}/control",
             "datatype": "sample_skill_msgs/action/SkillControl",
             "functional_domains": [
-                "external_interfaces"
+                "other"
             ]
         }
       </skill>
