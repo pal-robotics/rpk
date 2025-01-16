@@ -41,6 +41,7 @@
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
+  <test_depend>ament_skilllint</test_depend>
   <test_depend>python3-pytest</test_depend>
 
   <export>
@@ -48,7 +49,7 @@
 
       <skill content-type="json">
           {
-            "name": "{{ id }}",
+            "id": "{{ id }}",
             "description": "Say out loud a message aimed at the user",
             "interface": "action",
             "default_interface_path": "/say",
