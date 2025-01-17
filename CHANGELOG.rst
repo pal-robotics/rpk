@@ -2,6 +2,27 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add std_skills and ament_cmake_auto to the rpk test dependencies
+* tpl: skill: say_python now has conformant manifest
+* tpl: skill: db_connector_python now has conformant manifest
+* tpl: skill: base_python now has conformant manifest
+* tpl: mission: fix duplicate dep in package.xml
+* tpl: task: greet task: use tts_msgs for /say on PAL arch
+* {skill_msgs -> sample_skill_msgs} + use std_skills meta types
+* tpl: mission: make sure ActionClient always imported to ctrl the UI
+* tpl: intents llm: fix error when falling back to RAW_USER_INPUT + handle START/STOP_ACTIVITY
+* tpl: missions: various fixes (incl. linting)
+* tpl: missions: improve logging of lifecycle states changes
+* tpl: missions: configure launch to trigger shutdown upon failure/crash
+* tpl: missions: add deps on launch,launch_ros,launch_ros
+* tpl: add tpl for mission ctrl with GUI
+* tpl: add tpl for task with QML GUI
+  While here: properly shutdown all tasks when launch terminates
+* tpl: minor fixes in task documentation
+* Contributors: Séverin Lemaignan
+
 4.5.0 (2024-12-11)
 ------------------
 * tpl: fix launch files not returning the correct LaunchDescription
