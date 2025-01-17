@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.6.0 (2025-01-17)
+------------------
 * add std_skills and ament_cmake_auto to the rpk test dependencies
 * tpl: skill: say_python now has conformant manifest
 * tpl: skill: db_connector_python now has conformant manifest
