@@ -1,0 +1,200 @@
+// Copyright (c) 2024 PAL Robotics S.L. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "{{id}}/node_{{id}}.hpp"
+
+#include <chrono>
+#include <functional>
+#include <thread>
+
+#include "diagnostic_updater/diagnostic_status_wrapper.hpp"
+#include "lifecycle_msgs/msg/state.hpp"
+
+namespace {{id}}
+{
+
+Node{{Id}}::Node{{Id}}(const rclcpp::NodeOptions & options)
+: rclcpp_lifecycle::LifecycleNode("{{id}}", "", options)
+{
+  RCLCPP_INFO(this->get_logger(), "Initialising...");
+
+  // Declare ROS parameters
+  //
+  // You can add here any parameters that you want to be configurable
+  // from the command line or from a launch file.
+  //
+  // You should also add the same parameters to config/00-defaults.yml
+  auto descriptor = rcl_interfaces::msg::ParameterDescriptor{};
+
+  descriptor.description = "A parameter for the skill";
+  this->declare_parameter("parameter_name", "parameter_value", descriptor);
+
+  // Add a callback to the context, making sure "on_shutdown" is called when the node is shutting
+  // down due to the object being destroyed or a signal being received.
+  // Unfortunately, that is not implemented in the parent LifecycleNode.
+  on_shutdown_cb_handle_ = this->get_node_options().context()->add_on_shutdown_callback(
+    [this]() {this->on_shutdown(this->get_current_state());});
+
+  RCLCPP_INFO(this->get_logger(), "Skill {{id}} started, but not yet configured.");
+}
+
+Node{{Id}}::~Node{{Id}}()
+{
+  // Remove the shutdown callback added in the constructor.
+  this->get_node_options().context()->remove_on_shutdown_callback(on_shutdown_cb_handle_);
+}
+
+Node{{Id}}::LifecycleCallbackReturn Node{{Id}}::on_configure(
+  const rclcpp_lifecycle::State &)
+{
+  using namespace std::placeholders;
+
+  nb_requests_ = 0;
+
+  // example API for our skill
+  // (note that we create the action server in the configure state,
+  // so that the API is available to users, but we only start accepting
+  // goals in the activate state)
+  skill_server_ = rclcpp_action::create_server<Skill>(
+    this, "/{{id}}/control",
+    std::bind(&Node{{Id}}::OnSkillRequestGoal, this, _1, _2),
+    nullptr,
+    std::bind(&Node{{Id}}::OnSkillRequestAccepted, this, _1));
+
+  // configure and start diagnostics publishing
+  diagnostics_pub_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
+    "/diagnostics", 1);
+  diagnostics_timer_ = rclcpp::create_timer(
+    this, this->get_clock(), std::chrono::seconds(1),
+    std::bind(&Node{{Id}}::PublishDiagnostics, this));
+
+  RCLCPP_INFO(this->get_logger(), "Skill {{id}} is configured, but not yet active");
+  return LifecycleCallbackReturn::SUCCESS;
+}
+
+Node{{Id}}::LifecycleCallbackReturn Node{{Id}}::on_activate(
+  const rclcpp_lifecycle::State &)
+{
+  // Define a timer that fires every second to call the run function
+  run_timer_ = rclcpp::create_timer(
+    this, this->get_clock(), std::chrono::seconds(1),
+    std::bind(&Node{{Id}}::Run, this));
+
+  RCLCPP_INFO(this->get_logger(), "Skill {{id}} is active and running");
+  return LifecycleCallbackReturn::SUCCESS;
+}
+
+Node{{Id}}::LifecycleCallbackReturn Node{{Id}}::on_deactivate(
+  const rclcpp_lifecycle::State &)
+{
+  DeactivateImpl();
+  RCLCPP_INFO(this->get_logger(), "Skill {{id}} is stopped (inactive)");
+  return LifecycleCallbackReturn::SUCCESS;
+}
+
+Node{{Id}}::LifecycleCallbackReturn Node{{Id}}::on_cleanup(
+  const rclcpp_lifecycle::State &)
+{
+  CleanupImpl();
+  RCLCPP_INFO(this->get_logger(), "Skill {{id}} is cleaned up (unconfigured).");
+  return LifecycleCallbackReturn::SUCCESS;
+}
+
+Node{{Id}}::LifecycleCallbackReturn Node{{Id}}::on_shutdown(
+  const rclcpp_lifecycle::State & state)
+{
+  if (state.id() == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
+    DeactivateImpl();
+    CleanupImpl();
+  } else if (state.id() == lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE) {
+    CleanupImpl();
+  }
+  RCLCPP_INFO(this->get_logger(), "Skill {{id}} finalized.");
+  return LifecycleCallbackReturn::SUCCESS;
+}
+
+void Node{{Id}}::CleanupImpl()
+{
+  diagnostics_timer_.reset();
+  diagnostics_pub_.reset();
+  skill_server_.reset();
+}
+
+void Node{{Id}}::DeactivateImpl()
+{
+  run_timer_.reset();
+}
+
+std::string Node{{Id}}::RunSkill()
+{
+  RCLCPP_INFO(this->get_logger(), "...running the skill");
+
+  std::this_thread::sleep_for(std::chrono::seconds(1));  // simulate a long request
+
+  return "this is an important result";
+}
+
+rclcpp_action::GoalResponse Node{{Id}}::OnSkillRequestGoal(
+  const rclcpp_action::GoalUUID &, SkillGoal)
+{
+  if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
+    RCLCPP_ERROR(this->get_logger(), "Skill is not active yet, rejecting goal");
+    return rclcpp_action::GoalResponse::REJECT;
+  }
+
+  RCLCPP_INFO(this->get_logger(), "Accepted a new goal");
+  return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+}
+
+void Node{{Id}}::OnSkillRequestAccepted(const SkillGoalHandle goal_handle)
+{
+  RCLCPP_INFO(
+    this->get_logger(),
+    "Executing the skill with data: %s",
+    goal_handle->get_goal()->skill_data.c_str());
+
+  // perform request here
+  auto result = std::make_shared<Skill::Result>();
+  result->value = RunSkill();
+  goal_handle->succeed(result);
+
+  RCLCPP_INFO(this->get_logger(), "Goal executed successfully");
+}
+
+void Node{{Id}}::PublishDiagnostics()
+{
+  diagnostic_updater::DiagnosticStatusWrapper status;
+  status.name = "/skills/{{ id }}";
+  status.hardware_id = "none";
+  status.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "skill {{id}} is running");
+  status.add("Module name", "{{ id }}");
+  status.add("Current lifecycle state", this->get_current_state().label());
+  status.add("Number of invocations", nb_requests_);
+
+  diagnostic_msgs::msg::DiagnosticArray msg;
+  msg.header.stamp = this->get_clock()->now();
+  msg.status.push_back(status);
+  diagnostics_pub_->publish(msg);
+}
+
+void Node{{Id}}::Run()
+{
+  // Implement here any background task required by your skill.
+  // If the skill is deactivated, this function is not called anymore.
+
+  RCLCPP_INFO(this->get_logger(), "skill {{id}}: performing background task...");
+}
+
+}  // namespace {{id}}
+

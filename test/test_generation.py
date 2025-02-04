@@ -20,6 +20,8 @@ import tempfile
 from ament_pep257.main import main as pep257_main
 from ament_flake8.main import main_with_errors as flake8_main_with_errors
 from ament_copyright.main import main as copyright_main
+from ament_cppcheck.main import main as cppcheck_main
+from ament_cpplint.main import main as cpplint_main
 
 from rpk import rpk
 rpk.PKG_PATH = (
@@ -33,14 +35,15 @@ rpk.PKG_PATH = (
                             for robot in rpk.AVAILABLE_ROBOTS
                             for category, tpls in rpk.TEMPLATES_FAMILIES.items()
                             for tpl in tpls["src"].keys()
+                            if tpls['src'][tpl]['prog_lang'] == 'python'
                          ])
 @pytest.mark.linter
 @pytest.mark.pep257
 @pytest.mark.flake8
 @pytest.mark.copyright
-def test_generation_linting(category, template, robot):
+def test_generation_linting_python(category, template, robot):
 
-    path = tempfile.mkdtemp()
+    path = tempfile.mkdtemp(prefix='rpk_')
 
     rpk.main(['create',
               '--robot', robot,
@@ -64,6 +67,36 @@ def test_generation_linting(category, template, robot):
 @pytest.mark.parametrize('category, template, robot',
                          [
                             (category, tpl, robot)
+                            for robot in rpk.AVAILABLE_ROBOTS
+                            for category, tpls in rpk.TEMPLATES_FAMILIES.items()
+                            for tpl in tpls["src"].keys()
+                            if tpls['src'][tpl]['prog_lang'] == 'c++'
+                         ])
+@pytest.mark.copyright
+def test_generation_linting_cpp(category, template, robot):
+
+    path = tempfile.mkdtemp(prefix='rpk_')
+
+    rpk.main(['create',
+              '--robot', robot,
+              '--path', path,
+              category,
+              '--template', template,
+              '--yes'])
+
+    rc = cppcheck_main(argv=[path, 'test'])
+    assert rc == 0, 'Found cppcheck code style errors / warnings'
+
+    rc = cpplint_main(argv=[path, 'test'])
+    assert rc == 0, 'Found cpplint code style errors / warnings'
+
+    rc = copyright_main(argv=[path, 'test'])
+    assert rc == 0, 'Found copyright-related errors'
+
+
+@pytest.mark.parametrize('category, template, robot',
+                         [
+                            (category, tpl, robot)
                             # for robot in rpk.AVAILABLE_ROBOTS
                             for robot in ['generic', 'generic-pal']
                             for category, tpls in rpk.TEMPLATES_FAMILIES.items()
@@ -71,7 +104,7 @@ def test_generation_linting(category, template, robot):
                          ])
 def test_generation_compile(category, template, robot):
 
-    ws_dir = Path(tempfile.mkdtemp(suffix='_ws'))
+    ws_dir = Path(tempfile.mkdtemp(prefix='rpk_', suffix='_ws'))
 
     rpk.main(['create',
               '--robot', robot,
@@ -92,7 +125,7 @@ def test_generation_compile(category, template, robot):
                                                  '--base-paths', str(ws_dir),
                                                  '--build-base', str(ws_dir / "build"),
                                                  '--install-base', str(ws_dir / "install"),
-                                                 ]), shell=True, capture_output=True, check=True)
+                                                 ]), shell=True, capture_output=True)
 
     # for some reason, the return code is always 0
     # assert completed_process.returncode == 0

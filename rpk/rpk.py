@@ -20,6 +20,7 @@ import datetime
 from importlib.metadata import version
 from jinja2 import Environment, select_autoescape, FileSystemLoader
 import random
+import re
 import string
 import sys
 from pathlib import Path
@@ -36,20 +37,31 @@ PKG_PATH = (
 )
 
 SKILL_TEMPLATES = {
+    "base_cpp": {
+        "tpl_paths": ["skills/base_cpp/{{id}}", "skills/sample_skill_msgs"],
+        "prog_lang": "c++",
+        "short_desc": "base skill template [c++]",
+        "post_install_help": "Check README.md in {path}/{id}/ and "
+                             "edit src/{id}/node_{id}.cpp and include/{id}/node_{id}.hpp "
+                             "to implement your skill logic.",
+    },
     "base_python": {
         "tpl_paths": ["skills/base_python/{{id}}", "skills/sample_skill_msgs"],
+        "prog_lang": "python",
         "short_desc": "base skill template [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
     "say_python": {
         "tpl_paths": ["skills/say_python/{{id}}", "skills/sample_skill_msgs"],
+        "prog_lang": "python",
         "short_desc": "example implementation for a 'say' skill [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
     "db_connector_python": {
         "tpl_paths": ["skills/db_connector_python/{{id}}", "skills/sample_skill_msgs"],
+        "prog_lang": "python",
         "short_desc": "database connector mock-up [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
@@ -59,12 +71,14 @@ SKILL_TEMPLATES = {
 INTENT_EXTRACTOR_TEMPLATES = {
     "basic_chatbot": {
         "tpl_paths": ["intents/basic_chatbot/{{id}}"],
+        "prog_lang": "python",
         "short_desc": "basic chatbot template [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/node_impl.py to implement your node logic.",
     },
     "llm_bridge_python": {
         "tpl_paths": ["intents/llm_connector_python/{{id}}"],
+        "prog_lang": "python",
         "short_desc": "complete intent extraction example: LLM bridge using the OpenAI "
                       "API (ollama, chatgpt) [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
@@ -75,18 +89,21 @@ INTENT_EXTRACTOR_TEMPLATES = {
 TASK_TEMPLATES = {
     "base_python": {
         "tpl_paths": ["tasks/base_python/{{id}}", "tasks/task_msgs"],
+        "prog_lang": "python",
         "short_desc": "base task template [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/task_impl.py to implement your task logic.",
     },
     "simple_ui": {
         "tpl_paths": ["tasks/simple_ui/{{id}}", "tasks/task_msgs"],
+        "prog_lang": "python",
         "short_desc": "simple task template with a graphical user interface [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/task_impl.py to implement your task logic.",
     },
     "greet_task_python": {
         "tpl_paths": ["tasks/greet_task_python/{{id}}", "tasks/greet_task_msgs"],
+        "prog_lang": "python",
         "short_desc": "'greet' task mock-up [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/task_impl.py to implement your task logic.",
@@ -97,6 +114,7 @@ TASK_TEMPLATES = {
 MISSION_CTRL_TEMPLATES = {
     "base_python": {
         "tpl_paths": ["mission_ctrls/base_python/{{id}}"],
+        "prog_lang": "python",
         "short_desc": "base robot supervisor [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and edit src/{id}/"
                              "mission_controller.py to customize your application logic.",
@@ -104,12 +122,14 @@ MISSION_CTRL_TEMPLATES = {
     },
     "base_intents_python": {
         "tpl_paths": ["mission_ctrls/base_intents_python/{{id}}"],
+        "prog_lang": "python",
         "short_desc": "robot supervisor with pre-filled intent handlers [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and edit src/{id}/"
                              "mission_controller.py to implement your application logic.",
     },
     "base_intents_ui_python": {
         "tpl_paths": ["mission_ctrls/base_intents_ui_python/{{id}}"],
+        "prog_lang": "python",
         "short_desc": "robot supervisor with a GUI and pre-filled intent handlers [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and edit src/{id}/"
                              "mission_controller.py to implement your application logic.",
@@ -117,6 +137,7 @@ MISSION_CTRL_TEMPLATES = {
     },
     "chatbot_supervisor_python": {
         "tpl_paths": ["mission_ctrls/llm_supervisor_python/{{id}}"],
+        "prog_lang": "python",
         "short_desc": "complete supervisor example, using a basic chatbot to manage interactions "
                       "with users [python]",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
@@ -128,6 +149,7 @@ MISSION_CTRL_TEMPLATES = {
     },
     "llm_supervisor_python": {
         "tpl_paths": ["mission_ctrls/llm_supervisor_python/{{id}}"],
+        "prog_lang": "python",
         "short_desc": "complete supervisor example, using LLMs to manage interactions with "
                       "users [python]",
         "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
@@ -143,6 +165,7 @@ MISSION_CTRL_TEMPLATES = {
 APPLICATION_TEMPLATES = {
     "basic_chatbot_python": {
         "tpl_paths": ["apps/python/{{id}}"],
+        "prog_lang": "python",
         "short_desc": "complete sample app, using a basic chatbot to interact with users. "
                       "It includes a supervisor and sample tasks and skills [python]",
         "post_install_help": "Check README.md in ./{path}/ to learn how to configure "
@@ -153,6 +176,7 @@ APPLICATION_TEMPLATES = {
     },
     "llm_chatbot_python": {
         "tpl_paths": ["apps/python/{{id}}"],
+        "prog_lang": "python",
         "short_desc": "complete sample app, using LLM to interact with users. "
                       "It includes a supervisor and sample tasks and skills [python]",
         "post_install_help": "Check README.md in ./{path}/ to learn how to configure "
@@ -302,9 +326,8 @@ def interactive_create(id=None,
                        robot=None,
                        yes=False):
 
-    if id and (" " in id or "-" in id):
-        print("The chosen ID can not contain spaces or hyphens.")
-        id = None
+    # apply subset of topic name rules to the ID, since it may be used in pkg topics names
+    valid_id = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*$")
 
     if not id and yes:
         id = random_id()
@@ -316,8 +339,9 @@ def interactive_create(id=None,
                 "spaces or hyphens. eg 'robot_receptionist')\n"
             )
 
-            if " " in id or "-" in id:
-                print("The chosen ID can not contain spaces or hyphens.")
+            if not valid_id.fullmatch(id):
+                print("The chosen ID can only contain alphanumeric or '_' characters,"
+                      " and cannot start with a number.")
                 id = None
 
         if not name and not yes:
@@ -576,6 +600,7 @@ def main(args=sys.argv[1:]):
             yes=args.yes)
 
         data = {"id": id,
+                "Id": string.capwords(id, '_'),
                 "name": name,
                 "intents": intents,
                 "robot": robot,
