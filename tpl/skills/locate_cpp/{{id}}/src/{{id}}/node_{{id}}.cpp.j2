@@ -16,10 +16,13 @@
 
 #include <chrono>
 #include <functional>
-#include <thread>
+#include <stdexcept>
+#include <vector>
 
 #include "diagnostic_updater/diagnostic_status_wrapper.hpp"
 #include "lifecycle_msgs/msg/state.hpp"
+#include "nlohmann/json.hpp"
+#include "std_skills/msg/result.hpp"
 
 namespace {{id}}
 {
@@ -60,14 +63,18 @@ Node{{Id}}::LifecycleCallbackReturn Node{{Id}}::on_configure(
 {
   using namespace std::placeholders;
 
-  nb_requests_ = 0;
+  // create KB client with a separate callback group,
+  // to be able to make asynchronous requests during the Skill execution
+  kb_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  kb_client_ = this->create_client<kb_msgs::srv::Query>(
+    "kb/query", rclcpp::ServicesQoS().get_rmw_qos_profile(), kb_cb_group_);
 
   // example API for our skill
   // (note that we create the action server in the configure state,
   // so that the API is available to users, but we only start accepting
   // goals in the activate state)
   skill_server_ = rclcpp_action::create_server<Skill>(
-    this, "/{{id}}/control",
+    this, "/skill/locate",
     std::bind(&Node{{Id}}::OnSkillRequestGoal, this, _1, _2),
     nullptr,
     std::bind(&Node{{Id}}::OnSkillRequestAccepted, this, _1));
@@ -86,10 +93,12 @@ Node{{Id}}::LifecycleCallbackReturn Node{{Id}}::on_configure(
 Node{{Id}}::LifecycleCallbackReturn Node{{Id}}::on_activate(
   const rclcpp_lifecycle::State &)
 {
+  using namespace std::chrono_literals;
+  using namespace std::placeholders;
+
   // Define a timer that fires every second to call the run function
   run_timer_ = rclcpp::create_timer(
-    this, this->get_clock(), std::chrono::seconds(1),
-    std::bind(&Node{{Id}}::RunSkill, this));
+    this, this->get_clock(), 1s, std::bind(&Node{{Id}}::Run, this));
 
   RCLCPP_INFO(this->get_logger(), "Skill {{id}} is active and running");
   return LifecycleCallbackReturn::SUCCESS;
@@ -136,13 +145,48 @@ void Node{{Id}}::DeactivateImpl()
   run_timer_.reset();
 }
 
-std::string Node{{Id}}::RunSkill()
+Node{{Id}}::LocateResult Node{{Id}}::Locate(std::string target)
 {
-  RCLCPP_INFO(this->get_logger(), "...running the skill");
+  using namespace std::chrono_literals;
 
-  std::this_thread::sleep_for(std::chrono::seconds(1));  // simulate a long request
+  LocateResult result;
 
-  return "this is an important result";
+  if (target.empty()) {
+    result.error_code = std_skills::msg::Result::ROS_EBADMSG;
+    result.error_msg = "No target has been provided";
+    return result;
+  }
+
+  auto request = std::make_shared<kb_msgs::srv::Query::Request>();
+  request->patterns = std::vector<std::string>({target + " isIn ?location"});
+  request->vars = std::vector<std::string>({"?location"});
+
+  kb_msgs::srv::Query::Response::SharedPtr kb_response;
+  auto future = kb_client_->async_send_request(request);
+  if (future.wait_for(1s) != std::future_status::ready) {
+    result.error_code = std_skills::msg::Result::ROS_EOTHER;
+    result.error_msg = "Could not get a response from the knowledge base";
+    return result;
+  }
+  kb_response = future.get();
+
+  if (!kb_response->success) {
+    result.error_code = std_skills::msg::Result::ROS_EOTHER;
+    result.error_msg = "Query failed: " + kb_response->error_msg;
+    return result;
+  }
+
+  auto query_results = nlohmann::json::parse(kb_response->json);
+  for (const auto & query_result : query_results) {
+    if (query_result.contains("location")) {
+      result.location = query_result["location"].template get<std::string>();
+      break;
+    }
+  }
+  result.error_code = std_skills::msg::Result::ROS_ENOERR;
+  result.error_msg = "";
+
+  return result;
 }
 
 rclcpp_action::GoalResponse Node{{Id}}::OnSkillRequestGoal(
@@ -159,17 +203,27 @@ rclcpp_action::GoalResponse Node{{Id}}::OnSkillRequestGoal(
 
 void Node{{Id}}::OnSkillRequestAccepted(const SkillGoalHandle goal_handle)
 {
-  RCLCPP_INFO(
-    this->get_logger(),
-    "Executing the skill with data: %s",
-    goal_handle->get_goal()->skill_data.c_str());
+  auto skill_data = goal_handle->get_goal()->skill_data;
+  RCLCPP_INFO(this->get_logger(), "Locating entity: %s", skill_data.c_str());
 
-  // perform request here
   auto result = std::make_shared<Skill::Result>();
-  result->value = RunSkill();
-  goal_handle->succeed(result);
-
-  RCLCPP_INFO(this->get_logger(), "Goal executed successfully");
+  auto locate_result = this->Locate(skill_data);
+  if (locate_result.error_code == std_skills::msg::Result::ROS_ENOERR) {
+    result->value = locate_result.location;
+    goal_handle->succeed(result);
+    if (locate_result.location.empty()) {
+      RCLCPP_WARN(this->get_logger(), "Entity not found");
+    } else {
+      RCLCPP_INFO(this->get_logger(), "Entity found in: %s", locate_result.location.c_str());
+    }
+  } else {
+    result->result.error_code = locate_result.error_code;
+    result->result.error_msg = locate_result.error_msg;
+    goal_handle->abort(result);
+    RCLCPP_ERROR(
+      this->get_logger(), "Locate execution error: [code %u] %s",
+      locate_result.error_code, locate_result.error_msg.c_str());
+  }
 }
 
 void Node{{Id}}::PublishDiagnostics()

@@ -19,6 +19,7 @@
 #include <string>
 
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
+#include "kb_msgs/srv/query.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
@@ -47,6 +48,13 @@ public:
   using Skill = sample_skill_msgs::action::SkillControl;
   using SkillGoal = std::shared_ptr<const Skill::Goal>;
   using SkillGoalHandle = std::shared_ptr<rclcpp_action::ServerGoalHandle<Skill>>;
+
+  struct LocateResult
+  {
+    std::string location;
+    int error_code;
+    std::string error_msg;
+  };
 
   /** \brief Construct the skill node. */
   explicit Node{{Id}}(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
@@ -108,8 +116,8 @@ private:
   void CleanupImpl();
   // Internal implementation for the "deactivate" transition
   void DeactivateImpl();
-  // Mock a skill functionality returning a random name.
-  std::string RunSkill();
+  // Locate the item using the knowledge base.
+  LocateResult Locate(std::string target);
   // Accept the incoming goal, if appropriate.
   rclcpp_action::GoalResponse OnSkillRequestGoal(const rclcpp_action::GoalUUID &, SkillGoal);
   // Process an accepted incoming goal.
@@ -126,6 +134,9 @@ private:
   std::shared_ptr<rclcpp::TimerBase> run_timer_;
   std::shared_ptr<rclcpp::TimerBase> diagnostics_timer_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_pub_;
+
+  rclcpp::CallbackGroup::SharedPtr kb_cb_group_;
+  rclcpp::Client<kb_msgs::srv::Query>::SharedPtr kb_client_;
 };
 
 }  // namespace {{id}}

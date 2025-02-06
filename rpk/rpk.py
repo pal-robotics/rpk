@@ -66,6 +66,14 @@ SKILL_TEMPLATES = {
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
+    "locate_cpp": {
+        "tpl_paths": ["skills/locate_cpp/{{id}}", "skills/sample_skill_msgs"],
+        "prog_lang": "c++",
+        "short_desc": "example implementation of 'locate' skill [c++]",
+        "post_install_help": "Check README.md in {path}/{id}/ and "
+                             "edit src/{id}/node_{id}.cpp and include/{id}/node_{id}.hpp "
+                             "to implement your skill logic.",
+    },
 }
 
 INTENT_EXTRACTOR_TEMPLATES = {
@@ -600,7 +608,7 @@ def main(args=sys.argv[1:]):
             yes=args.yes)
 
         data = {"id": id,
-                "Id": string.capwords(id, '_'),
+                "Id": string.capwords(id, '_').replace("_", ""),
                 "name": name,
                 "intents": intents,
                 "robot": robot,
