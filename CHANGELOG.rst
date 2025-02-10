@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.7.0 (2025-02-10)
+------------------
 * gitignore (ignore pypi release artefacts)
 * add missing test dependencies
 * add locate skill template
