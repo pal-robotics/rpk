@@ -2,6 +2,15 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* gitignore (ignore pypi release artefacts)
+* add missing test dependencies
+* add locate skill template
+* add copy of skill/base_cpp for skill/locate_cpp
+* add base_cpp skill template
+* Contributors: Luka Juricic, Séverin Lemaignan
+
 4.6.0 (2025-01-17)
 ------------------
 * add std_skills and ament_cmake_auto to the rpk test dependencies
