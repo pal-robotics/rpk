@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+{% if "pal_arch" in features %}
+import json
+{% endif %}
 {% if "pal_arch" not in features %}
 from functools import partial
 
@@ -107,7 +110,7 @@ class IntentExtractorImpl(Node):
                             source=user_id,
                             modality=Intent.MODALITY_SPEECH,
                             confidence=1.0,
-                            data=f'"input": "{input}"')
+                            data=json.dumps({"input": input}))
             suggested_response = "I'm sorry, I did not understand. " \
                                  "My basic chatbot is not very smart yet."
 
