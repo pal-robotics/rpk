@@ -2,6 +2,11 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [tpl] fix json serialization bug in basic chatbot template
+* Contributors: Séverin Lemaignan
+
 4.7.0 (2025-02-10)
 ------------------
 * gitignore (ignore pypi release artefacts)
