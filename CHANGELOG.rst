@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.7.1 (2025-02-20)
+------------------
 * [tpl] fix json serialization bug in basic chatbot template
 * Contributors: Séverin Lemaignan
 
