@@ -27,7 +27,7 @@ from rclpy.action import ActionClient
 {% for intent in intents %}
 {% if intent.intent == "ENGAGE_WITH"%}
 {% if "communication" in features or "pal_arch" in features %}
-from tts_msgs.action import TTS
+from communication_skills import Say
 {% endif %}
 {% if "gestures" in features %}
 from play_motion2_msgs.action import PlayMotion2
@@ -152,14 +152,14 @@ class MissionController(Node):
     {% endif %}
 {% elif intent.intent == "ENGAGE_WITH" and ("social" in features) %}
             {% if "communication" in features %}
-            # As an example, we call here the TTS and play_motion action server
+            # As an example, we call here the Say and play_motion action server
             # to implement a very simple behaviour when someone engages with
             # the robot.
-            tts = ActionClient(self, TTS, 'say')
-            tts.wait_for_server()
-            tts_goal = TTS.Goal()
-            tts_goal.input = _("engage with msg")
-            tts.send_goal_async(tts_goal)
+            say = ActionClient(self, Say, 'say')
+            say.wait_for_server()
+            say_goal = Say.Goal()
+            say_goal.input = _("engage with msg")
+            say.send_goal_async(say_goal)
             {% endif %}
             {% if "gestures" in features %}
 
@@ -203,14 +203,14 @@ class MissionController(Node):
             # Handle intents to greet, customised by the user
             # Refer to:
             # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
-            tts = ActionClient(self, TTS, 'say')
-            tts.wait_for_server()
+            say = ActionClient(self, Say, 'say')
+            say.wait_for_server()
             {% if robot != "generic-pal" %}
-            tts_goal = TTS.Goal(input=_("Hello, I'm {{robot_name}}. Nice to meet you!"))
+            say_goal = Say.Goal(input=_("Hello, I'm {{robot_name}}. Nice to meet you!"))
             {% else %}
-            tts_goal = TTS.Goal(input=_("Hello. Nice to meet you!"))
+            say_goal = Say.Goal(input=_("Hello. Nice to meet you!"))
             {% endif %}
-            tts.send_goal_async(tts_goal)
+            say.send_goal_async(say_goal)
 {% elif intent.intent in ["GREET", "ENGAGE_WITH"] and "pal_arch" not in features %}
             # Handle intents to greet, customised by the user
             # Refer to:
@@ -223,10 +223,10 @@ class MissionController(Node):
             # Handle intents to say a specific text
             # Refer to:
             # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
-            tts = ActionClient(self, TTS, 'say')
-            tts.wait_for_server()
-            tts_goal = TTS.Goal(input=data['object'])
-            tts.send_goal_async(tts_goal)
+            say = ActionClient(self, Say, 'say')
+            say.wait_for_server()
+            say_goal = Say.Goal(input=data['object'])
+            say.send_goal_async(say_goal)
 {% elif intent.intent == "SAY" and "pal_arch" not in features %}
             # Handle intents to greet, customised by the user
             # Refer to:

@@ -47,11 +47,11 @@
   <!-- If using PAL robots, we need the communication_hub to -->
   <!-- provide communicative acts to the user -->
   <depend>communication_hub</depend>
-  <!-- As an example, we are going to use the TTS and play_motion -->
+  <!-- As an example, we are going to use the Say and play_motion -->
   <!-- actions. We need to list the corresponding ROS actions as -->
   <!-- dependencies. Similary, we will publish in the touchscreen, -->
   <!-- so we need to add dependencies to the pal_web_msgs topic -->
-  <depend>tts_msgs</depend>
+  <depend>communication_skills</depend>
   <depend>play_motion2_msgs</depend>
   <!-- <depend>pal_web_msgs</depend> -->  <!-- Waiting for ros 2 porting -->
 {% else %}

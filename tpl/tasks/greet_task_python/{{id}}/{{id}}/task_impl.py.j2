@@ -26,7 +26,7 @@ from greet_task_msgs.action import Greet
 
 # action for the system skill 'say'
 {% if "pal_arch" in features %}
-from tts_msgs.action import TTS
+from communication_skills.action import Say
 {% else %}
 from sample_skill_msgs.action import SkillControl
 {% endif %}
@@ -80,7 +80,7 @@ class TaskImpl(Node):
 
         self.task_server = None
 
-        self.tts_client = None
+        self.say_client = None
 
         self.current_greeting_status = Greet.Goal().INACTIVE
         self._get_result_future = None
@@ -211,11 +211,11 @@ class TaskImpl(Node):
 
         # create an action client for the 'say' skill
 {% if "pal_arch" in features %}
-        self.tts_client = ActionClient(self, TTS, "/say")
+        self.say_client = ActionClient(self, Say, "/say")
 {% else %}
-        self.tts_client = ActionClient(self, SkillControl, "/say")
+        self.say_client = ActionClient(self, SkillControl, "/say")
 {% endif %}
-        while not self.tts_client.wait_for_server(timeout_sec=1.0):
+        while not self.say_client.wait_for_server(timeout_sec=1.0):
             self.get_logger().info("'/say' skill not yet available, waiting again...")
 
         self.get_logger().info("Task {{id}} is configured, but not yet active")
@@ -326,7 +326,7 @@ class TaskImpl(Node):
 
             self.get_logger().info("Saying hello to the user")
 {% if "pal_arch" in features %}
-            goal = TTS.Goal()
+            goal = Say.Goal()
 
             if self.custom_greetings:
                 goal.input = self.custom_greetings
@@ -345,6 +345,6 @@ class TaskImpl(Node):
 
             # start the say action; the greet_done_callback will be called
             # when the action is over.
-            future = self.tts_client.send_goal_async(goal)
+            future = self.say_client.send_goal_async(goal)
             future.add_done_callback(self.greet_goal_callback)
 

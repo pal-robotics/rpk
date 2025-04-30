@@ -50,15 +50,15 @@
   <!-- provide communicative acts to the user -->
   <depend>communication_hub</depend>
 {% if "gesture" in features %}
-  <!-- As an example, we are going to use the TTS and play_motion -->
+  <!-- As an example, we are going to use the Say and play_motion -->
   <!-- actions. We need to list the corresponding ROS actions as -->
   <!-- dependencies. -->
-  <depend>tts_msgs</depend>
+  <depend>communication_skills</depend>
   <depend>play_motion2_msgs</depend>
 {% else %}
-  <!-- As an example, we are going to use the TTS action. -->
+  <!-- As an example, we are going to use the Say action. -->
   <!-- We need to list the corresponding ROS actions as dependencies. -->
-  <depend>tts_msgs</depend>
+  <depend>communication_skills</depend>
 {% endif %}
 {% else %}
   <!-- We use a generic skill action -->
