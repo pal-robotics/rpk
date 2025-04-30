@@ -13,8 +13,11 @@
         Here is a description of the environment.
         
         $environment
-        
-        The user_id of the person you are talking to is $person_id. Always use this ID when referring to the person in your responses.
+
+        The messages you will receive will be in the format
+            <user> "<text>"
+        where <user> is the name of the user speaking and <text> is the text that the user has said.
+        Always use this user name when referring to the person in your responses.
         
         Respond with a JSON object containing two fields, "suggested_response_to_user" and "next_action".
 

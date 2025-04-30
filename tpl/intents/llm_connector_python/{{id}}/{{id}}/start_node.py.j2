@@ -31,7 +31,7 @@ import {{ id }}.node_impl
 def main():
     rclpy.init()
 
-    node = {{ id }}.node_impl.IntentExtractorImpl()
+    node = {{ id }}.node_impl.LLMChatbot()
     node_executor = MultiThreadedExecutor()
     node_executor.add_node(node)
 
