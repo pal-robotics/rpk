@@ -12,32 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-{% if "pal_arch" in features %}
 import json
-{% endif %}
-{% if "pal_arch" not in features %}
+{% if "pal_arch" in features %}
+import time
+{% else %}
 from functools import partial
-
 {% endif %}
+
 from rclpy.lifecycle import Node
 from rclpy.lifecycle import State
 from rclpy.lifecycle import TransitionCallbackReturn
 from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.action import ActionServer, GoalResponse
-
-{% if "pal_arch" in features %}
-from chatbot_msgs.srv import GetResponse, ResetModel
-{% else %}
-from hri import HRIListener
-{% endif %}
 from hri_actions_msgs.msg import Intent
 from i18n_msgs.action import SetLocale
 from i18n_msgs.srv import GetLocales
-
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
+{% if "pal_arch" in features %}
+from chatbot_msgs.action import Dialogue
+from chatbot_msgs.srv import DialogueInteraction
+from rclpy.action import CancelResponse
+from rclpy.action.server import ServerGoalHandle
+from rclpy.callback_groups import ReentrantCallbackGroup
+{% else %}
+from hri import HRIListener
+{% endif %}
 
 
-class IntentExtractorImpl(Node):
+class BasicChatbot(Node):
     """
     Implementation of {{id}}.
 
@@ -62,8 +64,8 @@ class IntentExtractorImpl(Node):
         self.get_logger().info("Initialising...")
 
 {% if "pal_arch" in features %}
-        self._get_response_srv = None
-        self._reset_srv = None
+        self._dialogue_start_action = None
+        self._dialogue_interaction_srv = None
 {% else %}
         self._hri_listener = None
         self._intent_pub = None
@@ -76,41 +78,110 @@ class IntentExtractorImpl(Node):
         self._diag_timer = None
 
         self._nb_requests = 0
+{% if "pal_arch" in features %}
+        self._dialogue_id = None
+        self._dialogue_result = None
+{% endif %}
 
         self.get_logger().info('Chatbot {{id}} started, but not yet configured.')
 
 {% if "pal_arch" in features %}
-    def on_get_response(self, request: GetResponse.Request, response: GetResponse.Response):
+    def on_dialog_goal(self, goal: Dialogue.Goal):
+        # here we check if the goal is valid and the node is able to accept it
+        # 
+        # For simplicity, we allow only one dialogue at a time.
+        # You might want to change this to allow multiple dialogues at the same time.
+        #
+        # We also check if the dialogue role is supported by the chatbot.
+        # In this example, we only support only the "__default__" role.
+
+        if self._dialogue_id or goal.role.name != '__default__':
+            return GoalResponse.REJECT
+        return GoalResponse.ACCEPT
+
+    def on_dialog_accept(self, handle: ServerGoalHandle):
+        self._dialogue_id = tuple(handle.goal_id.uuid)
+        self._dialogue_result = None
+        handle.execute()
+
+    def on_dialog_cancel(self, handle: ServerGoalHandle):
+        if self._dialogue_id:
+            return CancelResponse.ACCEPT
+        else:
+            return CancelResponse.REJECT
+
+    def on_dialog_execute(self, handle: ServerGoalHandle):
+        id = tuple(handle.goal_id.uuid)
+        self.get_logger().warn(f"Starting '{handle.request.role.name}' dialogue with id {id}")
+
+        try:
+            while handle.is_active:
+                if handle.is_cancel_requested:
+                    handle.canceled()
+                    return Dialogue.Result(error_msg='Dialogue cancelled')
+                elif self._dialogue_result:
+                    if self._dialogue_result.error_msg:
+                        handle.abort()
+                    else:
+                        handle.succeed()
+                    return self._dialogue_result
+                time.sleep(1e-2)
+            return Dialogue.Result(error_msg='Dialogue execution interrupted')
+        finally:
+            self.get_logger().warn(f"Dialogue with id {id} finished")
+            self._dialogue_id = None
+            self._dialogue_result = None
+
+    def on_dialogue_interaction(self,
+                                request: DialogueInteraction.Request,
+                                response: DialogueInteraction.Response):
 
         user_id = request.user_id
         input = request.input
-
-        self.get_logger().info(f"input from {user_id}: {input}")
-        self._nb_requests += 1
+        response_expected = request.response_expected
+{% else %}
+    def on_user_input(self, input, user_id):
+        response_expected = True
+{% endif %}
 
         # implement here the logic to process the natural text input
         #
         # You might want to:
-        # - recognise and return the user intent (if any), and map it to the
-        # Intent.msg semantics.
+        # - recognize and return the user intent (if any), and map it to the Intent.msg semantics.
         # - return a suggested response to the user (if any)
-        #
-        # For now, we just try to recognise a greeting
+        # - return a result (if the dialogue has exhausted its role), which would close the dialogue
+        # For now, we just try to recognize a greeting, and close the dialogue if requested
+        suggested_response = ""
+        intents = []
+        stop = False
+
+        self.get_logger().info(f"input from {user_id}: {input}")
+        self._nb_requests += 1
+
         if "hello" in input.lower() or "hi" in input.lower():
             self.get_logger().warn("I think the user want to greet me. Sending a GREET intent")
-            intent = Intent(intent=Intent.GREET,
-                            source=user_id,
-                            modality=Intent.MODALITY_SPEECH,
-                            confidence=.8)
+            intents.append(Intent(intent=Intent.GREET,
+                                  source=user_id,
+                                  modality=Intent.MODALITY_SPEECH,
+                                  confidence=.8))
             suggested_response = "Hello! How can I help you?"
+        elif "stop" in input.lower() or "shut up" in input.lower():
+            self.get_logger().warn("I think the user wants me to stop this interaction. Closing the dialogue")
+            intents.append(Intent(intent=Intent.STOP_ACTIVITY,
+                                  source=user_id,
+                                  modality=Intent.MODALITY_SPEECH,
+                                  confidence=1.0,
+                                  data=json.dumps({"object": "dialogue"})))
+            suggested_response = "Ok, I will stop talking now."
+            stop = True
         else:
             self.get_logger().warn("Unable to recognise a particular intent! "
                                    "forwarding a 'RAW_USER_INPUT'")
-            intent = Intent(intent=Intent.RAW_USER_INPUT,
-                            source=user_id,
-                            modality=Intent.MODALITY_SPEECH,
-                            confidence=1.0,
-                            data=json.dumps({"input": input}))
+            intents.append(Intent(intent=Intent.RAW_USER_INPUT,
+                                  source=user_id,
+                                  modality=Intent.MODALITY_SPEECH,
+                                  confidence=1.0,
+                                  data=json.dumps({"input": input})))
             suggested_response = "I'm sorry, I did not understand. " \
                                  "My basic chatbot is not very smart yet."
 
@@ -122,46 +193,16 @@ class IntentExtractorImpl(Node):
                 " I went to the mountains and did some hiking.",
                 " I went to the city and visited a museum."][self._nb_requests % 5]
 
-        response.response = suggested_response
-        response.intents = [intent]
-
-        return response
-
-    def on_reset(self, request: ResetModel.Request, response: ResetModel.Response):
-        self.get_logger().info('Received reset request. Not implemented yet.')
+{% if "pal_arch" in features %}
+        if response_expected:
+            response.response = suggested_response
+        response.intents = intents
+        if stop:
+            self._dialogue_result = Dialogue.Result()
         return response
 {% else %}
-    def on_user_input(self, input, user_id):
-        """
-        Return the chatbot's response to a text input.
-
-        Implement here the logic to process the natural text input
-        and return a reponse made of a combination of text to be spoken back, and
-        possible recognized user intents.
-        """
-        self.get_logger().info(f"input from {user_id}: {input}")
-        self._nb_requests += 1
-
-        # here, you need to retrieve the user intent, and map it to the
-        # Intent.msg semantics.
-        #
-        # For now, we just try to recognise a greeting
-        if "hello" in input.lower() or "hi" in input.lower():
-            intent = Intent(intent=Intent.GREET,
-                            source=user_id,
-                            modality=Intent.MODALITY_SPEECH,
-                            confidence=.8)
-            self.get_logger().warn("I think the user want to greet me. Sending a GREET intent")
-        else:
-            self.get_logger().warn("Unable to recognise a particular intent! "
-                                   "forwarding a 'RAW_USER_INPUT'")
-            intent = Intent(intent=Intent.RAW_USER_INPUT,
-                            source=user_id,
-                            modality=Intent.MODALITY_SPEECH,
-                            confidence=1.0,
-                            data=f'"input": "{input}"')
-
-        self._intent_pub.publish(intent)
+        for intent in intents:
+            self._intent_pub.publish(intent)
 {% endif %}
 
     def on_get_supported_locales(self, request, response):
@@ -213,10 +254,16 @@ class IntentExtractorImpl(Node):
 
         """
 {% if "pal_arch" in features %}
-        self._get_response_srv = self.create_service(
-            GetResponse, '/chatbot/get_response', self.on_get_response)
-        self._reset_srv = self.create_service(
-            ResetModel, '/chatbot/reset', self.on_reset)
+        self._dialogue_start_action = ActionServer(
+            self, Dialogue, '/chatbot/start_dialogue',
+            execute_callback=self.on_dialog_execute,
+            goal_callback=self.on_dialog_goal,
+            handle_accepted_callback=self.on_dialog_accept,
+            cancel_callback=self.on_dialog_cancel,
+            callback_group=ReentrantCallbackGroup())
+    
+        self._dialogue_interaction_srv = self.create_service(
+            DialogueInteraction, '/chatbot/dialogue_interaction', self.on_dialogue_interaction)
 {% else %}
         self._hri_listener = HRIListener("__internal_{{id}}_hri__")
         self._hri_listener.on_voice(lambda voice:
@@ -237,8 +284,8 @@ class IntentExtractorImpl(Node):
 
         self.destroy_timer(self._timer)
 {% if "pal_arch" in features %}
-        self.destroy_service(self._get_response_srv)
-        self.destroy_service(self._reset_srv)
+        self._dialogue_start_action.destroy()
+        self.destroy_service(self._dialogue_interaction_srv)
 {% else %}
         self._hri_listener = None
         self.destroy_publisher(self._intent_pub)
