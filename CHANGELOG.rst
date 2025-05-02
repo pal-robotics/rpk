@@ -2,6 +2,16 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [minor][chatbot] document request.dialogue_id
+* launch.actions.Shutdown instead of launch.events.Shutdown to shutdown launch files
+* linting
+* replace TTS action with Say
+* update llm_connector_python to new chatbot API
+* update basic_chatbot to new chatbot API
+* Contributors: Luka Juricic, Séverin Lemaignan
+
 4.7.1 (2025-02-20)
 ------------------
 * [tpl] fix json serialization bug in basic chatbot template
