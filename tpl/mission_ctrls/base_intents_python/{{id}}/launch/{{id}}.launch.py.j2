@@ -13,8 +13,8 @@
 # limitations under the License.
 
 from launch import LaunchDescription
-from launch.actions import EmitEvent, RegisterEventHandler
-from launch.events import matches_action, Shutdown
+from launch.actions import EmitEvent, RegisterEventHandler, Shutdown
+from launch.events import matches_action
 from launch_ros.actions import LifecycleNode
 from launch_ros.events.lifecycle import ChangeState
 from launch_ros.event_handlers import OnStateTransition
