@@ -154,6 +154,10 @@ class BasicChatbot(Node):
         For now, we just try to recognize a greeting, and close the dialogue
         if requested.
         """
+        # we can have multiple dialogues: we use the dialogue_id to
+        # identify to which conversation this new input belongs
+        target_dialogue_id = request.dialogue_id
+
         user_id = request.user_id
         input = request.input
         response_expected = request.response_expected
@@ -164,7 +168,11 @@ class BasicChatbot(Node):
         suggested_response = ""
         intents = []
 
+{% if "pal_arch" in features %}
+        self.get_logger().info(f"input from {user_id} to dialogue {target_dialogue_id}: {input}")
+{% else %}
         self.get_logger().info(f"input from {user_id}: {input}")
+{% endif %}
         self._nb_requests += 1
 
         if "hello" in input.lower() or "hi" in input.lower():
