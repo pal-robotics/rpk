@@ -31,7 +31,6 @@ from hri_actions_msgs.msg import Intent
 from i18n_msgs.action import SetLocale
 from i18n_msgs.srv import GetLocales
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
-from unique_identifier_msgs.msg import UUID
 {% if "pal_arch" in features %}
 from chatbot_msgs.action import Dialogue
 from chatbot_msgs.srv import DialogueInteraction
@@ -174,8 +173,8 @@ class LLMChatbot(Node):
 
 {% if "pal_arch" in features %}
     def on_dialog_goal(self, goal: Dialogue.Goal):
-        # here we check if the goal is valid and the node is able to accept it
-        # 
+        # Check if the goal is valid and the node is able to accept it
+        #
         # For simplicity, we allow only one dialogue at a time.
         # You might want to change this to allow multiple dialogues at the same time.
         #
@@ -235,13 +234,17 @@ class LLMChatbot(Node):
     def on_user_input(self, input, user_id):
 {% endif %}
 
-        # implement here the logic to process the natural text input
+        # Implement here the logic to process the natural text input
         #
         # You might want to:
-        # - recognize and return the user intent (if any), and map it to the Intent.msg semantics.
-        # - return a suggested response to the user (if any)
-        # - return a result (if the dialogue has exhausted its role), which would close the dialogue
-        # For now, we just try to recognize a greeting, and close the dialogue if requested
+        # - recognize and return the user intent (if any), and map it to the
+        #   Intent.msg semantics.
+        # - return a suggested response to the user (if any) - return a result
+        #   (if the dialogue has exhausted its role), which would close the
+        #   dialogue
+        #
+        # For now, we just try to recognize a greeting, and close the dialogue
+        # if requested
         suggested_response = ""
         intent = None
 
@@ -450,8 +453,9 @@ class LLMChatbot(Node):
         system_prompt = self.get_parameter('system_prompt').value
 
         tpl = Template(system_prompt)
-        rendered_system_prompt = tpl.safe_substitute(action_list=self.make_action_list(),
-                                                     environment=self.get_environment_description())
+        rendered_system_prompt = tpl.safe_substitute(
+                                                action_list=self.make_action_list(),
+                                                environment=self.get_environment_description())
         self._system_prompt_msg = {'role': 'system', 'content': rendered_system_prompt}
 
         self.get_logger().info(f"I will connect to the LLM server on {self._llm_server}.")

@@ -87,8 +87,8 @@ class BasicChatbot(Node):
 
 {% if "pal_arch" in features %}
     def on_dialog_goal(self, goal: Dialogue.Goal):
-        # here we check if the goal is valid and the node is able to accept it
-        # 
+        # Here we check if the goal is valid and the node is able to accept it
+        #
         # For simplicity, we allow only one dialogue at a time.
         # You might want to change this to allow multiple dialogues at the same time.
         #
@@ -131,29 +131,38 @@ class BasicChatbot(Node):
             self.get_logger().warn(f"Dialogue with id {id} finished")
             self._dialogue_id = None
             self._dialogue_result = None
+{% endif %}
+{% if "pal_arch" in features %}
 
     def on_dialogue_interaction(self,
                                 request: DialogueInteraction.Request,
                                 response: DialogueInteraction.Response):
+{% else %}
+    def on_user_input(self, input, user_id):
+{% endif %}
+        """
+        Implement here the logic to process the natural text input.
 
+        You might want to:
+        - recognize and return the user intent (if any), and map it to the
+          Intent.msg semantics.
+        - return a suggested response to the user (if any)
+        - return a result (if the discussion has come to a close), which
+          effectively terminates the dialogue
+{% if "pal_arch" in features %}
+
+        For now, we just try to recognize a greeting, and close the dialogue
+        if requested.
+        """
         user_id = request.user_id
         input = request.input
         response_expected = request.response_expected
+        stop = False
 {% else %}
-    def on_user_input(self, input, user_id):
-        response_expected = True
+        """
 {% endif %}
-
-        # implement here the logic to process the natural text input
-        #
-        # You might want to:
-        # - recognize and return the user intent (if any), and map it to the Intent.msg semantics.
-        # - return a suggested response to the user (if any)
-        # - return a result (if the dialogue has exhausted its role), which would close the dialogue
-        # For now, we just try to recognize a greeting, and close the dialogue if requested
         suggested_response = ""
         intents = []
-        stop = False
 
         self.get_logger().info(f"input from {user_id}: {input}")
         self._nb_requests += 1
@@ -166,14 +175,17 @@ class BasicChatbot(Node):
                                   confidence=.8))
             suggested_response = "Hello! How can I help you?"
         elif "stop" in input.lower() or "shut up" in input.lower():
-            self.get_logger().warn("I think the user wants me to stop this interaction. Closing the dialogue")
+            self.get_logger().warn("I think the user wants me to stop this interaction."
+                                   " Closing the dialogue")
             intents.append(Intent(intent=Intent.STOP_ACTIVITY,
                                   source=user_id,
                                   modality=Intent.MODALITY_SPEECH,
                                   confidence=1.0,
                                   data=json.dumps({"object": "dialogue"})))
             suggested_response = "Ok, I will stop talking now."
+{% if "pal_arch" in features %}
             stop = True
+{% endif %}
         else:
             self.get_logger().warn("Unable to recognise a particular intent! "
                                    "forwarding a 'RAW_USER_INPUT'")
@@ -261,7 +273,7 @@ class BasicChatbot(Node):
             handle_accepted_callback=self.on_dialog_accept,
             cancel_callback=self.on_dialog_cancel,
             callback_group=ReentrantCallbackGroup())
-    
+
         self._dialogue_interaction_srv = self.create_service(
             DialogueInteraction, '/chatbot/dialogue_interaction', self.on_dialogue_interaction)
 {% else %}
