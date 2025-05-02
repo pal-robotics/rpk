@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+5.0.0 (2025-05-02)
+------------------
 * [minor][chatbot] document request.dialogue_id
 * launch.actions.Shutdown instead of launch.events.Shutdown to shutdown launch files
 * linting
