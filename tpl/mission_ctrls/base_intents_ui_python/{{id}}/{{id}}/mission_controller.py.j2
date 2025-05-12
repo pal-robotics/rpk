@@ -27,7 +27,7 @@ from rclpy.action import ActionClient
 {% for intent in intents %}
 {% if intent.intent == "ENGAGE_WITH"%}
 {% if "communication" in features or "pal_arch" in features %}
-from communication_skills import Say
+from communication_skills.action import Say
 {% endif %}
 {% if "gestures" in features %}
 from play_motion2_msgs.action import PlayMotion2
@@ -39,6 +39,7 @@ from sample_skill_msgs.action import SkillControl
 {% endfor %}
 {% endif %}
 
+from std_msgs.msg import Int16
 from hri_actions_msgs.msg import Intent
 {% if "pal_arch" in features %}
 from lifecycle_msgs.msg import State as StateMsg
@@ -71,6 +72,7 @@ class MissionController(Node):
         self.i18n = I18nSupport(self, '{{ id }}')
 
         self.ui_client = None  # service client to set the UI
+        self.ui_update_client = None  # service client to update the UI state
 
         #######################################
         #
@@ -80,16 +82,24 @@ class MissionController(Node):
         # on_configure state.
         #
 
-        self.inc = None
+        self._counter_sub = None
+        self.counter = None
 
         self.get_logger().info('Mission controller initialized, but not yet configured.')
 
     def set_ui(self, qml: str) -> None:
+        """Set the UI interface."""
         ui_fragment = SetUiFragment.Request()
         ui_fragment.qml_import_path = get_package_share_directory("{{id}}") + "/.."
         ui_fragment.qml_fragment = "import {{id}}.ui 1.0\n" + qml
 
         self.ui_client.call_async(ui_fragment)
+
+    def update_ui(self, qml: str) -> None:
+        """Update the UI interface."""
+        ui_fragment = SetUiFragment.Request()
+        ui_fragment.qml_fragment = qml
+        self.ui_update_client.call_async(ui_fragment)
 
     def on_intent(self, msg):
 
@@ -266,6 +276,15 @@ class MissionController(Node):
                                       "<%s>!" % msg.intent)
 {% endif %}
 
+    def on_counter_reset(self, msg):
+        """
+        Reset the counter to a value set by the user interface.
+
+        This illustrates how to receive a message from the UI.
+        """
+        self.counter = msg.data
+        self.get_logger().info(f"Counter reset to {self.counter}")
+
     def start_task(self, task: str) -> None:
 
         if task == "sample_task_1":
@@ -273,19 +292,55 @@ class MissionController(Node):
 
             # create an action client to call the tasks' action server
             # and send a goal to start the task
-            task_client = ActionClient(self, TaskControl, '/sample_gui_task/control')
-            task_ok = task_client.wait_for_server(timeout_sec=1)
+            self.current_task_client = ActionClient(self, TaskControl, '/sample_gui_task/control')
+            task_ok = self.current_task_client.wait_for_server(timeout_sec=1)
             if not task_ok:
                 self.get_logger().error("The task server is not available. Task not started?")
             else:
-                task_goal = TaskControl.Goal()
-                task_goal.task_data = "go go go"
-                task_client.send_goal_async(task_goal)
+                task_msg = TaskControl.Goal()
+                task_msg.task_data = "go go go"
+                self.ongoing_task_goal = self.current_task_client.send_goal_async(task_msg)
+                self.ongoing_task_goal.add_done_callback(self.goal_response_callback)
         else:
             self.get_logger().warn("Task %s not implemented" % task)
-            self.set_ui("MainPage{"
-                        "alertMsg: 'Task %s not yet implemented';"
-                        "popupVisible:true}" % task)
+
+            # this.alert is a function defined in the UI. See res/ui/AppUI.qml
+            self.update_ui(
+                f"this.alert('Task {task} not yet implemented');")
+
+    def goal_response_callback(self, future):
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().info('task rejected the goal :(')
+            return
+
+        self.get_logger().info('Task accepted the goal :)')
+
+        self.ongoing_task_result_future = goal_handle.get_result_async()
+        self.ongoing_task_result_future.add_done_callback(self.task_finished)
+
+    def task_finished(self, future):
+        """
+        Callback to be called when the task is finished.
+
+        :param future: The future of the action client.
+        """
+
+        # restore the main UI
+        self.set_ui("AppUI {}")
+
+        result = future.result()
+        self.get_logger().info("Task finished with status: %d" % result.status)
+        self.get_logger().info("Task result: %s" % dir(result))
+        if result.status == 4:
+            self.get_logger().info("Task finished successfully")
+            self.update_ui(
+                "this.alert('Task finished successfully');")
+        else:
+            self.get_logger().warn("Task failed")
+            self.update_ui(
+                "this.alert('Task failed (canceled?)');")
+
 
     #########################################################################
     #################################
@@ -309,7 +364,7 @@ class MissionController(Node):
         self.i18n.configure()
         _ = self.i18n.tr
 
-        self.inc = 0
+        self.counter = 0
         self.get_logger().info('Mission controller configured, but not yet active.')
         return TransitionCallbackReturn.SUCCESS
 
@@ -325,8 +380,16 @@ class MissionController(Node):
             '/intents',
             self.on_intent,
             10)
-        self.get_logger().info("Listening to %s topic" %
+        self.get_logger().info("Listening for intents on %s topic" %
                                self._intents_sub.topic_name)
+
+        self._counter_sub = self.create_subscription(
+            Int16,
+            '/{{id}}/my_counter',
+            self.on_counter_reset,
+            10)
+        self.get_logger().info("Listening for counter reset on %s topic" %
+                               self._counter_sub.topic_name)
 
         ui_service = "/ui/set_fragment"
         self.ui_client = self.create_client(SetUiFragment, ui_service)
@@ -334,7 +397,11 @@ class MissionController(Node):
         if not ui_ok:
             self.get_logger().error(f"The UI server is not available (service {ui_service}).")
         else:
-            self.set_ui("MainPage {}")
+            ui_update_service = "/ui/update_state"
+            self.ui_update_client = self.create_client(SetUiFragment, ui_update_service)
+            ui_ok = self.ui_update_client.wait_for_service(timeout_sec=1)
+
+            self.set_ui("AppUI {}")
 
         # Define a timer that fires every second to call the run function
         timer_period = 1  # in sec
@@ -353,8 +420,10 @@ class MissionController(Node):
         self.get_logger().info("Stopping application")
 
         self.destroy_client(self.ui_client)
+        self.destroy_client(self.ui_update_client)
         self.destroy_timer(self._timer)
         self.destroy_subscription(self._intents_sub)
+        self.destroy_subscription(self._counter_sub)
 
         self.get_logger().info('Mission controller deactivated.')
         return super().on_deactivate(state)
@@ -391,6 +460,13 @@ class MissionController(Node):
         # this function will not be called
         #
 
-        self.get_logger().info(str(self.inc))
-        self.inc += 1
+        if self.counter == 0:
+            return
+
+        self.counter = max(0, self.counter - 1)
+        self.get_logger().info(f"Counting down: {self.counter}")
+
+        if self.counter == 0:
+            self.get_logger().info("Counter reached 0! Reset it to resume the counting.")
+
 

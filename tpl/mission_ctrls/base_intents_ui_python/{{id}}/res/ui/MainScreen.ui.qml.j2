@@ -1,0 +1,190 @@
+
+
+/* Copyright (c) {{ year }} {{ author }}. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+This is a UI file (.ui.qml) that is intended to be edited in Qt Design Studio only.
+It is supposed to be strictly declarative and only uses a subset of QML. If you edit
+this file manually, you might introduce QML code that is not supported by Qt Design Studio.
+Check out https://doc.qt.io/qtcreator/creator-quick-ui-forms.html for details on .ui.qml files.
+*/
+import QtQuick 2.15
+import "js/Constants.js" as Constants
+
+Rectangle {
+    id: mainScreen
+
+    width: Constants.width
+    height: Constants.height
+    color: Constants.bgColor
+    property alias alertModal: alertModal
+    property alias mainMenu: mainMenu
+
+    Image {
+        id: wallpaper
+        anchors.fill: parent
+        source: "images/wallpaper.jpg"
+        fillMode: Image.PreserveAspectCrop
+    }
+    Rectangle {
+        id: backIcon
+        width: 50
+        height: 50
+        opacity: 0.8
+        visible: false
+        color: Constants.accentColor
+        radius: width / 2
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.leftMargin: 30
+        anchors.topMargin: 30
+
+        Image {
+            source: "images/back.svg"
+            anchors.fill: parent
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+        MouseArea {
+            id: mouseArea
+            anchors.fill: parent
+            // returns to the base (default) app state
+            onClicked: mainScreen.state = ""
+        }
+    }
+    Text {
+        id: label
+        text: qsTr("{{ id }} Demo UI")
+        anchors.top: parent.top
+        font: Constants.largeFont
+        color: Constants.fgColor
+        anchors.topMargin: 45
+        anchors.horizontalCenter: parent.horizontalCenter
+    }
+
+    MainMenu {
+        id: mainMenu
+        anchors.centerIn: parent
+        btn_1.onClicked: mainScreen.state = "AlternateTitle"
+        btn_2.onClicked: mainScreen.state = "SecondPage"
+    }
+
+    AlertModal {
+        id: alertModal
+        anchors.fill: parent
+        visible: false
+    }
+
+    Image {
+        id: robotLove
+        y: 774
+        width: 316
+        height: 211
+        visible: false
+        source: "images/robot-love.svg"
+        anchors.horizontalCenter: parent.horizontalCenter
+        fillMode: Image.PreserveAspectFit
+    }
+
+    Text {
+        id: desc
+        text: qsTr("This demo app shows several of the QML features (like *components*, *states*, *transitions*...), as well as simple interaction with your main mission controller via ROS.")
+        width: parent.width * 0.8
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 40
+        horizontalAlignment: Text.AlignHCenter
+        wrapMode: Text.WordWrap
+        textFormat: Text.MarkdownText
+        anchors.horizontalCenter: parent.horizontalCenter
+        font: Constants.font
+        color: Constants.fgColor
+    }
+
+    states: [
+        State {
+            name: "AlternateTitle"
+
+            PropertyChanges {
+                target: label
+                text: qsTr("This is another title!")
+            }
+
+            PropertyChanges {
+                target: backIcon
+                visible: true
+            }
+        },
+        State {
+            name: "SecondPage"
+
+            PropertyChanges {
+                target: robotLove
+                y: 213
+                width: 640
+                height: 321
+                visible: true
+                anchors.horizontalCenterOffset: 0
+            }
+
+            PropertyChanges {
+                target: mainMenu
+                visible: false
+            }
+
+            PropertyChanges {
+                target: backIcon
+                visible: true
+            }
+        }
+    ]
+    transitions: [
+        Transition {
+            id: transition
+            ParallelAnimation {
+                SequentialAnimation {
+                    PauseAnimation {
+                        duration: 0
+                    }
+
+                    PropertyAnimation {
+                        target: robotLove
+                        property: "anchors.horizontalCenterOffset"
+                        duration: 150
+                    }
+                }
+
+                SequentialAnimation {
+                    PauseAnimation {
+                        duration: 0
+                    }
+
+                    PropertyAnimation {
+                        target: robotLove
+                        property: "y"
+                        duration: 150
+                    }
+                }
+            }
+            to: "*"
+            from: "*"
+        }
+    ]
+}
+
+/*##^##
+Designer {
+    D{i:0}D{i:8}D{i:9}D{i:17;transitionDuration:2000}
+}
+##^##*/
+

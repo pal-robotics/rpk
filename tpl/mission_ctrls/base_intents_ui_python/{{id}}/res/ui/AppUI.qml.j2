@@ -1,0 +1,72 @@
+/* Copyright (c) {{ year }} {{ author }}. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+Sample UI application. This component (AppUI.qml) is sent at startup
+to the robot's UI server by the mission controller.
+*/
+
+import QtQuick 2.15
+
+
+import Ros 2.0
+
+Item {
+    width: mainScreen.width
+    height: mainScreen.height
+
+    IntTopic {
+        id: counterTopic
+        topic: "/{{ id }}/my_counter"
+    }
+
+    IntentTopic {
+        id: intentTopic
+        topic: "/intents"
+    }
+
+
+    MainScreen {
+        id: mainScreen
+
+        // implement here the actions when user click the various buttons
+        mainMenu.btn_3.onClicked: alert("**Hello!**<br/>I'm a custom modal to display **alert** messages")
+
+        mainMenu.btn_4.onClicked: {
+            counterTopic.value = 10;
+            counterTopic.publish();
+            alert("Value published to topic `" + counterTopic.topic + "`");
+        }
+
+        mainMenu.btn_5.onClicked: {
+            intentTopic.value = "__intent_start_activity__";
+            intentTopic.data = "{\"object\": \"sample_task_1\"}"
+            intentTopic.publish();
+            alert("Intent published to topic `" + intentTopic.topic + "` to start `sample_task_1`");
+        }
+
+        mainMenu.btn_6.onClicked: {
+            intentTopic.value = "__intent_start_activity__";
+            intentTopic.data = "{\"object\": \"unknown_task\"}"
+            intentTopic.publish();
+            alert("Intent published to topic `" + intentTopic.topic + "` to start `unknown_task`");
+        }
+    }
+
+    function alert(msg) {
+        mainScreen.alertModal.msg = msg;
+        mainScreen.alertModal.visible = true;
+    }
+
+}

@@ -1,0 +1,40 @@
+# Copyright (c) 2025 PAL Robotics SLU. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+# This Ros module is a mock module, replacing the real Ros-QML bridge.
+#
+# This module is useful during development, when editing the QML interface outside of
+# a ROS2 environment. It allows you to test the QML interface without having to
+# run a ROS2 node.
+#
+# On an actual robot, you will want to install the real QML module, found
+# here: https://gitlab.pal-robotics.com/interaction/ros_qml_plugin
+
+# API based on ros_qml_plugin 2.13.0
+
+module Ros
+RosParam 2.0 Param.qml
+
+StringTopic 2.0 Topic.qml
+IntTopic 2.0 Topic.qml
+Int32Topic 2.0 Topic.qml
+FloatTopic 2.0 Topic.qml
+BoolTopic 2.0 Topic.qml
+ExpressionTopic 2.0 Topic.qml
+ClosedCaptionTopic 2.0 Topic.qml
+IntentTopic 2.0 Topic.qml
+RosSignal 2.0 Topic.qml
+
+SetBoolService 2.0 Service.qml
