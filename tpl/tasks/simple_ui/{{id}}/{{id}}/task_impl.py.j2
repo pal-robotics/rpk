@@ -26,6 +26,8 @@ from ament_index_python.packages import get_package_share_directory
 from task_msgs.action import TaskControl
 from ui_msgs.srv import SetUiFragment
 
+from std_msgs.msg import String, Int16
+
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
 
@@ -66,6 +68,8 @@ class TaskImpl(Node):
 
         self.task_running = False
         self.completed = 0
+        self._ui_msg_sub = None
+        self._task_progress_pub = None
 
         self.get_logger().info('Task {{id}} started, but not yet configured.')
 
@@ -77,6 +81,21 @@ class TaskImpl(Node):
 
         self.get_logger().info("Accepted a new goal")
         return GoalResponse.ACCEPT
+
+    def on_ui_msg(self, msg: String) -> None:
+        """
+        Callback to process incoming UI messages.
+
+        Every time a message is received on the topic /{{id}}/ui_msg,
+        increment the task completion percentage by 10.
+
+        This is purely for demonstration purposes, and should be replaced
+        with your own logic.
+        """
+        self.get_logger().info(f"Received UI message: {msg.data}. "
+                                "Increasing task completion by 10%")
+        self.completed += 10
+        self._task_progress_pub.publish(Int16(data=self.completed))
 
     def set_ui(self, qml: str) -> None:
         ui_fragment = SetUiFragment.Request()
@@ -90,6 +109,7 @@ class TaskImpl(Node):
         task_data = goal_handle.request.task_data
 
         self.get_logger().info(f"Starting the task with data <{task_data}>")
+        self.completed = 0
 
         feedback_msg = TaskControl.Feedback()
         feedback_msg.status = "task started"
@@ -99,8 +119,8 @@ class TaskImpl(Node):
         self.task_running = True
 
         # set the UI: pass a QML fragment to be displayed
-        self.set_ui("MainPage {}")
-        feedback_msg.status = "UI set to display main QML widget"
+        self.set_ui("TaskUI {customMsg: 'Hello from the the task_impl script'}")
+        feedback_msg.status = "Set task user interface"
         goal_handle.publish_feedback(feedback_msg)
 
         # publish feedback
@@ -121,7 +141,6 @@ class TaskImpl(Node):
         feedback_msg.status = "task completed"
         goal_handle.publish_feedback(feedback_msg)
 
-        self.completed = 0
         self.task_running = False
 
         goal_handle.succeed()
@@ -185,6 +204,16 @@ class TaskImpl(Node):
         if not ui_ok:
             self.get_logger().error(f"The UI server is not available (service {ui_service}).")
 
+        self._ui_msg_sub = self.create_subscription(
+            String,
+            '/{{id}}/ui_msg',
+            self.on_ui_msg,
+            10)
+        self.get_logger().info("Listening for UI messages on topic <%s>" %
+                               self._ui_msg_sub.topic_name)
+
+        self._task_progress_pub = self.create_publisher(Int16,'/{{id}}/task_progress', 10)
+
         # As an example, define a timer that fires every second to call the run
         # function
         timer_period = 1  # in sec self._timer =
@@ -196,6 +225,10 @@ class TaskImpl(Node):
     def on_deactivate(self, state: State) -> TransitionCallbackReturn:
         """Stop the timer to stop calling the `run` function (main task of your application)."""
         self.get_logger().info("Stopping task...")
+
+        self.destroy_subscription(self._ui_msg_sub)
+        self.destroy_publisher(self._task_progress_pub)
+
         self.destroy_client(self.ui_client)
         self.destroy_timer(self._timer)
 
@@ -259,7 +292,6 @@ class TaskImpl(Node):
         # If the task is deactivated,
         # this function is not called anymore
         #
+        pass
 
-        if self.task_running:
-            self.completed += 10
 
