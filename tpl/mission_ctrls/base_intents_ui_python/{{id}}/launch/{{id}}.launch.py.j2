@@ -12,8 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+from ament_index_python.packages import get_package_share_directory
+
 from launch import LaunchDescription
 from launch.actions import EmitEvent, RegisterEventHandler, Shutdown
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.events import matches_action
 from launch_ros.actions import LifecycleNode
 from launch_ros.events.lifecycle import ChangeState
@@ -62,6 +67,12 @@ def generate_launch_description():
         handle_once=True))
 
     ld.add_action(activate_event)
+
+    for dep in ["sample_gui_task"]:
+        ld.add_action(IncludeLaunchDescription(
+          PythonLaunchDescriptionSource([os.path.join(
+            get_package_share_directory(dep), 'launch'), f'/{dep}.launch.py'])
+        ))
 
     return ld
 
