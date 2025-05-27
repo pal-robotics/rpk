@@ -320,12 +320,6 @@ class MissionController(Node):
         self.ongoing_task_result_future.add_done_callback(self.task_finished)
 
     def task_finished(self, future):
-        """
-        Callback to be called when the task is finished.
-
-        :param future: The future of the action client.
-        """
-
         # restore the main UI
         self.set_ui("AppUI {}")
 
@@ -341,8 +335,6 @@ class MissionController(Node):
             self.update_ui(
                 "this.alert('Task failed (canceled?)');")
 
-
-    #########################################################################
     #################################
     #
     # Lifecycle transitions callbacks
@@ -468,5 +460,4 @@ class MissionController(Node):
 
         if self.counter == 0:
             self.get_logger().info("Counter reached 0! Reset it to resume the counting.")
-
 

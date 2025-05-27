@@ -84,7 +84,7 @@ class TaskImpl(Node):
 
     def on_ui_msg(self, msg: String) -> None:
         """
-        Callback to process incoming UI messages.
+        Process incoming UI messages.
 
         Every time a message is received on the topic /{{id}}/ui_msg,
         increment the task completion percentage by 10.
@@ -93,7 +93,7 @@ class TaskImpl(Node):
         with your own logic.
         """
         self.get_logger().info(f"Received UI message: {msg.data}. "
-                                "Increasing task completion by 10%")
+                               "Increasing task completion by 10%")
         self.completed += 10
         self._task_progress_pub.publish(Int16(data=self.completed))
 
@@ -212,7 +212,8 @@ class TaskImpl(Node):
         self.get_logger().info("Listening for UI messages on topic <%s>" %
                                self._ui_msg_sub.topic_name)
 
-        self._task_progress_pub = self.create_publisher(Int16,'/{{id}}/task_progress', 10)
+        self._task_progress_pub = self.create_publisher(Int16,
+                                                        '/{{id}}/task_progress', 10)
 
         # As an example, define a timer that fires every second to call the run
         # function
@@ -293,5 +294,4 @@ class TaskImpl(Node):
         # this function is not called anymore
         #
         pass
-
 
