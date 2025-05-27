@@ -2,6 +2,14 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* linting
+* [tpl] base_intents_ui_python: make sure to launch dependen task
+* [tpl] update task/simple_ui tpl to support Qt Design Studio
+* [tpl] UI templates: add support for Qt Design Studio with more advanced default UI template
+* Contributors: Séverin Lemaignan
+
 5.0.0 (2025-05-02)
 ------------------
 * [minor][chatbot] document request.dialogue_id
