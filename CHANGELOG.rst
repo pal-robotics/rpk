@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+5.1.0 (2025-05-27)
+------------------
 * linting
 * [tpl] base_intents_ui_python: make sure to launch dependen task
 * [tpl] update task/simple_ui tpl to support Qt Design Studio
