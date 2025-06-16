@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+5.2.0 (2025-06-16)
+------------------
 * [tpl][UI] add SaySkill to mock-up ROS QML
 * [tpl] base_intent_ui_mission: handle the '__back_\_' PRESENT_CONTENT
 * since communication_hub 2.0.0, no need to activate comunication_hub anymore
