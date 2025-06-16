@@ -38,3 +38,5 @@ IntentTopic 2.0 Topic.qml
 RosSignal 2.0 Topic.qml
 
 SetBoolService 2.0 Service.qml
+
+SaySkill 2.0 Action.qml
