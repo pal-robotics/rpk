@@ -120,8 +120,7 @@ class MissionController(Node):
           (("social" in features or "pal_arch" not in features) and intent.intent in ["ENGAGE_WITH"]) or
           (("gestures" in features or "pal_arch" not in features) and intent.intent in ["PERFORM_MOTION"]) or
           ("navigation" in features and intent.intent in ["MOVE_TO", "GUIDE"]) or
-          (robot == "ari" and intent.intent in ["PRESENT_CONTENT"]) or
-          (intent.intent not in ["PRESENT_CONTENT", "ENGAGE_WITH", "PERFORM_MOTION", "GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT", "MOVE_TO", "GUIDE"]) %}
+          (intent.intent not in ["ENGAGE_WITH", "PERFORM_MOTION", "GRAB_OBJECT", "BRING_OBJECT", "PLACE_OBJECT", "MOVE_TO", "GUIDE"]) %}
 
         {{ "if" if ns.first_intent else "elif"}} msg.intent == Intent.{{ intent.intent }}:
 {% if ns.first_intent %}{% set ns.first_intent = false %}{% endif %}
@@ -166,9 +165,16 @@ class MissionController(Node):
             # https://docs.pal-robotics.com/sdk-dev/manipulation/skills_list
             pass
 {% elif intent.intent in ["PRESENT_CONTENT"] %}
-            # Handle intents to present content to the user: information
-            # about a product, a service, etc.
-            pass
+            if "object" in data and data["object"] == "__back__":
+                # An actual implementation might want to:
+                # - check if a task is running, and if so, interrupt it
+                # - implement a complete 'stack management' to navigate the history
+                self.get_logger().info("Received intent to go back to main menu")
+                self.set_ui("AppUI {}")
+            else:
+                # Implement content presentation: information
+                # about a product, a service, etc.
+                self.get_logger().error("Received intent to present unknown content")
 {% elif intent.intent in ["MOVE_TO", "GUIDE"] %}
             # Handle intents to move the robot from one place to another using
             # its navigation skills. Refer to "navigation skills":
