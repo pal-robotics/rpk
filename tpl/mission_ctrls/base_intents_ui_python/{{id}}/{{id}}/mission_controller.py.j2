@@ -41,10 +41,6 @@ from sample_skill_msgs.action import SkillControl
 
 from std_msgs.msg import Int16
 from hri_actions_msgs.msg import Intent
-{% if "pal_arch" in features %}
-from lifecycle_msgs.msg import State as StateMsg
-from {{ id }}.change_state_helper import ChangeNodeStateHelper
-{% endif %}
 from {{ id }}.i18n import I18nSupport
 
 
@@ -62,12 +58,6 @@ class MissionController(Node):
         self._intents_sub = None
         self._timer = None
 
-{% if "pal_arch" in features %}
-        # We manage the state of the "communication_hub" node
-        self._change_state_helper = ChangeNodeStateHelper(
-            self,
-            'communication_hub')
-{% endif %}
         # helper class to handle locale changes
         self.i18n = I18nSupport(self, '{{ id }}')
 
@@ -144,22 +134,10 @@ class MissionController(Node):
 {% endif %}
 {% if intent.intent == "WAKEUP" %}
             # Handle intents to wakeup the robot
-    {% if "pal_arch" in features %}
-            # The "communication_hub" is a managed node that needs to be
-            # activated based on the received wakeup intent.
-            self._change_state_helper.change_state(StateMsg.PRIMARY_STATE_ACTIVE)
-    {% else %}
             pass
-    {% endif %}
 {% elif intent.intent == "SUSPEND" %}
             # Handle intents to suspend the robot
-    {% if "pal_arch" in features %}
-            # The "communication_hub" is a managed node that needs to be
-            # deactivated based on the received suspend intent.
-            self._change_state_helper.change_state(StateMsg.PRIMARY_STATE_INACTIVE)
-    {% else %}
             pass
-    {% endif %}
 {% elif intent.intent == "ENGAGE_WITH" and ("social" in features) %}
             {% if "communication" in features %}
             # As an example, we call here the Say and play_motion action server
@@ -365,7 +343,6 @@ class MissionController(Node):
         Activate the node.
 
         Subscribe to topic and start listening to /intents topic.
-        Activate the 'communication_hub' node.
         """
         self._intents_sub = self.create_subscription(
             Intent,
@@ -399,11 +376,6 @@ class MissionController(Node):
         timer_period = 1  # in sec
         self._timer = self.create_timer(timer_period, self.run)
 
-{% if "pal_arch" in features %}
-        # We activate the "communication_hub" node by default
-        self._change_state_helper.change_state(StateMsg.PRIMARY_STATE_ACTIVE)
-
-{% endif %}
         self.get_logger().info('Mission controller active.')
         return super().on_activate(state)
 
