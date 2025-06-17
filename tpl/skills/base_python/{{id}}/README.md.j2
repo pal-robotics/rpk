@@ -49,17 +49,17 @@ ros2 action list
 > docker exec -it ros2_sandbox bash
 > ```
 
-You should see your skill and its *control* action:
+You should see your skill action:
 
 ```
-/{{id}}/control
+/skill/{{id}}
 ```
 
 
 We can trigger the skill (from a third terminal):
 
 ```
-ros2 action send_goal /{{id}}/control sample_skill_msgs/action/SkillControl "skill_data: 'test data'" 
+ros2 action send_goal /skill/{{id}} {{id}}_skill_msgs/action/{{Id}} "skill_data: 'test data'" 
 ```
 
 You should get the following output:
@@ -72,8 +72,10 @@ Sending goal:
 Goal accepted with ID: a257b444a54d4f42911678d6f93e7e65
 
 Result:
-    error_msg: ''
-result: this is an important result
+    result:
+  error_code: 0
+  error_msg: ''
+    value: this is an important result
 
 Goal finished with status: SUCCEEDED
 ```
@@ -87,17 +89,10 @@ To implement your skill logic, have a look at `{{id}}/skill_impl.py`: this is
 the main file you will have to modify.
 
 You might want however to create a custom message type to start/configure/stop
-your skill. Check the `sample_skill_msgs` package that has been generated alongside
+your skill. Check the `{{id}}_skill_msgs` package that has been generated alongside
 this package, and feel free to modify it & rename it as you see fit.
 
 ## Install on the robot
-
-To install you app on the robot, you need to follow the following steps:
-
-1. deploy your code to the robot using PAL's `deploy` tool.
-2. install the webpages (if you are using any)
-
-### Deploy the application controller to the robot
 
 **To deploy the code to the robot, you have to run the following commands from
 *inside* your PAL OS Developer Docker image**.
@@ -108,14 +103,6 @@ To install you app on the robot, you need to follow the following steps:
 
 You can now `ssh` onto the robot (`ssh pal@{{ robot | lower }}-XXc`, password
 `pal`), and go to your project: `cd ~/deployed_ws/share/{{ id }}`
-
-{% if (robot == "ari") %}
-
-### Install the webpages
-
-To install your webpages onto the robot, check `pages_only_ari/README.md`.
-
-{% endif %}
 
 ## Run your application
 
@@ -131,25 +118,10 @@ There are several ways to run the application:
 
 `ros2 run {{ id }} start_skill`
 
-Since your application controller is a lifecycle node, you need to manage it
-through the lifecycle tools. You can execute the following to transit the
-mission controller as follows:
-
-``ros2 lifecycle set /app_{{ id }} configure``
-``ros2 lifecycle set /app_{{ id }} activate``
-
-To stop it (but not reseting it's internal variables):
-``ros2 lifecycle set /app_{{ id }} activate``
-
-To stop it and clean it:
-``ros2 lifecycle set /app_{{ id }} deactivate``
-``ros2 lifecycle set /app_{{ id }} cleanup``
-
-
 3. Automatically start your application at startup:
 
 To make your application run at startup, uncomment the related lines in
 `setup.py` and reinstall the package. You can then start, stop or view the logs
 of the application as a module. See [Application
-management](https://docs.pal-robotics.com/sdk-dev/management/application-management)
+management](https://docs.pal-robotics.com/edge/management/application-management)
 for more details. 

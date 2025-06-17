@@ -25,13 +25,13 @@ import rclpy
 
 from rclpy.executors import MultiThreadedExecutor
 
-import {{ id }}.skill_impl
+import {{id}}.skill_impl
 
 
 def main():
     rclpy.init()
 
-    skill = {{ id }}.skill_impl.SkillImpl()
+    skill = {{id}}.skill_impl.{{Id}}SkillImpl()
     skill_executor = MultiThreadedExecutor()
     skill_executor.add_node(skill)
 

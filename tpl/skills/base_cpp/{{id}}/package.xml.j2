@@ -34,7 +34,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_action</depend>
   <depend>rclcpp_lifecycle</depend>
-  <depend>sample_skill_msgs</depend>
+  <depend>{{id}}_skill_msgs</depend>
 
   <build_depend>diagnostic_updater</build_depend>
   <build_depend>lifecycle_msgs</build_depend>
@@ -50,18 +50,6 @@
 
   <export>
       <build_type>ament_cmake</build_type>
-
-      <skill content-type="json">
-          {
-            "id": "{{ id }}",
-            "description": "This is a basic example skill. Write here an actual description.",
-            "interface": "action",
-            "default_interface_path": "/{{ id }}/control",
-            "datatype": "sample_skill_msgs/action/SkillControl",
-            "functional_domains": [
-                "other"
-            ]
-        }
-      </skill>
+      <implements type="skill" package="{{id}}_skill_msgs" id="{{id}}" />
   </export>
 </package>

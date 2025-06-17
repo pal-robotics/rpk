@@ -1,7 +1,7 @@
 {{ name }}
 ====================
 
-Welcome to your new robot 'db connector' skill template!
+Welcome to your new robot 'localte' skill.
 
 What are the next steps?
 
@@ -9,7 +9,8 @@ What are the next steps?
 
 You need a ROS 2 environment to compile the template.
 
-You can for instance use PAL Robotics public 'tutorials' Docker image:
+You can for instance use the ROS humble Docker image, or PAL Robotics own 
+public 'tutorials' Docker image (itself based on ROS humble):
 
 ```
 > docker pull palrobotics/public-tutorials-alum-devel
@@ -51,14 +52,14 @@ ros2 action list
 You should see your skill action:
 
 ```
-/skill/{{id}}
+/skill/locate
 ```
 
 
 We can trigger the skill (from a third terminal):
 
 ```
-ros2 action send_goal /skill/{{id}} db_skill_msgs/action/Db "skill_data: 'test query'" 
+ros2 action send_goal /skill/locate locate_skill_msgs/action/Locate "skill_data: 'object'" 
 ```
 
 You should get the following output:
@@ -66,32 +67,36 @@ You should get the following output:
 ```
 Waiting for an action server to become available...
 Sending goal:
-     [...]
-     skill_data: test query
+     skill_data: object
 
-Goal accepted with ID: 511a927c658e4026b04107c27b907db3
+Goal accepted with ID: a257b444a54d4f42911678d6f93e7e65
 
 Result:
     result:
   error_code: 0
   error_msg: ''
-    value: John
+    value: ''
 
 Goal finished with status: SUCCEEDED
 ```
 
+(or an error! you need a knowledge base for this simple skill template to actually
+perform a query)
+
 ## Customize your skill
 
-By default, the template does not do anything useful. It is mainly an example of
-a complete (Python) ROS 2 lifecycle node.
+By default, the 'locate' template performs a semantic query to a running knowledge base
+(using the `/kb/query` ROS service). In an actual robot system, you might want to
+extend it with eg asking help from a human, or moving the robot's head around.
 
-To implement your skill logic (...ie, an actual database connector!), have a look
-at `{{id}}/skill_impl.py`: this is the main file you will have to modify.
+To implement your skill logic, have a look at the header file
+`include/{{id}}/node_{{id}}.hpp` and the source file
+`src/{{id}}/node_{{id}}.cpp`:
+these are the main files you will have to modify.
 
-You might want however to create a custom message type to start/configure/stop
-your skill. Check the `db_skill_msgs` package that has been generated alongside
-this package, and feel free to modify it & rename it as you see fit with eg a 
-`query` field, a `db_name` field, etc.
+You might also want to customize the API of your skill. Check the `locate_skill_msgs`
+package that has been generated alongside this package, and feel free to modify
+it & rename it as you see fit.
 
 ## Install on the robot
 
@@ -122,7 +127,7 @@ There are several ways to run the application:
 3. Automatically start your application at startup:
 
 To make your application run at startup, uncomment the related lines in
-`setup.py` and reinstall the package. You can then start, stop or view the logs
+`CMakeLists.txt` and reinstall the package. You can then start, stop or view the logs
 of the application as a module. See [Application
 management](https://docs.pal-robotics.com/edge/management/application-management)
 for more details. 

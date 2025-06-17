@@ -45,41 +45,54 @@ SKILL_TEMPLATES = {
                              "edit {id}_skill_msgs/package.xml to edit your skill manifest.",
     },
     "base_cpp": {
-        "tpl_paths": ["skills/base_cpp/{{id}}", "skills/sample_skill_msgs"],
+        "tpl_paths": ["skills/base_cpp/{{id}}"],
         "prog_lang": "c++",
         "short_desc": "base skill template [c++]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/node_{id}.cpp and include/{id}/node_{id}.hpp "
                              "to implement your skill logic.",
+        "skill_templates": [
+            {"skill_definition": {"id": "{{id}}", "name": "{{id}} skill definition"}}
+        ],
     },
     "base_python": {
-        "tpl_paths": ["skills/base_python/{{id}}", "skills/sample_skill_msgs"],
+        "tpl_paths": ["skills/base_python/{{id}}"],
         "prog_lang": "python",
         "short_desc": "base skill template [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
+        "skill_templates": [
+            {"skill_definition": {"id": "{{id}}", "name": "{{id}} skill definition"}}
+        ],
     },
     "say_python": {
-        "tpl_paths": ["skills/say_python/{{id}}", "skills/sample_skill_msgs"],
+        "tpl_paths": ["skills/say_python/{{id}}"],
         "prog_lang": "python",
-        "short_desc": "example implementation for a 'say' skill [python]",
+        "short_desc": "creates a custom implementation of the standard 'say' skill [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
     },
     "db_connector_python": {
-        "tpl_paths": ["skills/db_connector_python/{{id}}", "skills/sample_skill_msgs"],
+        "tpl_paths": ["skills/db_connector_python/{{id}}"],
         "prog_lang": "python",
         "short_desc": "database connector mock-up [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/skill_impl.py to implement your skill logic.",
+        "skill_templates": [{"skill_definition": {
+            "id": "db",
+            "name": "Skill definition for a custom database connector"
+        }}],
     },
     "locate_cpp": {
-        "tpl_paths": ["skills/locate_cpp/{{id}}", "skills/sample_skill_msgs"],
+        "tpl_paths": ["skills/locate_cpp/{{id}}"],
         "prog_lang": "c++",
         "short_desc": "example implementation of 'locate' skill [c++]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
                              "edit src/{id}/node_{id}.cpp and include/{id}/node_{id}.hpp "
                              "to implement your skill logic.",
+        "skill_templates": [{"skill_definition": {
+            "id": "locate", "name": "Manifest of the 'locate' skill"
+        }}],
     },
 }
 
@@ -449,7 +462,10 @@ def generate_skeleton(data, family, tpl_name, robot, root):
             for a_tpl in tpl[additional_tpl]:
                 tpl_name = list(a_tpl.keys())[0]
                 a_data = dict(data)
-                a_data["id"] = a_tpl[tpl_name]["id"]
+                a_data["id"] = a_tpl[tpl_name]["id"].replace(
+                    "{{id}}", data["id"]).replace("{{Id}}", data["Id"])
+                a_data["Id"] = string.capwords(
+                    a_data["id"], '_').replace("_", "")
                 data["dependencies"].append(a_data["id"])
                 a_data["name"] = a_tpl[tpl_name]["name"]
                 generate_skeleton(a_data, type, tpl_name, robot, root)

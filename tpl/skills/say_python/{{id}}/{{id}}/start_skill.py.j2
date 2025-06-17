@@ -31,7 +31,7 @@ import {{ id }}.skill_impl
 def main():
     rclpy.init()
 
-    skill = {{ id }}.skill_impl.SkillImpl()
+    skill = {{ id }}.skill_impl.SaySkillImpl()
     skill_executor = MultiThreadedExecutor()
     skill_executor.add_node(skill)
 

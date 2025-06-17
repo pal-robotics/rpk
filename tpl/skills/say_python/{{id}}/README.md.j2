@@ -1,7 +1,7 @@
 {{ name }}
 ====================
 
-Welcome to your new robot skill template!
+This is a custom implementation of the communication skill 'Say'.
 
 What are the next steps?
 
@@ -34,8 +34,11 @@ You can now start your skill with:
 
 ## Testing
 
-This basic skill template does not do much on this own. However, we can already check it works
-as intended.
+This basic skill template does not do much on this own. It simply
+'says' (ie, outputs) on the terminal the input provided by user when
+invoking the skill.
+
+We can already check it works as intended:
 
 Open a second terminal, and run:
 
@@ -51,14 +54,14 @@ ros2 action list
 You should see your skill and its *control* action:
 
 ```
-/skill_test/control
+/skill/say
 ```
 
 
 We can trigger the skill (from a third terminal):
 
 ```
-ros2 action send_goal /skill_test/control sample_skill_msgs/action/SkillControl "skill_data: 'test data'" 
+ros2 action send_goal /skill/say communication_skills/action/Say "input: 'hello there'" 
 ```
 
 You should get the following output:
@@ -66,37 +69,33 @@ You should get the following output:
 ```
 Waiting for an action server to become available...
 Sending goal:
-     skill_data: test data
+     [...]
+     input: hello there
 
 Goal accepted with ID: a257b444a54d4f42911678d6f93e7e65
 
 Result:
-    error_msg: ''
-result: this is an important result
+    result:
+  error_code: 0
+  error_msg: ''
 
 Goal finished with status: SUCCEEDED
 ```
 
+In the terminal where your skill is running, you should see:
+
+```
+[...]
+[start_skill-1] [WARN] [1750164542.904816436] [{{id}}]: NEW MESSAGE TO USER: hello there
+```
+
 ## Customize your skill
 
-By default, the template does not do anything useful. It is mainly an example of
-a complete (Python) ROS 2 lifecycle node.
-
-To implement your skill logic, have a look at `{{id}}/skill_impl.py`: this is
-the main file you will have to modify.
-
-You might want however to create a custom message type to start/configure/stop
-your skill. Check the `sample_skill_msgs` package that has been generated alongside
-this package, and feel free to modify it & rename it as you see fit.
+If you want to go ahead, and implement a real `Say` skill, using for instance a
+custom TTS engine, have a look at `{{id}}/skill_impl.py`: this is the main file
+you will have to modify.
 
 ## Install on the robot
-
-To install you app on the robot, you need to follow the following steps:
-
-1. deploy your code to the robot using PAL's `deploy` tool.
-2. install the webpages (if you are using any)
-
-### Deploy the application controller to the robot
 
 **To deploy the code to the robot, you have to run the following commands from
 *inside* your PAL OS Developer Docker image**.
@@ -107,14 +106,6 @@ To install you app on the robot, you need to follow the following steps:
 
 You can now `ssh` onto the robot (`ssh pal@{{ robot | lower }}-XXc`, password
 `pal`), and go to your project: `cd ~/deployed_ws/share/{{ id }}`
-
-{% if (robot == "ari") %}
-
-### Install the webpages
-
-To install your webpages onto the robot, check `pages_only_ari/README.md`.
-
-{% endif %}
 
 ## Run your application
 
@@ -130,25 +121,10 @@ There are several ways to run the application:
 
 `ros2 run {{ id }} start_skill`
 
-Since your application controller is a lifecycle node, you need to manage it
-through the lifecycle tools. You can execute the following to transit the
-mission controller as follows:
-
-``ros2 lifecycle set /app_{{ id }} configure``
-``ros2 lifecycle set /app_{{ id }} activate``
-
-To stop it (but not reseting it's internal variables):
-``ros2 lifecycle set /app_{{ id }} activate``
-
-To stop it and clean it:
-``ros2 lifecycle set /app_{{ id }} deactivate``
-``ros2 lifecycle set /app_{{ id }} cleanup``
-
-
 3. Automatically start your application at startup:
 
 To make your application run at startup, uncomment the related lines in
 `setup.py` and reinstall the package. You can then start, stop or view the logs
 of the application as a module. See [Application
-management](https://docs.pal-robotics.com/sdk-dev/management/application-management)
+management](https://docs.pal-robotics.com/edge/management/application-management)
 for more details. 

@@ -2,7 +2,7 @@
 <package format="3">
     <name>{{ id }}</name>
     <version>0.1.0</version>
-    <description>{{ name }}</description>
+    <description>{{ name }}. Implements the /skill/say skill.</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -36,7 +36,7 @@
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>launch_pal</exec_depend>
 
-  <exec_depend>sample_skill_msgs</exec_depend>
+  <exec_depend>communication_skills</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
@@ -46,18 +46,6 @@
 
   <export>
       <build_type>ament_python</build_type>
-
-      <skill content-type="json">
-          {
-            "id": "{{ id }}",
-            "description": "Say out loud a message aimed at the user",
-            "interface": "action",
-            "default_interface_path": "/say",
-            "datatype": "sample_skill_msgs/action/SkillControl",
-            "functional_domains": [
-                "communication"
-            ]
-        }
-      </skill>
+      <implements type="skill" package="communication_skills" id="say" />
   </export>
 </package>

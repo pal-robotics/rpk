@@ -36,28 +36,15 @@
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>launch_pal</exec_depend>
 
-  <exec_depend>sample_skill_msgs</exec_depend>
+  <exec_depend>db_skill_msgs</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
-  <test_depend>ament_skilllint</test_depend>
   <test_depend>python3-pytest</test_depend>
 
   <export>
       <build_type>ament_python</build_type>
-
-      <skill content-type="json">
-          {
-            "id": "{{ id }}",
-            "description": "This example skill mocks-up the connection to a Mongo DB database.",
-            "interface": "action",
-            "default_interface_path": "/{{ id }}/db_request",
-            "datatype": "sample_skill_msgs/action/SkillControl",
-            "functional_domains": [
-                "external_bridge"
-            ]
-        }
-      </skill>
+      <implements type="skill" package="db_skill_msgs" id="db" />
   </export>
 </package>
