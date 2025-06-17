@@ -198,22 +198,27 @@ APPLICATION_TEMPLATES = {
 TEMPLATES_FAMILIES = {
     "intent": {"src": INTENT_EXTRACTOR_TEMPLATES,
                "name": "intent extractor",
+               "cmd": "intent",
                "help": "perception module that extracts intents from user input. "
                "Example: a chatbot"},
     "skill": {"src": SKILL_TEMPLATES,
               "name": "skill",
+              "cmd": "skill",
               "help": "short-term 'atomic' robot action, to be re-used by tasks and mission "
                       "controllers. Examples: 'go to', 'say', 'perform pre-recorded motion'"},
     "task": {"src": TASK_TEMPLATES,
              "name": "task",
+             "cmd": "task",
              "help": "time-limited robot activity, started by the mission controller. "
                      "Might use skills. Examples: 'greet person', 'fetch object'"},
     "mission": {"src": MISSION_CTRL_TEMPLATES,
                 "name": "mission controller",
+                "cmd": "mission",
                 "help": "manages the whole behaviour of the robot. Examples: 'receptionist', "
                         "'waiter'"},
     "app": {"src": APPLICATION_TEMPLATES,
             "name": "application",
+            "cmd": "app",
             "help": "complete application including a mission controller, a sample "
                     "task and skill, and sample resources"}
 }
@@ -625,14 +630,16 @@ def main(args=sys.argv[1:]):
     elif args.command == "list":
 
         for family in TEMPLATES_FAMILIES.keys():
+            tpls = TEMPLATES_FAMILIES[family]
             if not args.short:
-                print(f"\n# {TEMPLATES_FAMILIES[family]['name']} templates:")
-            for tpl in TEMPLATES_FAMILIES[family]["src"].keys():
+                print(
+                    f"\n# {tpls['name']} templates (rpk create {tpls['cmd']} ...):")
+            for tpl in tpls["src"].keys():
                 if args.short:
                     print(f"{family}/{tpl}")
                 else:
                     print(
-                        f" - {tpl}: {TEMPLATES_FAMILIES[family]['src'][tpl]['short_desc']}")
+                        f" - {tpl}: {tpls['src'][tpl]['short_desc']}")
 
 
 if __name__ == "__main__":
