@@ -37,6 +37,13 @@ PKG_PATH = (
 )
 
 SKILL_TEMPLATES = {
+    "skill_definition": {
+        "tpl_paths": ["skills/skill_definition/{{id}}_skill_msgs"],
+        "prog_lang": "c++",
+        "short_desc": "template for a skill manifest and API",
+        "post_install_help": "Check README.md in {path}/{id}_skill_msgs/ "
+                             "edit {id}_skill_msgs/package.xml to edit your skill manifest.",
+    },
     "base_cpp": {
         "tpl_paths": ["skills/base_cpp/{{id}}", "skills/sample_skill_msgs"],
         "prog_lang": "c++",
@@ -474,7 +481,9 @@ def generate_skeleton(data, family, tpl_name, robot, root):
                 continue
 
             # 'base' is the name of the package directory
-            base = root / tpl_path.name.replace("{{id}}", data["id"])
+            base = root / \
+                tpl_path.name.replace("{{id}}", data["id"]).replace(
+                    "{{Id}}", data["Id"])
             base.mkdir(parents=True, exist_ok=True)
 
             # Non-template file, copy file as is
@@ -486,7 +495,8 @@ def generate_skeleton(data, family, tpl_name, robot, root):
                 shutil.copy(source_filename, filename)
             else:
                 j2_tpl = env.get_template(j2_tpl_name)
-                j2_tpl_name = j2_tpl_name.replace("{{id}}", data["id"])
+                j2_tpl_name = j2_tpl_name.replace(
+                    "{{id}}", data["id"]).replace("{{Id}}", data["Id"])
 
                 filename = base / j2_tpl_name[: -(1 + len(TPL_EXT))]
                 filename.parent.mkdir(parents=True, exist_ok=True)
