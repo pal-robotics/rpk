@@ -209,7 +209,7 @@ class MissionController(Node):
             # Handle intents to greet, customised by the user
             # Refer to:
             # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
-            say = ActionClient(self, SkillControl, '/say')
+            say = ActionClient(self, SkillControl, '/skill/say')
             say.wait_for_server()
             say_goal = SkillControl.Goal(skill_data=_("Hello, what can I do for you today?"))
             say.send_goal_async(say_goal)
@@ -225,7 +225,7 @@ class MissionController(Node):
             # Handle intents to greet, customised by the user
             # Refer to:
             # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
-            say = ActionClient(self, SkillControl, '/say')
+            say = ActionClient(self, SkillControl, '/skill/say')
             say.wait_for_server()
             say_goal = SkillControl.Goal(skill_data=data['object'])
             say.send_goal_async(say_goal)

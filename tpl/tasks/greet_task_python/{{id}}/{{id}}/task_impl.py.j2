@@ -152,7 +152,7 @@ class TaskImpl(Node):
 
         goal_handle = future.result()
         if not goal_handle.accepted:
-            self.get_logger().info("Failed to greet the user. '/say' goal rejected.")
+            self.get_logger().info("Failed to greet the user. '/skill/say' goal rejected.")
             self.current_greeting_status = Greet.Goal().INACTIVE
             return
 
@@ -211,12 +211,12 @@ class TaskImpl(Node):
 
         # create an action client for the 'say' skill
 {% if "pal_arch" in features %}
-        self.say_client = ActionClient(self, Say, "/say")
+        self.say_client = ActionClient(self, Say, "/skill/say")
 {% else %}
-        self.say_client = ActionClient(self, SkillControl, "/say")
+        self.say_client = ActionClient(self, SkillControl, "/skill/say")
 {% endif %}
         while not self.say_client.wait_for_server(timeout_sec=1.0):
-            self.get_logger().info("'/say' skill not yet available, waiting again...")
+            self.get_logger().info("'/skill/say' skill not yet available, waiting again...")
 
         self.get_logger().info("Task {{id}} is configured, but not yet active")
         return TransitionCallbackReturn.SUCCESS

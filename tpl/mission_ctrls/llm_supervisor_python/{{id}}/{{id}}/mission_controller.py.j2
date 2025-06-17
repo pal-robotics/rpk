@@ -133,7 +133,7 @@ class MissionController(Node):
         while not self._greet_task_client.wait_for_server(timeout_sec=1.0):
             self.get_logger().info("'greet' task not yet available, waiting again...")
 
-        self._say_skill_client = ActionClient(self, SkillControl, '/say')
+        self._say_skill_client = ActionClient(self, SkillControl, '/skill/say')
         while not self._say_skill_client.wait_for_server(timeout_sec=1.0):
             self.get_logger().info("'say' skill skill not yet available, waiting again...")
 
