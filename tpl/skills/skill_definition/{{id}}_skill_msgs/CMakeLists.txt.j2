@@ -3,9 +3,6 @@ project({{id}}_skill_msgs)
 
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
-find_package(action_msgs REQUIRED)
-find_package(std_skills REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "action/{{Id}}.action"

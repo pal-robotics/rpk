@@ -22,7 +22,7 @@ from ament_flake8.main import main_with_errors as flake8_main_with_errors
 from ament_copyright.main import main as copyright_main
 from ament_cppcheck.main import main as cppcheck_main
 from ament_cpplint.main import main as cpplint_main
-from ament_skilllint.main import main as skilllint_main
+from ament_archlint.main import main as archlint_main
 
 from rpk import rpk
 rpk.PKG_PATH = (
@@ -38,7 +38,7 @@ rpk.PKG_PATH = (
                              for tpl in tpls["src"].keys()
                              if tpls['src'][tpl]['prog_lang'] == 'manifest'
                          ])
-@pytest.mark.skilllint
+@pytest.mark.archlint
 def test_generation_linting_manifests(category, template, robot):
     path = tempfile.mkdtemp(prefix='rpk_')
 
@@ -50,7 +50,7 @@ def test_generation_linting_manifests(category, template, robot):
               '--id', 'test_node',
               '--yes'])
 
-    rc = skilllint_main(argv=[path])
+    rc = archlint_main(argv=[path])
     assert rc == 0, 'Found errors in the manifest file'
 
 
