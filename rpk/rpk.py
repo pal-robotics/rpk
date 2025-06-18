@@ -39,7 +39,7 @@ PKG_PATH = (
 SKILL_TEMPLATES = {
     "skill_definition": {
         "tpl_paths": ["skills/skill_definition/{{id}}_skill_msgs"],
-        "prog_lang": "c++",
+        "prog_lang": "manifest",
         "short_desc": "template for a skill manifest and API",
         "post_install_help": "Check README.md in {path}/{id}_skill_msgs/ "
                              "edit {id}_skill_msgs/package.xml to edit your skill manifest.",

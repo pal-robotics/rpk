@@ -22,6 +22,7 @@ from ament_flake8.main import main_with_errors as flake8_main_with_errors
 from ament_copyright.main import main as copyright_main
 from ament_cppcheck.main import main as cppcheck_main
 from ament_cpplint.main import main as cpplint_main
+from ament_skilllint.main import main as skilllint_main
 
 from rpk import rpk
 rpk.PKG_PATH = (
@@ -31,11 +32,35 @@ rpk.PKG_PATH = (
 
 @pytest.mark.parametrize('category, template, robot',
                          [
-                            (category, tpl, robot)
-                            for robot in rpk.AVAILABLE_ROBOTS
-                            for category, tpls in rpk.TEMPLATES_FAMILIES.items()
-                            for tpl in tpls["src"].keys()
-                            if tpls['src'][tpl]['prog_lang'] == 'python'
+                             (category, tpl, robot)
+                             for robot in rpk.AVAILABLE_ROBOTS
+                             for category, tpls in rpk.TEMPLATES_FAMILIES.items()
+                             for tpl in tpls["src"].keys()
+                             if tpls['src'][tpl]['prog_lang'] == 'manifest'
+                         ])
+@pytest.mark.skilllint
+def test_generation_linting_manifests(category, template, robot):
+    path = tempfile.mkdtemp(prefix='rpk_')
+
+    rpk.main(['create',
+              '--robot', robot,
+              '--path', path,
+              category,
+              '--template', template,
+              '--id', 'test_node',
+              '--yes'])
+
+    rc = skilllint_main(argv=[path])
+    assert rc == 0, 'Found errors in the manifest file'
+
+
+@pytest.mark.parametrize('category, template, robot',
+                         [
+                             (category, tpl, robot)
+                             for robot in rpk.AVAILABLE_ROBOTS
+                             for category, tpls in rpk.TEMPLATES_FAMILIES.items()
+                             for tpl in tpls["src"].keys()
+                             if tpls['src'][tpl]['prog_lang'] == 'python'
                          ])
 @pytest.mark.linter
 @pytest.mark.pep257
@@ -66,11 +91,11 @@ def test_generation_linting_python(category, template, robot):
 
 @pytest.mark.parametrize('category, template, robot',
                          [
-                            (category, tpl, robot)
-                            for robot in rpk.AVAILABLE_ROBOTS
-                            for category, tpls in rpk.TEMPLATES_FAMILIES.items()
-                            for tpl in tpls["src"].keys()
-                            if tpls['src'][tpl]['prog_lang'] == 'c++'
+                             (category, tpl, robot)
+                             for robot in rpk.AVAILABLE_ROBOTS
+                             for category, tpls in rpk.TEMPLATES_FAMILIES.items()
+                             for tpl in tpls["src"].keys()
+                             if tpls['src'][tpl]['prog_lang'] == 'c++'
                          ])
 @pytest.mark.copyright
 def test_generation_linting_cpp(category, template, robot):
@@ -96,11 +121,11 @@ def test_generation_linting_cpp(category, template, robot):
 
 @pytest.mark.parametrize('category, template, robot',
                          [
-                            (category, tpl, robot)
-                            # for robot in rpk.AVAILABLE_ROBOTS
-                            for robot in ['generic', 'generic-pal']
-                            for category, tpls in rpk.TEMPLATES_FAMILIES.items()
-                            for tpl in tpls["src"].keys()
+                             (category, tpl, robot)
+                             # for robot in rpk.AVAILABLE_ROBOTS
+                             for robot in ['generic', 'generic-pal']
+                             for category, tpls in rpk.TEMPLATES_FAMILIES.items()
+                             for tpl in tpls["src"].keys()
                          ])
 def test_generation_compile(category, template, robot):
 
@@ -123,8 +148,10 @@ def test_generation_compile(category, template, robot):
                                                  '--log-level', 'error',
                                                  'build',
                                                  '--base-paths', str(ws_dir),
-                                                 '--build-base', str(ws_dir / "build"),
-                                                 '--install-base', str(ws_dir / "install"),
+                                                 '--build-base', str(
+                                                     ws_dir / "build"),
+                                                 '--install-base', str(
+                                                     ws_dir / "install"),
                                                  ]), shell=True, capture_output=True)
 
     # for some reason, the return code is always 0
