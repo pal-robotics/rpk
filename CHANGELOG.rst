@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+5.3.0 (2025-06-18)
+------------------
 * {skillint -> archlint}
 * update rpk tests to check for skill manifests
 * update skills to generate custom skill manifests
