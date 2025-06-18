@@ -2,6 +2,19 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* {skillint -> archlint}
+* update rpk tests to check for skill manifests
+* update skills to generate custom skill manifests
+  While here:
+  - improved READMEs
+  - fix the casing of C++ skill examples
+* [tpl] add tpl for skill manifests
+* minor improvement to rpk list
+* {/say -> /skill/say}
+* Contributors: Séverin Lemaignan
+
 5.2.0 (2025-06-16)
 ------------------
 * [tpl][UI] add SaySkill to mock-up ROS QML
