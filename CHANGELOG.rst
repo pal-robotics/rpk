@@ -2,6 +2,11 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* skill manifests: explicitely set parameters direction
+* Contributors: Séverin Lemaignan
+
 5.3.0 (2025-06-18)
 ------------------
 * {skillint -> archlint}
