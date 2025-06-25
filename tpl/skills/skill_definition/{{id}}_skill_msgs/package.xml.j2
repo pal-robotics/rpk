@@ -47,13 +47,14 @@
         "interface": "action",
         "default_interface_path": "/skill/{{id}}",
         "datatype": "{{id}}_skill_msgs/action/{{Id}}",
-        "parameters": [
-          {
+        "parameters": {
+          "in": [
+            {
             "name": "skill_data",
             "type": "string",
             "description": "This parameter indicates..."
-          }
-        ],
+            }
+        ]},
         "functional_domains": [
             "other"
         ]
