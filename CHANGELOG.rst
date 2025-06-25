@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+5.4.0 (2025-06-25)
+------------------
 * skill manifests: explicitely set parameters direction
 * Contributors: Séverin Lemaignan
 
