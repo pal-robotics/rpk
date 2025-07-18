@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+5.4.1 (2025-07-18)
+------------------
 * update existing mission tpl to properly use skills
   including generating custom 'say' skill msg when not on PAL arch
 * Contributors: Séverin Lemaignan
