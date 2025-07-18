@@ -20,7 +20,11 @@ from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.action import ActionServer, GoalResponse
 
 # we re-implement an existing skill, so we import corresponding action message
+{% if "pal_arch" in features %}
 from communication_skills.action import Say
+{% else %}
+from say_skill_msgs.action import Say
+{% endif %}
 
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
@@ -79,7 +83,11 @@ class SaySkillImpl(Node):
 
     def on_request_exec(self, goal_handle):
         """Process incoming goal."""
+{% if "pal_arch" in features %}
         self.run_skill(goal_handle.request.input)
+{% else %}
+        self.run_skill(goal_handle.request.skill_data)
+{% endif %}
 
         goal_handle.succeed()
         return Say.Result()

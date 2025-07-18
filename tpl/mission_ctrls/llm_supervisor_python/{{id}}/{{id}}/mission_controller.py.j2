@@ -20,7 +20,12 @@ from rclpy.action import ActionClient
 from rclpy.lifecycle import Node
 from rclpy.lifecycle import State
 from rclpy.lifecycle import TransitionCallbackReturn
-from sample_skill_msgs.action import SkillControl
+# action for the system skill 'say'
+{% if "pal_arch" in features %}
+from communication_skills.action import Say
+{% else %}
+from say_skill_msgs.action import Say
+{% endif %}
 
 
 class MissionController(Node):
@@ -72,8 +77,12 @@ class MissionController(Node):
             self._greet_task_future.add_done_callback(self.on_greet_goal)
         elif msg.intent == Intent.SAY:
             self.get_logger().info(f"Saying something to <{source}>")
-            goal = SkillControl.Goal()
+            goal = Say.Goal()
+{% if "pal_arch" in features %}
+            goal.input = data["object"]
+{% else %}
             goal.skill_data = data["object"]
+{% endif %}
             self._say_skill_future = self._say_skill_client.send_goal_async(
                                            goal,
                                            feedback_callback=self.on_feedback)
@@ -114,7 +123,7 @@ class MissionController(Node):
 
     def on_say_done(self, future):
         result = future.result().result
-        if result:
+        if result.result.error_code != 0:
             self.get_logger().error(f"Say skill returned: {result.result}")
         else:
             self.get_logger().info("Successfully said something")
@@ -133,7 +142,7 @@ class MissionController(Node):
         while not self._greet_task_client.wait_for_server(timeout_sec=1.0):
             self.get_logger().info("'greet' task not yet available, waiting again...")
 
-        self._say_skill_client = ActionClient(self, SkillControl, '/skill/say')
+        self._say_skill_client = ActionClient(self, Say, '/skill/say')
         while not self._say_skill_client.wait_for_server(timeout_sec=1.0):
             self.get_logger().info("'say' skill skill not yet available, waiting again...")
 

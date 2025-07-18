@@ -28,7 +28,7 @@ from greet_task_msgs.action import Greet
 {% if "pal_arch" in features %}
 from communication_skills.action import Say
 {% else %}
-from sample_skill_msgs.action import SkillControl
+from say_skill_msgs.action import Say
 {% endif %}
 
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
@@ -165,11 +165,11 @@ class TaskImpl(Node):
 
         result = future.result().result
 
-        if not result.error_msg:
+        if result.result.error_code == 0:
             self.get_logger().info("Greeting successful")
             self.current_greeting_status = Greet.Goal().SUCCESSFUL_USER_ACKNOWLEDGMENT
         else:
-            self.get_logger().error(f"Failed to greet the user: {result.error_msg}")
+            self.get_logger().error(f"Failed to greet the user: {result.result.error_msg}")
             self.current_greeting_status = Greet.Goal().INACTIVE
 
     #################################
@@ -210,11 +210,7 @@ class TaskImpl(Node):
             execute_callback=self.on_request_exec)
 
         # create an action client for the 'say' skill
-{% if "pal_arch" in features %}
         self.say_client = ActionClient(self, Say, "/skill/say")
-{% else %}
-        self.say_client = ActionClient(self, SkillControl, "/skill/say")
-{% endif %}
         while not self.say_client.wait_for_server(timeout_sec=1.0):
             self.get_logger().info("'/skill/say' skill not yet available, waiting again...")
 
@@ -325,17 +321,15 @@ class TaskImpl(Node):
            self._get_result_future is None:  # (make sure we are not already greeting)
 
             self.get_logger().info("Saying hello to the user")
-{% if "pal_arch" in features %}
             goal = Say.Goal()
 
+{% if "pal_arch" in features %}
             if self.custom_greetings:
                 goal.input = self.custom_greetings
             else:
                 # default greeting
                 goal.input = f"Hello, {self.target_user_id}!"
 {% else %}
-            goal = SkillControl.Goal()
-
             if self.custom_greetings:
                 goal.skill_data = self.custom_greetings
             else:

@@ -30,6 +30,15 @@ import rpk
 
 SELF_NAME = "rpk"
 
+FEAT_NAV = "navigation"
+FEAT_VISION = "vision"
+FEAT_SOCIAL = "social"
+FEAT_COMMUNICATION = "communication"
+FEAT_MANIPULATION = "manipulation"
+FEAT_GESTURES = "gestures"
+FEAT_EXPRESSIONS = "expressions"
+FEAT_PAL_ARCH = "pal_arch"
+
 # not using ament, so that is also work outside of a ROS environment
 PKG_PATH = (
     Path(rpk.__file__).parent.parent.parent.parent.parent / "share" /
@@ -60,7 +69,7 @@ SKILL_TEMPLATES = {
         "prog_lang": "python",
         "short_desc": "base skill template [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
-                             "edit src/{id}/skill_impl.py to implement your skill logic.",
+                             "edit src/{id}/{id}/skill_impl.py to implement your skill logic.",
         "skill_templates": [
             {"skill_definition": {"id": "{{id}}", "name": "{{id}} skill definition"}}
         ],
@@ -70,14 +79,20 @@ SKILL_TEMPLATES = {
         "prog_lang": "python",
         "short_desc": "creates a custom implementation of the standard 'say' skill [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
-                             "edit src/{id}/skill_impl.py to implement your skill logic.",
+                             "edit {id}/{id}/skill_impl.py to implement your skill logic.",
+        "skill_templates": [{"skill_definition": {
+            # not need to generate skill msgs on PAL robots as we use communication_skills
+            "only_if": [f"!{FEAT_PAL_ARCH}"],
+            "id": "say",
+            "name": "Skill definition for a sample say skill",
+        }}],
     },
     "db_connector_python": {
         "tpl_paths": ["skills/db_connector_python/{{id}}"],
         "prog_lang": "python",
         "short_desc": "database connector mock-up [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and "
-                             "edit src/{id}/skill_impl.py to implement your skill logic.",
+                             "edit {id}/{id}/skill_impl.py to implement your skill logic.",
         "skill_templates": [{"skill_definition": {
             "id": "db",
             "name": "Skill definition for a custom database connector"
@@ -154,6 +169,13 @@ MISSION_CTRL_TEMPLATES = {
         "short_desc": "robot supervisor with pre-filled intent handlers [python]",
         "post_install_help": "Check README.md in {path}/{id}/ and edit src/{id}/"
                              "mission_controller.py to implement your application logic.",
+        "skill_templates": [{
+            "say_python": {
+                "only_if": [f"!{FEAT_PAL_ARCH}"],
+                "id": "say_skill",
+                "name": "basic 'say' skill"}
+        }
+        ],
     },
     "base_intents_ui_python": {
         "tpl_paths": ["mission_ctrls/base_intents_ui_python/{{id}}"],
@@ -162,6 +184,13 @@ MISSION_CTRL_TEMPLATES = {
         "post_install_help": "Check README.md in {path}/{id}/ and edit src/{id}/"
                              "mission_controller.py to implement your application logic.",
         "task_templates": [{"simple_ui": {"id": "sample_gui_task", "name": "Sample GUI task"}}],
+        "skill_templates": [{
+            "say_python": {
+                "only_if": [f"!{FEAT_PAL_ARCH}"],
+                "id": "say_skill",
+                "name": "basic 'say' skill"}
+        }
+        ],
     },
     "chatbot_supervisor_python": {
         "tpl_paths": ["mission_ctrls/llm_supervisor_python/{{id}}"],
@@ -250,15 +279,6 @@ ROBOTS_NAMES = {"generic": "Generic robot",
                 "tiago-pro": "PAL TIAGo Pro",
                 "tiago-head": "PAL TIAGo Head"}
 AVAILABLE_ROBOTS = list(ROBOTS_NAMES.keys())
-
-FEAT_NAV = "navigation"
-FEAT_VISION = "vision"
-FEAT_SOCIAL = "social"
-FEAT_COMMUNICATION = "communication"
-FEAT_MANIPULATION = "manipulation"
-FEAT_GESTURES = "gestures"
-FEAT_EXPRESSIONS = "expressions"
-FEAT_PAL_ARCH = "pal_arch"
 
 ROBOTS_FEATURES = {
     "generic": [],
@@ -445,6 +465,21 @@ def interactive_create(id=None,
     return id, name, family, template, robot
 
 
+def is_template_enabled(template, features):
+    if "only_if" not in template:
+        return True
+
+    # check if the template is enabled for the current robot features
+    for feature in template["only_if"]:
+        if feature.startswith("!"):
+            if feature[1:] in features:
+                return False
+        else:
+            if feature not in features:
+                return False
+    return True
+
+
 def generate_skeleton(data, family, tpl_name, robot, root):
     print(f"Generating {family} skeleton in {root.resolve()}...")
     tpl = TEMPLATES_FAMILIES[family]["src"][tpl_name]
@@ -461,6 +496,11 @@ def generate_skeleton(data, family, tpl_name, robot, root):
             type = additional_tpl.split("_")[0]
             for a_tpl in tpl[additional_tpl]:
                 tpl_name = list(a_tpl.keys())[0]
+                if not is_template_enabled(a_tpl[tpl_name], data["features"]):
+                    print(
+                        f"Skipping {type} template {a_tpl} as it is not enabled for "
+                        f"{robot} ({data['features']})")
+                    continue
                 a_data = dict(data)
                 a_data["id"] = a_tpl[tpl_name]["id"].replace(
                     "{{id}}", data["id"]).replace("{{Id}}", data["Id"])

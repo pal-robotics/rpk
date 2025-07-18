@@ -33,7 +33,7 @@ from communication_skills.action import Say
 from play_motion2_msgs.action import PlayMotion2
 {% endif %}
 {% if "pal_arch" not in features %}
-from sample_skill_msgs.action import SkillControl
+from say_skill_msgs.action import Say
 {% endif %}
 {% endif %}
 {% endfor %}
@@ -209,9 +209,9 @@ class MissionController(Node):
             # Handle intents to greet, customised by the user
             # Refer to:
             # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
-            say = ActionClient(self, SkillControl, '/skill/say')
+            say = ActionClient(self, Say, '/skill/say')
             say.wait_for_server()
-            say_goal = SkillControl.Goal(skill_data=_("Hello, what can I do for you today?"))
+            say_goal = Say.Goal(skill_data=_("Hello, what can I do for you today?"))
             say.send_goal_async(say_goal)
 {% elif intent.intent in ["SAY"] and "pal_arch" in features %}
             # Handle intents to say a specific text
@@ -225,9 +225,9 @@ class MissionController(Node):
             # Handle intents to greet, customised by the user
             # Refer to:
             # https://docs.pal-robotics.com/sdk-dev/speech/skills_list
-            say = ActionClient(self, SkillControl, '/skill/say')
+            say = ActionClient(self, Say, '/skill/say')
             say.wait_for_server()
-            say_goal = SkillControl.Goal(skill_data=data['object'])
+            say_goal = Say.Goal(skill_data=data['object'])
             say.send_goal_async(say_goal)
 {% elif intent.intent == "START_ACTIVITY" %}
             if "object" in data:
