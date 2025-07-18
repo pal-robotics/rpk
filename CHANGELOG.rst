@@ -2,6 +2,12 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* update existing mission tpl to properly use skills
+  including generating custom 'say' skill msg when not on PAL arch
+* Contributors: Séverin Lemaignan
+
 5.4.0 (2025-06-25)
 ------------------
 * skill manifests: explicitely set parameters direction
