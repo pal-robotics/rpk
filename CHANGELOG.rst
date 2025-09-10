@@ -2,6 +2,11 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* ament_auto_package now requires USE_SCOPED_HEADER_INSTALL_DIR
+* Contributors: Séverin Lemaignan
+
 5.4.1 (2025-07-18)
 ------------------
 * update existing mission tpl to properly use skills
