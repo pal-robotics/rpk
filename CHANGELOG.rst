@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+5.5.1 (2025-11-13)
+------------------
 * Handle well the case where there is only a verbal response and related issues
 * Some skill templates were including a DatabaseRequest action that was never used
 * Contributors: ferrangebelli
