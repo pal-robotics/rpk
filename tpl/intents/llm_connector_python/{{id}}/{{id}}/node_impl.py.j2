@@ -263,6 +263,11 @@ class LLMChatbot(Node):
             }
         )
 
+{% if "pal_arch" in features %}
+        if not response_expected:
+            return chatbot_response
+
+{% endif %}
         llm_response = self.perform_request(
             server=self._llm_server,
             model=self._llm_model,
@@ -305,24 +310,30 @@ class LLMChatbot(Node):
 
         type = ""
         if intent:
-            type = intent.get("type", None).upper()
-            if not type:
+            if not isinstance(intent, dict):
                 self.get_logger().warn("Error while decoding LLM response: 'next_action' "
-                                       "is not specified. Falling back to raw response.")
+                                       "is not a dictionary. Falling back to raw response.")
                 valid = False
+            else:
+                type = intent.get("type", None).upper()
+                if not type:
+                    self.get_logger().warn("Error while decoding LLM response: 'next_action' "
+                                           "is not specified. Falling back to raw response.")
+                    valid = False
 
+{% if not "pal_arch" in features %}
         else:
             if suggested_response:
                 self.get_logger().warn("LLM did not provide any 'next_action'. "
                                        "Assuming a pure 'SAY' action.")
                 type = "SAY"
-                valid = True
             else:
                 self.get_logger().warn("Error while decoding LLM response: no 'next_action' "
                                        "or 'suggested_response_to_user' fields. Falling "
                                        "back to raw response.")
                 valid = False
 
+{% endif %}
         if valid:
             if type == "GREET":
                 self.get_logger().warn("I think the user want to greet me. "
@@ -393,8 +404,7 @@ class LLMChatbot(Node):
                                  self.escape_json(raw_response) + '"} }')
 
 {% if "pal_arch" in features %}
-        if response_expected:
-            chatbot_response.response = suggested_response
+        chatbot_response.response = suggested_response
         chatbot_response.intents = [intent]
 
         return chatbot_response
