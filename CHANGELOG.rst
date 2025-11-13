@@ -2,6 +2,12 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Handle well the case where there is only a verbal response and related issues
+* Some skill templates were including a DatabaseRequest action that was never used
+* Contributors: ferrangebelli
+
 5.5.0 (2025-09-10)
 ------------------
 * ament_auto_package now requires USE_SCOPED_HEADER_INSTALL_DIR
