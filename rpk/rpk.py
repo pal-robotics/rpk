@@ -104,6 +104,18 @@ ROBOTS_NAMES, ROBOTS_FEATURES, TEMPLATES_FAMILIES = load_templates()
 AVAILABLE_ROBOTS = list(ROBOTS_NAMES.keys())
 
 
+class Colors:
+    """ANSI color codes for terminal output. Colors are disabled if stdout is not a TTY."""
+    _use_colors = sys.stdout.isatty()
+
+    BOLD = "\033[1m" if _use_colors else ""
+    CYAN = "\033[36m" if _use_colors else ""
+    GREEN = "\033[32m" if _use_colors else ""
+    YELLOW = "\033[33m" if _use_colors else ""
+    RED = "\033[31m" if _use_colors else ""
+    RESET = "\033[0m" if _use_colors else ""
+
+
 TPL_EXT = "j2"
 
 
@@ -487,13 +499,14 @@ def main(args=sys.argv[1:]):
             tpls = TEMPLATES_FAMILIES[family]
             if not args.short:
                 print(
-                    f"\n# {tpls['name']} templates (rpk create {tpls['cmd']} ...):")
+                    f"\n{Colors.BOLD}{Colors.CYAN}# {tpls['name']} templates{Colors.RESET} "
+                    f"({Colors.YELLOW}rpk create {tpls['cmd']} ...{Colors.RESET}):")
             for tpl in tpls["src"].keys():
                 if args.short:
                     print(f"{family}/{tpl}")
                 else:
                     print(
-                        f" - {tpl}: {tpls['src'][tpl]['short_desc']}")
+                        f" - {Colors.GREEN}{tpl}{Colors.RESET}: {tpls['src'][tpl]['short_desc']}")
 
 
 if __name__ == "__main__":
