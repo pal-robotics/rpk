@@ -22,7 +22,7 @@ import sys
 from importlib.metadata import version
 
 # Re-export common symbols for backward compatibility
-from rpk.common import (
+from rpk.common import (  # noqa: F401
     SELF_NAME,
     PKG_PATH,
     TPL_EXT,
@@ -39,10 +39,10 @@ from rpk.commands.info import add_info_parser, run_info
 
 
 def main(args=sys.argv[1:]):
-    """Main entry point for rpk CLI."""
+    """Entry point for rpk CLI."""
     parser = argparse.ArgumentParser(
-        description="Generate and manage application skeletons for ROS 2-based "
-                    "robots"
+        description="Generate and manage application skeletons for "
+                    "ROS 2-based robots"
     )
 
     parser.add_argument('--version', action='version',
@@ -59,7 +59,8 @@ def main(args=sys.argv[1:]):
 
     if not args.command:
         print(
-            f"You must select a command.\nType '{SELF_NAME} --help' for details.")
+            f"You must select a command.\n"
+            f"Type '{SELF_NAME} --help' for details.")
         sys.exit(1)
 
     # Dispatch to command handlers

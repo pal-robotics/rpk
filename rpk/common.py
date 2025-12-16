@@ -102,7 +102,11 @@ AVAILABLE_ROBOTS = list(ROBOTS_NAMES.keys())
 
 
 class Colors:
-    """ANSI color codes for terminal output. Colors are disabled if stdout is not a TTY."""
+    """
+    ANSI color codes for terminal output.
+
+    Colors are disabled if stdout is not a TTY.
+    """
 
     _use_colors = sys.stdout.isatty()
 

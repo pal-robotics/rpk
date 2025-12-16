@@ -95,7 +95,8 @@ def interactive_create(id=None,
                        robot=None,
                        yes=False):
     """Interactively prompt user for template creation parameters."""
-    # apply subset of topic name rules to the ID, since it may be used in pkg topics names
+    # apply subset of topic name rules to the ID,
+    # since it may be used in pkg topics names
     valid_id = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*$")
 
     if not id and yes:
@@ -104,19 +105,21 @@ def interactive_create(id=None,
     try:
         while not id:
             id = input(
-                "ID of your application? (must be a valid ROS identifier without "
-                "spaces or hyphens. eg 'robot_receptionist')\n"
+                "ID of your application? (must be a valid ROS identifier "
+                "without spaces or hyphens. eg 'robot_receptionist')\n"
             )
 
             if not valid_id.fullmatch(id):
-                print("The chosen ID can only contain alphanumeric or '_' characters,"
-                      " and cannot start with a number.")
+                print(
+                    "The chosen ID can only contain alphanumeric or '_' "
+                    "characters, and cannot start with a number.")
                 id = None
 
         if not name and not yes:
             name = input(
-                "Full name of your skill/application? (eg 'The Receptionist Robot' or "
-                "'Database connector', press Return to use the ID. You can change it later)\n"
+                "Full name of your skill/application? (eg 'The Receptionist "
+                "Robot' or 'Database connector', press Return to use the ID. "
+                "You can change it later)\n"
             )
 
         if not name:
@@ -149,10 +152,11 @@ def interactive_create(id=None,
 
             try:
                 if len(tpls) == 1:
-                    # if only one template available, make it the default choice
+                    # if only one template available, make it the default
+                    default_desc = tpls[list(tpls.keys())[0]]['short_desc']
                     choice = int(input(
-                        "\nYour choice? (default: 1: "
-                        f"{tpls[list(tpls.keys())[0]]['short_desc']}) ").strip() or 1)
+                        f"\nYour choice? (default: 1: {default_desc}) "
+                    ).strip() or 1)
                 else:
                     choice = int(input("\nYour choice? ").strip())
 
@@ -169,8 +173,9 @@ def interactive_create(id=None,
                 print(f"{idx + 1}: {ROBOTS_NAMES[r]} ({r})")
 
             try:
-                choice = int(
-                    input(f"\nYour choice? (default: 1: {AVAILABLE_ROBOTS[0]}) ").strip() or 1)
+                choice = int(input(
+                    f"\nYour choice? (default: 1: {AVAILABLE_ROBOTS[0]}) "
+                ).strip() or 1)
 
                 robot = AVAILABLE_ROBOTS[choice - 1]
             except (ValueError, IndexError):
@@ -204,8 +209,8 @@ def generate_skeleton(data, family, tpl_name, robot, root):
 
     data["dependencies"] = []
 
-    # if needed, first generate the skeletons for the missions, skills and tasks
-    # referenced in the template
+    # if needed, first generate the skeletons for the missions, skills
+    # and tasks referenced in the template
     for additional_tpl in ["intent_extractor_templates",
                            "skill_templates",
                            "task_templates",
@@ -216,8 +221,8 @@ def generate_skeleton(data, family, tpl_name, robot, root):
                 tpl_name = list(a_tpl.keys())[0]
                 if not is_template_enabled(a_tpl[tpl_name], data["features"]):
                     print(
-                        f"Skipping {type} template {a_tpl} as it is not enabled for "
-                        f"{robot} ({data['features']})")
+                        f"Skipping {type} template {a_tpl} as it is not "
+                        f"enabled for {robot} ({data['features']})")
                     continue
                 a_data = dict(data)
                 a_data["id"] = a_tpl[tpl_name]["id"].replace(
@@ -244,20 +249,22 @@ def generate_skeleton(data, family, tpl_name, robot, root):
         if not j2_tpls:
             print(
                 "Error! no app template found for %s. I was looking for "
-                f"template files under <%s>. It seems {SELF_NAME} is not correctly "
+                "template files under <%s>. It seems %s is not correctly "
                 "installed."
-                % (tpl, tpl_path)
+                % (tpl, tpl_path, SELF_NAME)
             )
             sys.exit(1)
 
         for j2_tpl_name in j2_tpls:
-            if (("pages_only_ari" in j2_tpl_name) and (robot not in j2_tpl_name)):
+            if (
+                "pages_only_ari" in j2_tpl_name
+            ) and (robot not in j2_tpl_name):
                 continue
 
             # 'base' is the name of the package directory
-            base = root / \
-                tpl_path.name.replace("{{id}}", data["id"]).replace(
-                    "{{Id}}", data["Id"])
+            base = root / tpl_path.name.replace(
+                "{{id}}", data["id"]
+            ).replace("{{Id}}", data["Id"])
             base.mkdir(parents=True, exist_ok=True)
 
             # Non-template file, copy file as is
@@ -327,8 +334,8 @@ def add_create_parser(subparsers):
             "--id",
             type=str,
             nargs="?",
-            help="ID of your application. Must be a valid ROS2 identifier, without "
-            "spaces or hyphens.",
+            help="ID of your application. Must be a valid ROS2 identifier, "
+                 "without spaces or hyphens.",
         )
 
     create_parser.add_argument(

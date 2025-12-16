@@ -39,7 +39,8 @@ def add_info_parser(subparsers):
         type=str,
         choices=all_templates,
         metavar="TEMPLATE",
-        help="Template name in format 'family/template' (e.g., 'skill/base_python'). "
+        help="Template name in format 'family/template' "
+             "(e.g., 'skill/base_python'). "
              "Use 'rpk list --short' to see all available templates.",
     )
 
@@ -62,18 +63,22 @@ def run_info(args):
 
     tpls = TEMPLATES_FAMILIES[family]["src"]
     if tpl_name not in tpls:
-        print(f"{Colors.RED}Error:{Colors.RESET} Unknown template '{tpl_name}' "
-              f"in family '{family}'.")
+        print(
+            f"{Colors.RED}Error:{Colors.RESET} Unknown template "
+            f"'{tpl_name}' in family '{family}'.")
         sys.exit(1)
 
     tpl = tpls[tpl_name]
 
     # Display template info
-    print(f"\n{Colors.BOLD}{Colors.CYAN}Template:{Colors.RESET} "
-          f"{Colors.GREEN}{family}/{tpl_name}{Colors.RESET}")
+    print(
+        f"\n{Colors.BOLD}{Colors.CYAN}Template:{Colors.RESET} "
+        f"{Colors.GREEN}{family}/{tpl_name}{Colors.RESET}")
     print(f"{Colors.BOLD}Description:{Colors.RESET} {tpl['short_desc']}")
-    print(f"{Colors.BOLD}Language:{Colors.RESET} {tpl.get('prog_lang', 'N/A')}")
-    print(f"{Colors.BOLD}Template paths:{Colors.RESET} {', '.join(tpl['tpl_paths'])}")
+    lang = tpl.get('prog_lang', 'N/A')
+    print(f"{Colors.BOLD}Language:{Colors.RESET} {lang}")
+    paths = ', '.join(tpl['tpl_paths'])
+    print(f"{Colors.BOLD}Template paths:{Colors.RESET} {paths}")
 
     # Display dependencies
     dep_types = [
@@ -87,7 +92,9 @@ def run_info(args):
     for dep_key, dep_label in dep_types:
         if dep_key in tpl:
             if not has_deps:
-                print(f"\n{Colors.BOLD}{Colors.YELLOW}Dependencies:{Colors.RESET}")
+                print(
+                    f"\n{Colors.BOLD}{Colors.YELLOW}"
+                    f"Dependencies:{Colors.RESET}")
                 has_deps = True
             print(f"  {Colors.CYAN}{dep_label}:{Colors.RESET}")
             for dep in tpl[dep_key]:
@@ -96,9 +103,13 @@ def run_info(args):
                 dep_id = dep_config.get('id', '<id>')
                 dep_desc = dep_config.get('name', '')
                 only_if = dep_config.get('only_if', [])
-                only_if_str = f" (only if: {', '.join(only_if)})" if only_if else ""
-                print(f"    - {Colors.GREEN}{dep_name}{Colors.RESET} "
-                      f"(id: {dep_id}){only_if_str}")
+                if only_if:
+                    only_if_str = f" (only if: {', '.join(only_if)})"
+                else:
+                    only_if_str = ""
+                print(
+                    f"    - {Colors.GREEN}{dep_name}{Colors.RESET} "
+                    f"(id: {dep_id}){only_if_str}")
                 if dep_desc:
                     print(f"      {dep_desc}")
 

@@ -42,11 +42,13 @@ def run_list(args):
         tpls = TEMPLATES_FAMILIES[family]
         if not args.short:
             print(
-                f"\n{Colors.BOLD}{Colors.CYAN}# {tpls['name']} templates{Colors.RESET} "
-                f"({Colors.YELLOW}rpk create {tpls['cmd']} ...{Colors.RESET}):")
+                f"\n{Colors.BOLD}{Colors.CYAN}# {tpls['name']} "
+                f"templates{Colors.RESET} ({Colors.YELLOW}rpk create "
+                f"{tpls['cmd']} ...{Colors.RESET}):")
         for tpl in tpls["src"].keys():
             if args.short:
                 print(f"{family}/{tpl}")
             else:
+                desc = tpls['src'][tpl]['short_desc']
                 print(
-                    f" - {Colors.GREEN}{tpl}{Colors.RESET}: {tpls['src'][tpl]['short_desc']}")
+                    f" - {Colors.GREEN}{tpl}{Colors.RESET}: {desc}")
