@@ -25,19 +25,11 @@ import string
 import sys
 from pathlib import Path
 import shutil
+import yaml
 
 import rpk
 
 SELF_NAME = "rpk"
-
-FEAT_NAV = "navigation"
-FEAT_VISION = "vision"
-FEAT_SOCIAL = "social"
-FEAT_COMMUNICATION = "communication"
-FEAT_MANIPULATION = "manipulation"
-FEAT_GESTURES = "gestures"
-FEAT_EXPRESSIONS = "expressions"
-FEAT_PAL_ARCH = "pal_arch"
 
 # not using ament, so that is also work outside of a ROS environment
 PKG_PATH = (
@@ -45,275 +37,71 @@ PKG_PATH = (
     "rpk"
 )
 
-SKILL_TEMPLATES = {
-    "skill_definition": {
-        "tpl_paths": ["skills/skill_definition/{{id}}_skill_msgs"],
-        "prog_lang": "manifest",
-        "short_desc": "template for a skill manifest and API",
-        "post_install_help": "Check README.md in {path}/{id}_skill_msgs/ "
-                             "edit {id}_skill_msgs/package.xml to edit your skill manifest.",
-    },
-    "base_cpp": {
-        "tpl_paths": ["skills/base_cpp/{{id}}"],
-        "prog_lang": "c++",
-        "short_desc": "base skill template [c++]",
-        "post_install_help": "Check README.md in {path}/{id}/ and "
-                             "edit src/{id}/node_{id}.cpp and include/{id}/node_{id}.hpp "
-                             "to implement your skill logic.",
-        "skill_templates": [
-            {"skill_definition": {"id": "{{id}}", "name": "{{id}} skill definition"}}
-        ],
-    },
-    "base_python": {
-        "tpl_paths": ["skills/base_python/{{id}}"],
-        "prog_lang": "python",
-        "short_desc": "base skill template [python]",
-        "post_install_help": "Check README.md in {path}/{id}/ and "
-                             "edit src/{id}/{id}/skill_impl.py to implement your skill logic.",
-        "skill_templates": [
-            {"skill_definition": {"id": "{{id}}", "name": "{{id}} skill definition"}}
-        ],
-    },
-    "say_python": {
-        "tpl_paths": ["skills/say_python/{{id}}"],
-        "prog_lang": "python",
-        "short_desc": "creates a custom implementation of the standard 'say' skill [python]",
-        "post_install_help": "Check README.md in {path}/{id}/ and "
-                             "edit {id}/{id}/skill_impl.py to implement your skill logic.",
-        "skill_templates": [{"skill_definition": {
-            # not need to generate skill msgs on PAL robots as we use communication_skills
-            "only_if": [f"!{FEAT_PAL_ARCH}"],
-            "id": "say",
-            "name": "Skill definition for a sample say skill",
-        }}],
-    },
-    "db_connector_python": {
-        "tpl_paths": ["skills/db_connector_python/{{id}}"],
-        "prog_lang": "python",
-        "short_desc": "database connector mock-up [python]",
-        "post_install_help": "Check README.md in {path}/{id}/ and "
-                             "edit {id}/{id}/skill_impl.py to implement your skill logic.",
-        "skill_templates": [{"skill_definition": {
-            "id": "db",
-            "name": "Skill definition for a custom database connector"
-        }}],
-    },
-    "locate_cpp": {
-        "tpl_paths": ["skills/locate_cpp/{{id}}"],
-        "prog_lang": "c++",
-        "short_desc": "example implementation of 'locate' skill [c++]",
-        "post_install_help": "Check README.md in {path}/{id}/ and "
-                             "edit src/{id}/node_{id}.cpp and include/{id}/node_{id}.hpp "
-                             "to implement your skill logic.",
-        "skill_templates": [{"skill_definition": {
-            "id": "locate", "name": "Manifest of the 'locate' skill"
-        }}],
-    },
-}
+# Path to the templates configuration file
+TEMPLATES_YAML_PATH = Path(rpk.__file__).parent / "templates.yaml"
 
-INTENT_EXTRACTOR_TEMPLATES = {
-    "basic_chatbot": {
-        "tpl_paths": ["intents/basic_chatbot/{{id}}"],
-        "prog_lang": "python",
-        "short_desc": "basic chatbot template [python]",
-        "post_install_help": "Check README.md in {path}/{id}/ and "
-                             "edit src/{id}/node_impl.py to implement your node logic.",
-    },
-    "llm_bridge_python": {
-        "tpl_paths": ["intents/llm_connector_python/{{id}}"],
-        "prog_lang": "python",
-        "short_desc": "complete intent extraction example: LLM bridge using the OpenAI "
-                      "API (ollama, chatgpt) [python]",
-        "post_install_help": "Check README.md in {path}/{id}/ and "
-                             "edit src/{id}/node_impl.py to implement your node logic.",
-    },
-}
 
-TASK_TEMPLATES = {
-    "base_python": {
-        "tpl_paths": ["tasks/base_python/{{id}}", "tasks/task_msgs"],
-        "prog_lang": "python",
-        "short_desc": "base task template [python]",
-        "post_install_help": "Check README.md in {path}/{id}/ and "
-                             "edit src/{id}/task_impl.py to implement your task logic.",
-    },
-    "simple_ui": {
-        "tpl_paths": ["tasks/simple_ui/{{id}}", "tasks/task_msgs"],
-        "prog_lang": "python",
-        "short_desc": "simple task template with a graphical user interface [python]",
-        "post_install_help": "Check README.md in {path}/{id}/ and "
-                             "edit src/{id}/task_impl.py to implement your task logic.",
-    },
-    "greet_task_python": {
-        "tpl_paths": ["tasks/greet_task_python/{{id}}", "tasks/greet_task_msgs"],
-        "prog_lang": "python",
-        "short_desc": "'greet' task mock-up [python]",
-        "post_install_help": "Check README.md in {path}/{id}/ and "
-                             "edit src/{id}/task_impl.py to implement your task logic.",
-        "skill_templates": [{"say_python": {"id": "say_skill", "name": "basic 'say' skill"}}],
+def load_templates():
+    """Load templates from the external YAML file."""
+    with open(TEMPLATES_YAML_PATH, 'r') as f:
+        config = yaml.safe_load(f)
+
+    # Extract robots configuration
+    robots_names = {k: v['name'] for k, v in config['robots'].items()}
+    robots_features = {k: v['features'] for k, v in config['robots'].items()}
+
+    # Extract template families and their sources
+    skill_templates = config['skill_templates']
+    intent_extractor_templates = config['intent_extractor_templates']
+    task_templates = config['task_templates']
+    mission_ctrl_templates = config['mission_ctrl_templates']
+    application_templates = config['application_templates']
+
+    # Build templates families dict with sources linked
+    templates_families = {}
+    family_config = config['template_families']
+
+    templates_families['intent'] = {
+        'src': intent_extractor_templates,
+        'name': family_config['intent']['name'],
+        'cmd': family_config['intent']['cmd'],
+        'help': family_config['intent']['help']
     }
-}
-
-MISSION_CTRL_TEMPLATES = {
-    "base_python": {
-        "tpl_paths": ["mission_ctrls/base_python/{{id}}"],
-        "prog_lang": "python",
-        "short_desc": "base robot supervisor [python]",
-        "post_install_help": "Check README.md in {path}/{id}/ and edit src/{id}/"
-                             "mission_controller.py to customize your application logic.",
-        "skill_templates": [{"say_python": {"id": "basic_say", "name": "basic 'say' skill"}}],
-    },
-    "base_intents_python": {
-        "tpl_paths": ["mission_ctrls/base_intents_python/{{id}}"],
-        "prog_lang": "python",
-        "short_desc": "robot supervisor with pre-filled intent handlers [python]",
-        "post_install_help": "Check README.md in {path}/{id}/ and edit src/{id}/"
-                             "mission_controller.py to implement your application logic.",
-        "skill_templates": [{
-            "say_python": {
-                "only_if": [f"!{FEAT_PAL_ARCH}"],
-                "id": "say_skill",
-                "name": "basic 'say' skill"}
-        }
-        ],
-    },
-    "base_intents_ui_python": {
-        "tpl_paths": ["mission_ctrls/base_intents_ui_python/{{id}}"],
-        "prog_lang": "python",
-        "short_desc": "robot supervisor with a GUI and pre-filled intent handlers [python]",
-        "post_install_help": "Check README.md in {path}/{id}/ and edit src/{id}/"
-                             "mission_controller.py to implement your application logic.",
-        "task_templates": [{"simple_ui": {"id": "sample_gui_task", "name": "Sample GUI task"}}],
-        "skill_templates": [{
-            "say_python": {
-                "only_if": [f"!{FEAT_PAL_ARCH}"],
-                "id": "say_skill",
-                "name": "basic 'say' skill"}
-        }
-        ],
-    },
-    "chatbot_supervisor_python": {
-        "tpl_paths": ["mission_ctrls/llm_supervisor_python/{{id}}"],
-        "prog_lang": "python",
-        "short_desc": "complete supervisor example, using a basic chatbot to manage interactions "
-                      "with users [python]",
-        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
-                             "mission_controller.py to customize your application logic.",
-        "task_templates": [{"greet_task_python": {"id": "greet_task", "name": "'greet' task"}}],
-        "intent_extractor_templates": [{"basic_chatbot": {
-            "id": "basic_chatbot",
-            "name": "Basic Python chatbot"}}],
-    },
-    "llm_supervisor_python": {
-        "tpl_paths": ["mission_ctrls/llm_supervisor_python/{{id}}"],
-        "prog_lang": "python",
-        "short_desc": "complete supervisor example, using LLMs to manage interactions with "
-                      "users [python]",
-        "post_install_help": "Check README.md in ./{path}/ and edit src/{id}/"
-                             "mission_controller.py to customize your application logic.",
-        "task_templates": [{"greet_task_python": {"id": "greet_task", "name": "'greet' task"}}],
-        "intent_extractor_templates": [{"llm_bridge_python": {
-            "id": "llm_bridge",
-            "name": "LLM bridge"}}],
+    templates_families['skill'] = {
+        'src': skill_templates,
+        'name': family_config['skill']['name'],
+        'cmd': family_config['skill']['cmd'],
+        'help': family_config['skill']['help']
     }
-}
-
-
-APPLICATION_TEMPLATES = {
-    "basic_chatbot_python": {
-        "tpl_paths": ["apps/python/{{id}}"],
-        "prog_lang": "python",
-        "short_desc": "complete sample app, using a basic chatbot to interact with users. "
-                      "It includes a supervisor and sample tasks and skills [python]",
-        "post_install_help": "Check README.md in ./{path}/ to learn how to configure "
-                             "and start your application.",
-        "mission_ctrl_templates": [{"chatbot_supervisor_python": {
-            "id": "chatbot_supervisor",
-            "name": "Mission controller"}}],
-    },
-    "llm_chatbot_python": {
-        "tpl_paths": ["apps/python/{{id}}"],
-        "prog_lang": "python",
-        "short_desc": "complete sample app, using LLM to interact with users. "
-                      "It includes a supervisor and sample tasks and skills [python]",
-        "post_install_help": "Check README.md in ./{path}/ to learn how to configure "
-                             "and start your application.",
-        "mission_ctrl_templates": [{"llm_supervisor_python": {
-            "id": "llm_supervisor",
-            "name": "LLM-based mission controller"}}],
+    templates_families['task'] = {
+        'src': task_templates,
+        'name': family_config['task']['name'],
+        'cmd': family_config['task']['cmd'],
+        'help': family_config['task']['help']
     }
-}
+    templates_families['mission'] = {
+        'src': mission_ctrl_templates,
+        'name': family_config['mission']['name'],
+        'cmd': family_config['mission']['cmd'],
+        'help': family_config['mission']['help']
+    }
+    templates_families['app'] = {
+        'src': application_templates,
+        'name': family_config['app']['name'],
+        'cmd': family_config['app']['cmd'],
+        'help': family_config['app']['help']
+    }
 
-TEMPLATES_FAMILIES = {
-    "intent": {"src": INTENT_EXTRACTOR_TEMPLATES,
-               "name": "intent extractor",
-               "cmd": "intent",
-               "help": "perception module that extracts intents from user input. "
-               "Example: a chatbot"},
-    "skill": {"src": SKILL_TEMPLATES,
-              "name": "skill",
-              "cmd": "skill",
-              "help": "short-term 'atomic' robot action, to be re-used by tasks and mission "
-                      "controllers. Examples: 'go to', 'say', 'perform pre-recorded motion'"},
-    "task": {"src": TASK_TEMPLATES,
-             "name": "task",
-             "cmd": "task",
-             "help": "time-limited robot activity, started by the mission controller. "
-                     "Might use skills. Examples: 'greet person', 'fetch object'"},
-    "mission": {"src": MISSION_CTRL_TEMPLATES,
-                "name": "mission controller",
-                "cmd": "mission",
-                "help": "manages the whole behaviour of the robot. Examples: 'receptionist', "
-                        "'waiter'"},
-    "app": {"src": APPLICATION_TEMPLATES,
-            "name": "application",
-            "cmd": "app",
-            "help": "complete application including a mission controller, a sample "
-                    "task and skill, and sample resources"}
-}
+    return (
+        robots_names,
+        robots_features,
+        templates_families,
+    )
 
-ROBOTS_NAMES = {"generic": "Generic robot",
-                "generic-pal": "Generic PAL robot/simulator",
-                "ari": "PAL ARI",
-                "tiago": "PAL TIAGo",
-                "tiago-pro": "PAL TIAGo Pro",
-                "tiago-head": "PAL TIAGo Head"}
+
+# Load templates at module initialization
+ROBOTS_NAMES, ROBOTS_FEATURES, TEMPLATES_FAMILIES = load_templates()
 AVAILABLE_ROBOTS = list(ROBOTS_NAMES.keys())
-
-ROBOTS_FEATURES = {
-    "generic": [],
-    "generic-pal": [FEAT_PAL_ARCH],
-    "ari":         [FEAT_PAL_ARCH,
-                    FEAT_NAV,
-                    FEAT_VISION,
-                    FEAT_SOCIAL,
-                    FEAT_COMMUNICATION,
-                    FEAT_GESTURES,
-                    FEAT_EXPRESSIONS,
-                    ],
-    "tiago":       [FEAT_PAL_ARCH,
-                    FEAT_NAV,
-                    FEAT_VISION,
-                    FEAT_SOCIAL,
-                    FEAT_COMMUNICATION,
-                    FEAT_MANIPULATION,
-                    FEAT_GESTURES,
-                    ],
-    "tiago-pro":   [FEAT_PAL_ARCH,
-                    FEAT_NAV,
-                    FEAT_VISION,
-                    FEAT_SOCIAL,
-                    FEAT_COMMUNICATION,
-                    FEAT_MANIPULATION,
-                    FEAT_GESTURES,
-                    FEAT_EXPRESSIONS],
-    "tiago-head":  [FEAT_PAL_ARCH,
-                    FEAT_VISION,
-                    FEAT_SOCIAL,
-                    FEAT_COMMUNICATION,
-                    FEAT_EXPRESSIONS,
-                    ],
-}
 
 
 TPL_EXT = "j2"

@@ -1,0 +1,276 @@
+# Template definitions for rpk
+# This file contains all the available templates for skills, tasks, mission controllers,
+# intent extractors, and applications.
+
+# Feature constants (referenced in templates using !feature_only_if)
+features:
+  navigation: navigation
+  vision: vision
+  social: social
+  communication: communication
+  manipulation: manipulation
+  gestures: gestures
+  expressions: expressions
+  pal_arch: pal_arch
+
+# Available robots and their capabilities
+robots:
+  generic:
+    name: "Generic robot"
+    features: []
+  generic-pal:
+    name: "Generic PAL robot/simulator"
+    features: [pal_arch]
+  ari:
+    name: "PAL ARI"
+    features: [pal_arch, navigation, vision, social, communication, gestures, expressions]
+  tiago:
+    name: "PAL TIAGo"
+    features: [pal_arch, navigation, vision, social, communication, manipulation, gestures]
+  tiago-pro:
+    name: "PAL TIAGo Pro"
+    features: [pal_arch, navigation, vision, social, communication, manipulation, gestures, expressions]
+  tiago-head:
+    name: "PAL TIAGo Head"
+    features: [pal_arch, vision, social, communication, expressions]
+
+# Template families grouping related templates
+template_families:
+  intent:
+    name: "intent extractor"
+    cmd: "intent"
+    help: "perception module that extracts intents from user input. Example: a chatbot"
+
+  skill:
+    name: "skill"
+    cmd: "skill"
+    help: "short-term 'atomic' robot action, to be re-used by tasks and mission controllers. Examples: 'go to', 'say', 'perform pre-recorded motion'"
+
+  task:
+    name: "task"
+    cmd: "task"
+    help: "time-limited robot activity, started by the mission controller. Might use skills. Examples: 'greet person', 'fetch object'"
+
+  mission:
+    name: "mission controller"
+    cmd: "mission"
+    help: "manages the whole behaviour of the robot. Examples: 'receptionist', 'waiter'"
+
+  app:
+    name: "application"
+    cmd: "app"
+    help: "complete application including a mission controller, a sample task and skill, and sample resources"
+
+# Skill templates
+skill_templates:
+  skill_definition:
+    tpl_paths:
+      - "skills/skill_definition/{{id}}_skill_msgs"
+    prog_lang: "manifest"
+    short_desc: "template for a skill manifest and API"
+    post_install_help: "Check README.md in {path}/{id}_skill_msgs/ edit {id}_skill_msgs/package.xml to edit your skill manifest."
+
+  base_cpp:
+    tpl_paths:
+      - "skills/base_cpp/{{id}}"
+    prog_lang: "c++"
+    short_desc: "base skill template [c++]"
+    post_install_help: "Check README.md in {path}/{id}/ and edit src/{id}/node_{id}.cpp and include/{id}/node_{id}.hpp to implement your skill logic."
+    skill_templates:
+      - skill_definition:
+          id: "{{id}}"
+          name: "{{id}} skill definition"
+
+  base_python:
+    tpl_paths:
+      - "skills/base_python/{{id}}"
+    prog_lang: "python"
+    short_desc: "base skill template [python]"
+    post_install_help: "Check README.md in {path}/{id}/ and edit src/{id}/{id}/skill_impl.py to implement your skill logic."
+    skill_templates:
+      - skill_definition:
+          id: "{{id}}"
+          name: "{{id}} skill definition"
+
+  ros4hri_skill_python:
+    tpl_paths:
+      - "skills/base_python/{{id}}"
+    prog_lang: "python"
+    short_desc: "Implementation template for a ROS4HRI standard skill [python]"
+    post_install_help: "Check README.md in {path}/{id}/ and edit src/{id}/{id}/skill_impl.py to implement your skill logic."
+
+  say_python:
+    tpl_paths:
+      - "skills/say_python/{{id}}"
+    prog_lang: "python"
+    short_desc: "creates a custom implementation of the standard 'say' skill [python]"
+    post_install_help: "Check README.md in {path}/{id}/ and edit {id}/{id}/skill_impl.py to implement your skill logic."
+    skill_templates:
+      - skill_definition:
+          # not need to generate skill msgs on PAL robots as we use communication_skills
+          only_if: ["!pal_arch"]
+          id: "say"
+          name: "Skill definition for a sample say skill"
+
+  db_connector_python:
+    tpl_paths:
+      - "skills/db_connector_python/{{id}}"
+    prog_lang: "python"
+    short_desc: "database connector mock-up [python]"
+    post_install_help: "Check README.md in {path}/{id}/ and edit {id}/{id}/skill_impl.py to implement your skill logic."
+    skill_templates:
+      - skill_definition:
+          id: "db"
+          name: "Skill definition for a custom database connector"
+
+  locate_cpp:
+    tpl_paths:
+      - "skills/locate_cpp/{{id}}"
+    prog_lang: "c++"
+    short_desc: "example implementation of 'locate' skill [c++]"
+    post_install_help: "Check README.md in {path}/{id}/ and edit src/{id}/node_{id}.cpp and include/{id}/node_{id}.hpp to implement your skill logic."
+    skill_templates:
+      - skill_definition:
+          id: "locate"
+          name: "Manifest of the 'locate' skill"
+
+# Intent extractor templates
+intent_extractor_templates:
+  basic_chatbot:
+    tpl_paths:
+      - "intents/basic_chatbot/{{id}}"
+    prog_lang: "python"
+    short_desc: "basic chatbot template [python]"
+    post_install_help: "Check README.md in {path}/{id}/ and edit src/{id}/node_impl.py to implement your node logic."
+
+  llm_bridge_python:
+    tpl_paths:
+      - "intents/llm_connector_python/{{id}}"
+    prog_lang: "python"
+    short_desc: "complete intent extraction example: LLM bridge using the OpenAI API (ollama, chatgpt) [python]"
+    post_install_help: "Check README.md in {path}/{id}/ and edit src/{id}/node_impl.py to implement your node logic."
+
+# Task templates
+task_templates:
+  base_python:
+    tpl_paths:
+      - "tasks/base_python/{{id}}"
+      - "tasks/task_msgs"
+    prog_lang: "python"
+    short_desc: "base task template [python]"
+    post_install_help: "Check README.md in {path}/{id}/ and edit src/{id}/task_impl.py to implement your task logic."
+
+  simple_ui:
+    tpl_paths:
+      - "tasks/simple_ui/{{id}}"
+      - "tasks/task_msgs"
+    prog_lang: "python"
+    short_desc: "simple task template with a graphical user interface [python]"
+    post_install_help: "Check README.md in {path}/{id}/ and edit src/{id}/task_impl.py to implement your task logic."
+
+  greet_task_python:
+    tpl_paths:
+      - "tasks/greet_task_python/{{id}}"
+      - "tasks/greet_task_msgs"
+    prog_lang: "python"
+    short_desc: "'greet' task mock-up [python]"
+    post_install_help: "Check README.md in {path}/{id}/ and edit src/{id}/task_impl.py to implement your task logic."
+    skill_templates:
+      - say_python:
+          id: "say_skill"
+          name: "basic 'say' skill"
+
+# Mission controller templates
+mission_ctrl_templates:
+  base_python:
+    tpl_paths:
+      - "mission_ctrls/base_python/{{id}}"
+    prog_lang: "python"
+    short_desc: "base robot supervisor [python]"
+    post_install_help: "Check README.md in {path}/{id}/ and edit src/{id}/mission_controller.py to customize your application logic."
+    skill_templates:
+      - say_python:
+          id: "basic_say"
+          name: "basic 'say' skill"
+
+  base_intents_python:
+    tpl_paths:
+      - "mission_ctrls/base_intents_python/{{id}}"
+    prog_lang: "python"
+    short_desc: "robot supervisor with pre-filled intent handlers [python]"
+    post_install_help: "Check README.md in {path}/{id}/ and edit src/{id}/mission_controller.py to implement your application logic."
+    skill_templates:
+      - say_python:
+          only_if: ["!pal_arch"]
+          id: "say_skill"
+          name: "basic 'say' skill"
+
+  base_intents_ui_python:
+    tpl_paths:
+      - "mission_ctrls/base_intents_ui_python/{{id}}"
+    prog_lang: "python"
+    short_desc: "robot supervisor with a GUI and pre-filled intent handlers [python]"
+    post_install_help: "Check README.md in {path}/{id}/ and edit src/{id}/mission_controller.py to implement your application logic."
+    task_templates:
+      - simple_ui:
+          id: "sample_gui_task"
+          name: "Sample GUI task"
+    skill_templates:
+      - say_python:
+          only_if: ["!pal_arch"]
+          id: "say_skill"
+          name: "basic 'say' skill"
+
+  chatbot_supervisor_python:
+    tpl_paths:
+      - "mission_ctrls/llm_supervisor_python/{{id}}"
+    prog_lang: "python"
+    short_desc: "complete supervisor example, using a basic chatbot to manage interactions with users [python]"
+    post_install_help: "Check README.md in ./{path}/ and edit src/{id}/mission_controller.py to customize your application logic."
+    task_templates:
+      - greet_task_python:
+          id: "greet_task"
+          name: "'greet' task"
+    intent_extractor_templates:
+      - basic_chatbot:
+          id: "basic_chatbot"
+          name: "Basic Python chatbot"
+
+  llm_supervisor_python:
+    tpl_paths:
+      - "mission_ctrls/llm_supervisor_python/{{id}}"
+    prog_lang: "python"
+    short_desc: "complete supervisor example, using LLMs to manage interactions with users [python]"
+    post_install_help: "Check README.md in ./{path}/ and edit src/{id}/mission_controller.py to customize your application logic."
+    task_templates:
+      - greet_task_python:
+          id: "greet_task"
+          name: "'greet' task"
+    intent_extractor_templates:
+      - llm_bridge_python:
+          id: "llm_bridge"
+          name: "LLM bridge"
+
+# Application templates
+application_templates:
+  basic_chatbot_python:
+    tpl_paths:
+      - "apps/python/{{id}}"
+    prog_lang: "python"
+    short_desc: "complete sample app, using a basic chatbot to interact with users. It includes a supervisor and sample tasks and skills [python]"
+    post_install_help: "Check README.md in ./{path}/ to learn how to configure and start your application."
+    mission_ctrl_templates:
+      - chatbot_supervisor_python:
+          id: "chatbot_supervisor"
+          name: "Mission controller"
+
+  llm_chatbot_python:
+    tpl_paths:
+      - "apps/python/{{id}}"
+    prog_lang: "python"
+    short_desc: "complete sample app, using LLM to interact with users. It includes a supervisor and sample tasks and skills [python]"
+    post_install_help: "Check README.md in ./{path}/ to learn how to configure and start your application."
+    mission_ctrl_templates:
+      - llm_supervisor_python:
+          id: "llm_supervisor"
+          name: "LLM-based mission controller"
