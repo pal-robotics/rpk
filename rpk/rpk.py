@@ -21,7 +21,6 @@ import argparse
 import sys
 from importlib.metadata import version
 
-# Re-export common symbols for backward compatibility
 from rpk.common import (  # noqa: F401
     SELF_NAME,
     PKG_PATH,

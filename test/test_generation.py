@@ -24,10 +24,9 @@ from ament_cppcheck.main import main as cppcheck_main
 from ament_cpplint.main import main as cpplint_main
 from ament_archlint.main import main as archlint_main
 
-from rpk import rpk
-rpk.PKG_PATH = (
-    Path(rpk.__file__).parent.parent
-)
+from rpk.commands import create
+create.PKG_PATH = Path(__file__).parent.parent
+import rpk  # noqa: E402
 
 
 @pytest.mark.parametrize('category, template, robot',
