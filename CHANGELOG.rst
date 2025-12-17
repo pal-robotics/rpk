@@ -2,6 +2,38 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix tests + add test for 'rpk list' and 'rpk info'
+* 'version' is now a mandatory field in skill manifests
+* style: fix flake8 and pep257 issues
+  - Fixed line too long errors (E501) in all files
+  - Added noqa comments for intentional unused imports (F401)
+  - Verified docstrings are present for all functions/classes
+* refactor: split rpk.py into modular command structure
+  - Created rpk/common.py with shared utilities (Colors, load_templates, constants)
+  - Created rpk/commands/ package with separate modules:
+  - create.py: 'create' command implementation
+  - list.py: 'list' command implementation
+  - info.py: 'info' command implementation
+  - Simplified rpk.py to slim entry point with command dispatch
+  - Maintained backward compatibility (rpk.TEMPLATES_FAMILIES, etc.)
+* feat: add 'rpk info' command to show template details
+  - New command: rpk info <family/template>
+  - Shows template description, language, paths, and dependencies
+  - Displays conditional dependencies (only_if)
+  - Includes usage hint at the end
+* feat: add colorized output to rpk list command
+  - Added Colors class with ANSI color codes for terminal output
+  - Colors are automatically disabled when stdout is not a TTY
+  - Headers shown in bold cyan, commands in yellow, template names in green
+* refactor: move hardcoded templates to external YAML file
+  - Created rpk/templates.yaml containing all template definitions, robot
+  configurations, and feature constants
+  - Updated rpk/rpk.py to load templates from YAML file at module init
+  - Added package_data in setup.py to ensure templates.yaml is installed
+* Contributors: Séverin Lemaignan
+
 5.5.1 (2025-11-13)
 ------------------
 * Handle well the case where there is only a verbal response and related issues
