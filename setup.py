@@ -32,7 +32,7 @@ TPLS = [
 
 setup(
     name=NAME,
-    version='5.5.1',
+    version='5.6.0',
     description=DESCRIPTION,
     long_description=readme(),
     author="Séverin Lemaignan",

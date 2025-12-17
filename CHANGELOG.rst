@@ -2,8 +2,8 @@
 Changelog for package pal_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+5.6.0 (2025-12-17)
+------------------
 * fix tests + add test for 'rpk list' and 'rpk info'
 * 'version' is now a mandatory field in skill manifests
 * style: fix flake8 and pep257 issues
